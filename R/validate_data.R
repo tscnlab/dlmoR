@@ -1,98 +1,71 @@
-# Check if there is a meaningful rise >= threshold
-#' Title
+#' Data Validation and Preprocessing Functions
 #'
-#' @param profile
-#' @param threshold
-#' @param min_increase_points
+#' This file contains functions for validating and preprocessing profile data for analysis.
+#' These functions help ensure that profiles meet minimum requirements for rise, length,
+#' and ending criteria before proceeding with further analysis.
 #'
-#' @return
-#' @export
+#' ## Functions included:
+#' - `check_rise_threshold()`: Checks if the profile has a sustained rise above a specified threshold.
+#' - `check_data_points()`: Ensures the profile has a minimum number of data points.
+#' - `trim_end_below_threshold()`: Trims nodes below the threshold at the end of the profile.
+#' - `preprocess_profile()`: Wrapper function that combines all checks and preprocessing steps.
 #'
-#' @examples
+#' @param profile A numeric vector representing the profile data points.
+#' @param threshold Numeric value for the minimum rise threshold, default is 2.3.
+#' @param min_increase_points Integer specifying the minimum number of consecutive points
+#'   above the threshold to establish a rise, default is 3.
+#' @param min_points Integer specifying the minimum number of data points required for the profile,
+#'   default is 3.
+#' @return Depending on the function, returns either a boolean (for validation functions) or a
+#'   numeric vector (for the processed profile). If criteria are not met, an error message is returned.
+#'
+#' ## Example Usage
+#' ```R
+#' profile <- c(1.2, 2.1, 2.4, 2.5, 2.8, 2.9, 1.9, 2.2)
+#'
+#' # Check if profile has a significant rise
+#' check_rise_threshold(profile, threshold = 2.3, min_increase_points = 3)
+#'
+#' # Check if profile has sufficient data points
+#' check_data_points(profile, min_points = 3)
+#'
+#' # Trim nodes below threshold at the end of the profile
+#' trimmed_profile <- trim_end_below_threshold(profile, threshold = 2.3)
+#'
+#' # Full preprocessing, with all checks and trimming
+#' processed_profile <- preprocess_profile(profile, threshold = 2.3, min_increase_points = 3, min_points = 3)
+#' ```
+#'
+#' @name validate_data
+NULL
+
+#' @inheritParams validate_data
 check_rise_threshold <- function(profile, threshold = 2.3, min_increase_points = 3) {
-  # Find indices where the profile crosses the threshold
-  above_threshold <- which(profile >= threshold)
-
-  # If no points are above the threshold, return an error
-  if (length(above_threshold) == 0) {
-    stop("Error: Profile does not have a significant rise above the threshold.")
-  }
-
-  # Check for consecutive increases leading up to a threshold-crossing point
-  for (i in 2:length(profile)) {
-    if (profile[i] >= threshold && sum(diff(profile[1:i]) > 0) >= min_increase_points) {
-      return(TRUE)
-    }
-  }
-
-  # If no meaningful rise is found
-  stop("Error: Profile lacks a sustained rise above the threshold, indicating no dynamic part.")
+  above_threshold <- profile >= threshold
+  rise_length <- rle(above_threshold)$lengths[rle(above_threshold)$values]
+  any(rise_length >= min_increase_points)
 }
 
-# Check for sufficient number of data points
+#' @inheritParams validate_data
 check_data_points <- function(profile, min_points = 3) {
-  if (length(profile) < min_points) {
-    stop("Error: Insufficient data points for analysis (minimum required is 3).")
-  }
-  return(TRUE)
+  length(profile) >= min_points
 }
 
-# Trim nodes below threshold at the end of the profile
-#' Title
-#'
-#' @param profile
-#' @param threshold
-#'
-#' @return
-#' @export
-#'
-#' @examples
+#' @inheritParams validate_data
 trim_end_below_threshold <- function(profile, threshold = 2.3) {
-  last_above_threshold <- max(which(profile >= threshold), na.rm = TRUE)
-
-  # If trimming occurs, return a warning
-  if (last_above_threshold < length(profile)) {
-    warning("Warning: Trimming nodes below threshold at the end of the profile.")
-  }
-
-  return(profile[1:last_above_threshold])
+  last_above_threshold <- max(which(profile >= threshold))
+  profile[1:last_above_threshold]
 }
 
-# Main function
-#' Title
-#'
-#' @param data
-#' @param threshold
-#' @param min_increase_points
-#' @param min_points
-#'
-#' @return
-#' @export
-#'
-#' @examples
-preprocess_profiles <- function(data, threshold = 2.3, min_increase_points = 3, min_points = 3) {
-  processed_data <- list()
-
-  for (i in seq_along(data)) {
-    profile <- data[[i]]
-
-    # Check for meaningful rise and handle errors
-    check_rise_threshold(profile, threshold, min_increase_points)
-
-    # Check for sufficient data points and handle errors
-    check_data_points(profile, min_points)
-
-    # Trim end nodes below threshold
-    trimmed_profile <- trim_end_below_threshold(profile, threshold)
-
-    # Append to processed data
-    processed_data[[length(processed_data) + 1]] <- trimmed_profile
+#' @inheritParams validate_data
+preprocess_profile <- function(profile, threshold = 2.3, min_increase_points = 3, min_points = 3) {
+  if (!check_data_points(profile, min_points)) {
+    stop("Insufficient number of data points for analysis")
   }
+  if (!check_rise_threshold(profile, threshold, min_increase_points)) {
+    stop("No significant rise detected in profile for analysis")
+  }
+  trimmed_profile <- trim_end_below_threshold(profile, threshold)
 
-  return(processed_data)
+  return(trimmed_profile)
 }
-
-# Example usage
-# data <- list(c(1.2, 1.9, 2.1, 2.5, 3.0), c(2.1, 1.9), c(1.8, 2.0, 2.4, 2.7, 2.6, 2.2))
-# processed_data <- preprocess_profiles(data, threshold = 2.3, min_increase_points = 3, min_points = 3)
-# print(processed_data)
