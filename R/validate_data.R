@@ -57,6 +57,7 @@ trim_end_below_threshold <- function(profile, threshold = 2.3) {
   profile[1:last_above_threshold]
 }
 
+#' @export
 #' @inheritParams validate_data
 preprocess_profile <- function(profile, threshold = 2.3, min_increase_points = 3, min_points = 3) {
   if (!check_data_points(profile, min_points)) {
