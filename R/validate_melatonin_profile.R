@@ -39,20 +39,60 @@
 #' @name validate_melatonin_profile
 NULL
 
-validate_melatonin_profile(profile, threshold = 2.3, min_increase_points = 3){
+# validate_melatonin_profile(profile, threshold = 2.3, min_increase_points = 3){
+#
+# }
 
-}
 
 #' @inheritParams validate_melatonin_profile
 check_rise_threshold <- function(profile, threshold = 2.3, min_increase_points = 3) {
-  above_threshold <- profile >= threshold
-  rise_length <- rle(above_threshold)$lengths[rle(above_threshold)$values]
-  any(rise_length >= min_increase_points)
+  library(dplyr)
+  library(tibble)
+
+  profile_tbl <- tibble(value = profile) %>%
+    mutate(
+      above_threshold = value >= threshold,
+      # Handle the first row explicitly: prev_below_threshold should be FALSE for the first row
+      prev_below_threshold = ifelse(row_number() == 1, FALSE, lag(value < threshold)),
+      # Transition occurs only if crossing from below to above threshold
+      transition = above_threshold & prev_below_threshold
+    ) %>%
+    # Group consecutive above-threshold points starting from valid transitions
+    mutate(group = cumsum(transition))
+
+  # Print profile_tbl to see intermediate results
+  print("Profile Table After Mutation:")
+  print(profile_tbl,n=46)  # Debugging: Inspect intermediate results
+
+  # Group by `group` and calculate sustained length
+  summarized_tbl <- profile_tbl %>%
+    group_by(group) %>%
+    summarize(sustained_length = sum(above_threshold), .groups = "drop")
+
+  # Print the grouped summary (sustained length per group)
+  print("Summarized Sustained Length Per Group:")
+  print(summarized_tbl)
+
+  # Final check for any sustained rise, excluding group 0 (no valid transition)
+  final_result <- summarized_tbl %>%
+    filter(group != 0) %>%  # Filter out group 0
+    summarize(any_rise = any(sustained_length >= min_increase_points))
+
+  # Print the final result for any_rise
+  print("Final Result (any_rise):")
+  print(final_result)
+
+  return(final_result$any_rise)  # Return the result
 }
 
+
+
+
 #' @inheritParams validate_melatonin_profile
-check_data_points <- function(profile, min_points = 3) {
+check_data_length <- function(profile, min_points = 3) {
   length(profile) >= min_points
+  data_length<-length(profile)
+  print(data_length)
 }
 
 #' @inheritParams validate_melatonin_profile
@@ -64,7 +104,7 @@ trim_end_below_threshold <- function(profile, threshold = 2.3) {
 #' @export
 #' @inheritParams validate_melatonin_profile
 preprocess_profile <- function(profile, threshold = 2.3, min_increase_points = 3, min_points = 3) {
-  if (!check_data_points(profile, min_points)) {
+  if (!check_data_length(profile, min_points)) {
     stop("Insufficient number of data points for analysis")
   }
   if (!check_rise_threshold(profile, threshold, min_increase_points)) {

@@ -33,10 +33,14 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 10) {
     data <- .read_melatonin_data(file_path)
   }
 
-  # Validate data structure
+  # Validate df structure
   data<-validate_df_structure(data)
   # print(data1)
-  return(data)
+  # return(data)
+
+  # Validate melatonin profile
+  profile<-preprocess_profile(data$melatonin)
+  return(profile)
 }
 
 #' Helper Function to Read-in Melatonin Data from a CSV-File
