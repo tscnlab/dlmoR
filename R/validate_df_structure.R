@@ -7,10 +7,10 @@
 #' @return Returns a dataframe with columns `melatonin`, `datetime` and `time` if the input df contains
 #'    `melatonin` and `datetime` columns. Returns `melatonin` and `time` columns if the input df only contains these.
 #'    If criteria are not met, a corresponding error message is returned.
+#'
 validate_df_structure <- function(data) {
   # Ensure the data is in tibble format
   data <- tidyr::as_tibble(data)
-
   # Required columns
   required_columns <- c("melatonin")
 
@@ -28,14 +28,14 @@ validate_df_structure <- function(data) {
   }
 
   # Handle 'datetime' column with hms data
-  if ("datetime" %in% colnames(data) && inherits(data$.data$datetime, "hms")) {
+  if ("datetime" %in% colnames(data) && inherits(data$datetime, "hms")) {
     colnames(data)[colnames(data) == "datetime"] <- "time"
     stop("The 'datetime' column contains hms data. It has been renamed to 'time'.")
   }
 
   # Check for 'datetime' column and validate POSIXct
   if ("datetime" %in% colnames(data)) {
-    if (!inherits(data$.data$datetime, "POSIXct")) {
+    if (!inherits(data$datetime, "POSIXct")) {
       stop("The 'datetime' column must be of class 'POSIXct'.")
     }
     # Create 'time' column if not present
@@ -48,7 +48,7 @@ validate_df_structure <- function(data) {
 
   # Check for 'time' column and validate hms format
   if ("time" %in% colnames(data)) {
-    if (!inherits(data$.data$time, "hms")) {
+    if (!inherits(data$time, "hms")) {
       stop("The 'time' column must be of class 'hms'. If using a character column, convert it to 'hms' or 'POSIXct' format first.")
     }
   } else if (!"datetime" %in% colnames(data)) {
@@ -56,7 +56,7 @@ validate_df_structure <- function(data) {
   }
 
   # Ensure 'melatonin' column is numeric
-  if (!is.numeric(data$.data$melatonin)) {
+  if (!is.numeric(data$melatonin)) {
     stop("The 'melatonin' column must contain numeric values.")
   }
 

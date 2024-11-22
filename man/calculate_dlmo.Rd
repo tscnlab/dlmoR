@@ -4,7 +4,7 @@
 \alias{calculate_dlmo}
 \title{Calculate Dim-Light Melatonin Onset (DLMO)}
 \usage{
-calculate_dlmo(data = NULL, file_path = NULL, threshold = 10)
+calculate_dlmo(data = NULL, file_path = NULL, threshold = 2.3)
 }
 \arguments{
 \item{data}{A data frame with columns \code{time} and \code{melatonin}. If NULL, use

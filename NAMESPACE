@@ -2,6 +2,7 @@
 
 export("%>%")
 export(calculate_dlmo)
+export(define_base_segment)
 export(preprocess_profile)
 importFrom(magrittr,"%>%")
 importFrom(rlang,.data)
