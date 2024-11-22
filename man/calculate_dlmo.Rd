@@ -23,12 +23,3 @@ This function calculates the DLMO based on input melatonin concentration data
 with an associated time series. The user can provide data directly as a data frame
 or specify a file to load the data.
 }
-\examples{
-# Using a data frame directly:
-df <- data.frame(time = seq(1, 6), melatonin = c(5, 7, 9, 11, 13, 15))
-calculate_dlmo(df)
-
-# Loading data from a file:
-filename<-system.file("extdata/CiViBe_204_FD.csv", package = "dlmoR")
-# calculate_dlmo(file_path = "melatonin_data.csv")
-}

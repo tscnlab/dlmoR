@@ -11,16 +11,6 @@
 #' @param threshold Numeric. The melatonin threshold for defining DLMO (default: 10).
 #' @return A numeric or time value indicating the calculated DLMO time.
 #' @export
-#'
-#' @examples
-#' # Using a data frame directly:
-#' df <- data.frame(time = seq(1, 6), melatonin = c(5, 7, 9, 11, 13, 15))
-#' calculate_dlmo(df)
-#'
-#' # Loading data from a file:
-#' filename<-system.file("extdata/CiViBe_204_FD.csv", package = "dlmoR")
-#' # calculate_dlmo(file_path = "melatonin_data.csv")
-#' @export
 calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 10) {
   # Check if input is provided either directly or via file
   if (is.null(data) && is.null(file_path)) {
@@ -56,7 +46,7 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 10) {
     stop("The file does not exist: ", file_path)
   }
   # data <- read.csv(file_path, sep = ";", header = TRUE)
-  data <- read_delim(file_path, delim = NULL)
+  data <- readr::read_delim(file_path, delim = NULL)
 
   # # check if file is a dataframe
   # if (!is.data.frame(data)) {

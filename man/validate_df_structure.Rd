@@ -11,7 +11,7 @@ validate_df_structure(data)
 }
 \value{
 Returns a dataframe with columns \code{melatonin}, \code{datetime} and \code{time} if the input df contains
-\code{melatonin} and \code{datatime} columns. Returns \code{melatonin} and \code{time} columns if the input df only contains these.
+\code{melatonin} and \code{datetime} columns. Returns \code{melatonin} and \code{time} columns if the input df only contains these.
 If criteria are not met, a corresponding error message is returned.
 }
 \description{
