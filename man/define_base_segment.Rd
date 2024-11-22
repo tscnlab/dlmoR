@@ -6,6 +6,12 @@
 \usage{
 define_base_segment()
 }
+\arguments{
+\item{profile}{a vector of melatonin concentrations}
+}
+\value{
+the segment of the melatonin concentrations defined as belonging to the baseline
+}
 \description{
 Title
 }
