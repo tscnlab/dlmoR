@@ -13,6 +13,7 @@
 #' @export
 #'
 calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3) {
+  #filename <- system.file("extdata/CiViBe_204_FD_day1.csv", package = "dlmoR")
   # Check if input is provided either directly or via file
   if (is.null(data) && is.null(file_path)) {
     stop("You must provide either `data` or `file_path`.")
