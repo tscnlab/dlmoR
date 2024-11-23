@@ -24,14 +24,13 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3) {
     message("Loading data from file: ", file_path)
     data <- .read_melatonin_data(file_path)
   }
-
   # Validate df structure
   data<-validate_df_structure(data)
   # print(data1)
   # return(data)
 
   # Validate melatonin profile
-  profile<-preprocess_profile(data$melatonin)
+  profile<-preprocess_profile(data)
   return(profile)
 }
 
