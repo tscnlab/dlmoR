@@ -85,24 +85,24 @@ define_base_segment <- function(profile_tibble, threshold = 2.3) {
 
   # Create a tibble for the full profile with slopes and base labels
   profile_data <- profile_tibble %>%
-    mutate(
+    dplyr::mutate(
       slope = c(slopes, NA),                     # Append NA to align slope with profile length
       base = rep(0, length(profile))              # Initialize base column to 0 for all points
     )
 
   # Identify base segment based on slope and threshold
   profile_data <- profile_data %>%
-    mutate(
-      base = if_else(
-        slope <= 0 & (melatonin <= threshold | lead(melatonin, default = NA) <= threshold),
+    dplyr::mutate(
+      base = dplyr::if_else(
+        .data$slope <= 0 & (.data$melatonin <= threshold | dplyr::lead(.data$melatonin, default = NA) <= threshold),
         1,  # Mark base as 1
-        base,  # Keep current base value
-        missing = base  # Keep NA for missing values
+        .data$base,  # Keep current base value
+        missing = .data$base  # Keep NA for missing values
       )
     ) %>%
     # Propagate the base segment until the rightmost identified base
-    mutate(
-      base = if_else(row_number() <= max(which(base == 1), na.rm = TRUE) + 1, 1, base, missing = base)
+    dplyr::mutate(
+      base = dplyr::if_else(dplyr::row_number() <= max(which(.data$base == 1), na.rm = TRUE) + 1, 1, .data$base, missing = .data$base)
     )
 
   # Return the full tibble with datetime, melatonin, time, slope, and base columns

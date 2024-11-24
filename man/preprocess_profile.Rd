@@ -5,15 +5,13 @@
 \title{Preprocess Profile Data}
 \usage{
 preprocess_profile(
-  profile,
+  data,
   threshold = 2.3,
   min_increase_points = 3,
   min_points = 3
 )
 }
 \arguments{
-\item{profile}{A numeric vector representing the profile data points.}
-
 \item{threshold}{Numeric value for the minimum rise threshold, default is 2.3.}
 
 \item{min_increase_points}{Integer specifying the minimum number of consecutive points

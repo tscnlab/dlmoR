@@ -2,16 +2,65 @@
 % Please edit documentation in R/define_base_segment.R
 \name{define_base_segment}
 \alias{define_base_segment}
-\title{Title}
+\title{#' Title
+#' @param profile a vector of melatonin concentrations
+#' @return the segment of the melatonin concentrations defined as belonging to the baseline
+#' @export
+#'
+#' @examplesFunction to define the base segmentdefine_base_segment <- function(profile, threshold=2.3) {# Calculate slopesslopes <- calculate_slopes(profile)# Create a tibble for the profile with slopes and other computationsprofile_data <- tibble(index = seq_along(profile),                # Index for referencemelatonin = profile,                       # Melatonin concentration valuesslope = c(slopes, NA),                     # Append NA to align slope with profile lengthbase = NA                                  # Initialize base column)# Identify base segment based on slope and thresholdprofile_data <- profile_data \%>\%mutate(base = if_else(slope <= 0 & (melatonin <= threshold | lead(melatonin, default = NA) <= threshold),1,0,missing = 0)) \%>\%# Propagate the base segment until the rightmost identified basemutate(base = if_else(row_number() <= max(which(base == 1), na.rm = TRUE) + 1, 1, base, missing = base))# Filter the base segment and return itbase_segment <- profile_data \%>\% filter(base == 1)# Return the tibble containing the identified base segmentreturn(base_segment)}
+
+define_base_segment <- function(profile, threshold = 2.3) {Calculate slopes
+
+slopes <- calculate_slopes(profile)}
 \usage{
-define_base_segment()
+define_base_segment(profile_tibble, threshold = 2.3)
 }
 \arguments{
-\item{profile}{a vector of melatonin concentrations}
+\item{profile_tibble}{A tibble containing datetime, melatonin, and time columns}
+
+\item{threshold}{The melatonin concentration threshold to define the base segment (default = 2.3)}
 }
 \value{
-the segment of the melatonin concentrations defined as belonging to the baseline
+A tibble with the base segment labeled (1 for base, 0 for non-base), including datetime, time, and melatonin columns
 }
 \description{
-Title
+#' Title
+#' @param profile a vector of melatonin concentrations
+#' @return the segment of the melatonin concentrations defined as belonging to the baseline
+#' @export
+#'
+#' @examplesFunction to define the base segmentdefine_base_segment <- function(profile, threshold=2.3) {# Calculate slopesslopes <- calculate_slopes(profile)# Create a tibble for the profile with slopes and other computationsprofile_data <- tibble(index = seq_along(profile),                # Index for referencemelatonin = profile,                       # Melatonin concentration valuesslope = c(slopes, NA),                     # Append NA to align slope with profile lengthbase = NA                                  # Initialize base column)# Identify base segment based on slope and thresholdprofile_data <- profile_data \%>\%mutate(base = if_else(slope <= 0 & (melatonin <= threshold | lead(melatonin, default = NA) <= threshold),1,0,missing = 0)) \%>\%# Propagate the base segment until the rightmost identified basemutate(base = if_else(row_number() <= max(which(base == 1), na.rm = TRUE) + 1, 1, base, missing = base))# Filter the base segment and return itbase_segment <- profile_data \%>\% filter(base == 1)# Return the tibble containing the identified base segmentreturn(base_segment)}
+
+define_base_segment <- function(profile, threshold = 2.3) {Calculate slopes
+
+slopes <- calculate_slopes(profile)
 }
+\section{Create a tibble for the full profile with slopes and base labels}{
+profile_data <- tibble(
+index = seq_along(profile),                # Index for x-axis
+melatonin = profile,                       # Melatonin concentration values
+slope = c(slopes, NA),                     # Append NA to align slope with profile length
+base = rep(0, length(profile))             # Initialize base column to 0 for all points
+)
+}
+
+\section{Identify base segment based on slope and threshold}{
+profile_data <- profile_data \%>\%
+mutate(
+base = if_else(
+slope <= 0 & (melatonin <= threshold | lead(melatonin, default = NA) <= threshold),
+1,
+base,
+missing = base
+)
+) \%>\%
+# Propagate the base segment until the rightmost identified base
+mutate(
+base = if_else(row_number() <= max(which(base == 1), na.rm = TRUE) + 1, 1, base, missing = base)
+)
+}
+
+\section{Return the full tibble with base labels}{
+
+}
+
