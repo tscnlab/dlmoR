@@ -31,6 +31,10 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3) {
 
   # Validate melatonin profile
   profile<-preprocess_profile(data)
+  profile<-define_base_segment(profile)
+  .check_base_profile_consistency(profile)
+  profile<-define_ascending_segment(profile)
+  profile<-truncate_ascending_segment(profile)
   return(profile)
 }
 
@@ -66,10 +70,5 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3) {
   }
   return(time[index])
 }
-
-
-
-# library(dplyr)
-# library(hms)
 
 

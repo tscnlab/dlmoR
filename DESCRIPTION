@@ -14,8 +14,11 @@ URL: https://github.com/salmathalji/dlmoR
 BugReports: https://github.com/salmathalji/dlmoR/issues
 Imports: 
     dplyr,
+    ggplot2,
     hms,
+    lubridate,
     magrittr,
     readr,
     rlang,
+    scales,
     tidyr
