@@ -35,6 +35,8 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3) {
   .check_base_profile_consistency(profile)
   profile<-define_ascending_segment(profile)
   profile<-truncate_ascending_segment(profile)
+  profile<-truncate_base_segment(profile)
+  profile<-define_intermediate_segment(profile)
   return(profile)
 }
 
