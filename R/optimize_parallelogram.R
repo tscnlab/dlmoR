@@ -93,7 +93,9 @@ optimize_parallelogram <- function(x, y) {
     method = "L-BFGS-B",
     lower = c(-Inf, -Inf, 0),
     upper = c(Inf, Inf, Inf),
-    control = list(maxit=1000, factr=1e8, trace=3)
+    #control = list(maxit=1000, factr=1e8, trace=3)
+    control = list(maxit=1000, factr=1e8)
+
   )
 
   result$par

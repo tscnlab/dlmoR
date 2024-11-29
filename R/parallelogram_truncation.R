@@ -2,10 +2,10 @@
 parallelogram_truncation <- function(profile_data) {
 
   # Filter the profile_data to use only the rows where ascending == 1
-  profile_data_ascending <- profile_data %>% filter(ascending == 1)
+  profile_data_ascending <- profile_data %>% dplyr::filter(ascending == 1)
 
   # Convert datetime to numeric for optimization
-  x_values <- posixct_to_decimal(profile_data_ascending$datetime)
+  x_values <- posixct_to_decimal(profile_data_ascending$datetime, profile_data$datetime)
   y_values <- profile_data_ascending$melatonin
 
   # Get the optimized parameters for the parallelogram
@@ -17,9 +17,9 @@ parallelogram_truncation <- function(profile_data) {
   slope <- params[3]
 
   # Convert the optimized numeric x0 and x1 back to datetime
-    trunc_datetime_0 <- decimal_to_posixct(optimized_x0)
-    trunc_datetime_1 <- decimal_to_posixct(optimized_x1)
+    pll_datetime_0 <- decimal_to_posixct(optimized_x0, profile_data$datetime)
+    pll_datetime_1 <- decimal_to_posixct(optimized_x1, profile_data$datetime)
 
   # Return the result as a list with datetime values
-  return(list(trunc_datetime_0 = trunc_datetime_0, trunc_datetime_1 = trunc_datetime_1, pll_slope = slope))
+  return(list(trunc_datetime_0 = pll_datetime_0, pll_datetime_1 = pll_datetime_1, pll_slope = slope))
 }

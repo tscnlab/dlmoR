@@ -6,7 +6,7 @@ posixct_to_decimal <- function(posix_times, profile_datetime) {
   posix_times <- as.POSIXct(posix_times, tz = "UTC")
 
   # Extract reference origin date
-  posix_origin <-profile_datatime[1]
+  posix_origin <-profile_datetime[1]
   origin_date<-as.Date(posix_origin)
 
   # Calculate the number of elapsed days since origin
@@ -21,13 +21,12 @@ posixct_to_decimal <- function(posix_times, profile_datetime) {
 
   # Total decimal hours, including elapsed days
   decimal_hours <- (days_elapsed * 24) + decimal_time_today
-
-  return(decimal_time_today)
+  return(decimal_hours)
 }
 
 
 # Convert Decimal Hours to POSIXct
-decimal_to_posixct <- function(decimal_hours, origin_date = as.Date("2024-04-16"), tz = "UTC") {
+decimal_to_posixct <- function(decimal_hours, profile_datetime, tz = "UTC") {
   # Calculate the number of full days elapsed
   days_elapsed <- floor(decimal_hours / 24)
 
@@ -37,6 +36,10 @@ decimal_to_posixct <- function(decimal_hours, origin_date = as.Date("2024-04-16"
   # Extract hours and minutes
   hour <- floor(remaining_hours)
   minute <- (remaining_hours - hour) * 60
+
+  # Extract reference origin date
+  posix_origin <-profile_datetime[1]
+  origin_date<-as.Date(posix_origin)
 
   # Create POSIXct for the origin date + elapsed days + time of day
   posix_time <- as.POSIXct(origin_date, tz = tz) + days_elapsed * 86400 + hour * 3600 + minute * 60
