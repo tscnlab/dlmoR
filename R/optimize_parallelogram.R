@@ -18,7 +18,7 @@ get_corners <- function(x0, y0, x1, y1, slope) {
     upper_left <- c(x0 + delta_x, y1)
     upper_right <- c(x1 + delta_x, y1)
   }
-  return(list(lower_left, lower_right, upper_right, upper_left))
+  return(list(ll = lower_left, lr =lower_right, ur = upper_right, ul = upper_left))
 }
 
 
