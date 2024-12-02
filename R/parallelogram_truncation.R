@@ -27,8 +27,8 @@ parallelogram_truncation <- function(profile_data) {
     .id = "corner"
   )
 
-  corners_tibble <- corners_tibble %>%
-    dplyr::mutate(x = dplyr::if_else(corner == "ur", 26, x))
+  # corners_tibble <- corners_tibble %>%
+  #   dplyr::mutate(x = dplyr::if_else(corner == "ur", 26, x))
   # Calculate slopes of the diagonals
   diagonal_slopes <- corners_tibble %>%
     dplyr::summarize(

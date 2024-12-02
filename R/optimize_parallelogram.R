@@ -81,8 +81,10 @@ objective <- function(params, x, y, y0, y1) {
 optimize_parallelogram <- function(x, y) {
   y0 <- min(y)
   y1 <- max(y)
-  x0_initial <- min(x)*0.9
-  x1_initial <- max(x)*1.1
+  # x0_initial <- min(x)*0.9
+  # x1_initial <- max(x)*1.1
+  x0_initial <- min(x)
+  x1_initial <- max(x)
   slope_initial <- (y1 - y0) / (x1_initial - x0_initial)
 
   initial_guess <- c(x0_initial, x1_initial, slope_initial)
