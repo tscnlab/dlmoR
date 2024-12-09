@@ -46,18 +46,83 @@
 #   return(plot)
 # }
 
+# add DLMO fit lines to plot
+plot_fit<- function(plot, profile_data, dlmoFit){
+  # convert between  posixct and decimal hours
+  xstart_num = posixct_to_decimal(dplyr::filter(profile_data, base == 1)$datetime[1], profile_data$datetime)
+  xend_num = posixct_to_decimal(tail(dplyr::filter(profile_data, ascending == 1)$datetime,n=1), profile_data$datetime)
+  ipx_posix = decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime)
+
+  # left fit line (by default always linear) #TODO insert warning if fit is not linear for left segment
+  plot<- plot +
+    ggplot2::geom_segment( # m * (x - poi_x) + poi_y
+      x = dplyr::filter(profile_data, base == 1)$datetime[1],
+      y = dlmoFit$left_params * (xstart_num - dlmoFit$inflection_point$x) + dlmoFit$inflection_point$y,
+      xend = ipx_posix,
+      yend = dlmoFit$inflection_point$y,
+      color = "darkgrey",
+      size = 1
+    )
+
+  # right fit line (either linear or parabolic)
+  # check fit type (length 1 = linear, length 3 = parabolic)
+  if(length(dlmoFit$right_params) == 1){
+    # TODO
+  }
+  else{
+    plot<- plot +
+      ggplot2::geom_function(
+      fun = function (x) {
+        x_numeric<- posixct_to_decimal(x, profile_data$datetime)
+      # convert x (numeric) to a numeric equivalent of posixct
+      #x_numeric<- as.numeric(x)
+      #print(range(x_numeric))
+      # apply polynomial function
+      y<- dlmoFit$right_params[1] * x_numeric^2 +
+          dlmoFit$right_params[2] * x_numeric +
+          dlmoFit$right_params[3]
+      print(y)
+      y
+      },
+      color = "darkgrey",
+      xlim = c(dlmoFit$inflection_point$x, xend_num),
+      size = 1,
+      n = 1000
+    )
+  }
+  ggplot2::scale_x_datetime(
+    limits = c(decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime),
+               decimal_to_posixct(xend_num, profile_data$datetime)),
+    date_labels = "%H:%M", # Adjust date labels as needed
+    date_breaks = "1 hour" # Adjust date breaks as needed
+  )
+return(plot)
+}
+# add DLMO inflection point to plot
+plot_ip <- function(plot, profile_data, dlmoip){
+  plot<- plot +
+    ggplot2::geom_point(
+      x = decimal_to_posixct(dlmoip$x, profile_data$datetime),
+      y = dlmoip$y,
+      color = "darkorchid",
+      size = 4,
+      shape = 18
+    )
+  return(plot)
+}
+
 plot_roi <- function(plot, roi) {
   # Add ROI segment and rectangle to the plot
   plot <- plot +
     ggplot2::geom_segment(
       x = roi$x_start, xend = roi$x_end,
-      y = -0.05, yend = -0.05,
-      color = "purple", size = 1.5
+      y = -0.2, yend = -0.2,
+      color = "#C77CFF", size = 1.5
     ) +
     ggplot2::geom_rect(
       xmin = roi$x_start, xmax = roi$x_end,
       ymin = roi$y_min, ymax = roi$y_max,
-      fill = "purple", alpha = 0.01
+      fill = "#C77CFF", alpha = 0.01
     )
   return(plot)
 }
@@ -106,13 +171,14 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
   return(plot)
 }
 
-plot_profile <- function(profile_data, show_segments = TRUE, show_parallelogram = FALSE, pll_result = NULL, show_roi = FALSE, roi = NULL) {
+plot_profile <- function(profile_data, show_segments = TRUE, show_parallelogram = FALSE, pll_result = NULL, show_roi = FALSE, roi = NULL, show_dlmoIP = TRUE, dlmoFit = NULL, show_fit = FALSE) {
   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = .data$datetime, y = .data$melatonin)) +
     # Plot a single dotted line for the full profile (mapped to "Full Profile")
-    ggplot2::geom_line(
+    ggplot2::geom_point(
       ggplot2::aes(color = "Full Profile", group = 1, linetype = "Full Profile"),
-      size = 1.25
-    ) +
+      color = 'grey',
+      size = 2
+    ) + ggplot2::geom_line(color = 'grey', linetype = "dotted", size = 1)+
     # Format the x-axis to show only time
     ggplot2::scale_x_datetime(
       labels = scales::date_format("%H:%M"),
@@ -120,30 +186,32 @@ plot_profile <- function(profile_data, show_segments = TRUE, show_parallelogram 
     ) +
     # Add plot labels
     ggplot2::labs(
-      title = "Melatonin Profile",
-      x = "Time",
-      y = "Melatonin Concentration"
+      title = "Melatonin profile",
+      x = "Local time [hh:mm]",
+      y = "Melatonin concentration [pg/mL]"
     ) +
     ggplot2::theme_minimal() +
     # Show the legend on the right
     ggplot2::theme(legend.position = "right") +
     # Customize line types in the legend
-    ggplot2::scale_linetype_manual(values = c("Full Profile" = "dashed"))
+    ggplot2::scale_linetype_manual(values = c("Full Profile" = "dotted"))
 
   # Add base and ascending segments if show_segments is TRUE
   if (show_segments) {
     plot <- plot +
       # Overlay points for the base segment (mapped to "Base Segment")
-      ggplot2::geom_line(
+      ggplot2::geom_point(
         data = dplyr::filter(profile_data, .data$base == 1),
         ggplot2::aes(x = .data$datetime, y = .data$melatonin, color = "Base Segment"),
-        size = 1.25
+        color = '#56B4E9',
+        size = 2
       ) +
       # Overlay points for the ascending segment (mapped to "Ascending Segment")
-      ggplot2::geom_line(
+      ggplot2::geom_point(
         data = dplyr::filter(profile_data, .data$ascending == 1),
         ggplot2::aes(x = .data$datetime, y = .data$melatonin, color = "Ascending Segment"),
-        size = 1.25
+        color = 'lightgreen',
+        size = 2
       )
   }
 
@@ -155,6 +223,16 @@ plot_profile <- function(profile_data, show_segments = TRUE, show_parallelogram 
   # Add region of interest overlay, if show_roi is TRUE
   if (show_roi){
     plot <- plot_roi(plot, roi)
+  }
+
+  # Add DLMO inflection point
+  if (show_dlmoIP){
+    plot<- plot_ip(plot,profile_data, dlmoFit$inflection_point)
+  }
+
+  # Add DLMO fit lines
+  if (show_fit){
+    plot<- plot_fit(plot, profile_data, dlmoFit)
   }
   # Return the plot object
   return(plot)

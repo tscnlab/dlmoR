@@ -1,21 +1,21 @@
 # Load required libraries
-if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
-if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
+#if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
+#if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
 
 # Function to convert POSIXct times to decimal hours
-posixct_to_decimal <- function(posix_times, profile_datetime) {
-  posix_times <- as.POSIXct(posix_times, tz = "UTC")
-  posix_origin <- profile_datetime[1]
-  origin_date <- as.Date(posix_origin)
-
-  days_elapsed <- as.numeric(as.Date(posix_times) - origin_date)
-  hours <- as.numeric(format(posix_times, "%H"))
-  minutes <- as.numeric(format(posix_times, "%M"))
-
-  decimal_time_today <- hours + (minutes / 60)
-  decimal_hours <- (days_elapsed * 24) + decimal_time_today
-  return(decimal_hours)
-}
+# posixct_to_decimal <- function(posix_times, profile_datetime) {
+#   posix_times <- as.POSIXct(posix_times, tz = "UTC")
+#   posix_origin <- profile_datetime[1]
+#   origin_date <- as.Date(posix_origin)
+#
+#   days_elapsed <- as.numeric(as.Date(posix_times) - origin_date)
+#   hours <- as.numeric(format(posix_times, "%H"))
+#   minutes <- as.numeric(format(posix_times, "%M"))
+#
+#   decimal_time_today <- hours + (minutes / 60)
+#   decimal_hours <- (days_elapsed * 24) + decimal_time_today
+#   return(decimal_hours)
+# }
 
 # Define a function to create a grid of points within a region of interest
 make_grid <- function(roi, step_x, step_y) {
@@ -97,21 +97,24 @@ fit_profile <- function(x, y, poi, slope_initial, fit_type = "linear") {
 
 # Define a function to fit two splines around a point of interest
 fit <- function(data, poi, fit_type = "linear") {
-  x <- data$x
-  y <- data$y
+  x <- posixct_to_decimal(data$datetime, data$datetime)
+  y <- prof$melatonin
 
   poi_x <- poi$x
   poi_y <- poi$y
 
   # Left fit
   left_indices <- which(x <= poi_x)
+  # print(decimal_to_posixct(x[left_indices],data$datetime))
+  # print("poi")
+  # print(decimal_to_posixct(poi_x,data$datetime))
   slope_initial_left <- (poi_y - y[left_indices][1]) / (poi_x - x[left_indices][1])
-  result_left <- fit_profile(x = x[left_indices], y = y[left_indices], poi = poi, slope_initial = slope_initial_left, fit_type = fit_type)
+  result_left <- fit_profile(x = x[left_indices], y = y[left_indices], poi = poi, slope_initial = slope_initial_left, fit_type = "parabolic")
 
   # Right fit
   right_indices <- which(x > poi_x)
   slope_initial_right <- (y[right_indices][length(right_indices)] - poi_y) / (x[right_indices][length(right_indices)] - poi_x)
-  result_right <- fit_profile(x = x[right_indices], y = y[right_indices], poi = poi, slope_initial = slope_initial_right, fit_type = fit_type)
+  result_right <- fit_profile(x = x[right_indices], y = y[right_indices], poi = poi, slope_initial = slope_initial_right, fit_type = "parabolic")
 
   total_residuals <- result_left$residual + result_right$residual
 
@@ -125,12 +128,18 @@ seek_inflection <- function(data, roi, step_x = 0.05, step_y = 0.1, fit_type = "
   best_point <- NULL
   best_params_left <- NULL
   best_params_right <- NULL
+  res<-NULL
 
   for (i in seq_len(nrow(grid_points))) {
     poi <- grid_points[i, ]
     result <- fit(data, poi, fit_type)
+    # res[i]<-result$residual
+    # print("res")
+    # print(res)
     if (result$residual < best_residual) {
       best_residual <- result$residual
+      print("best_residual")
+      print(best_residual)
       best_point <- poi
       best_params_left <- result$left_params
       best_params_right <- result$right_params
@@ -138,4 +147,11 @@ seek_inflection <- function(data, roi, step_x = 0.05, step_y = 0.1, fit_type = "
   }
 
   return(list(inflection_point = best_point, left_params = best_params_left, right_params = best_params_right))
+}
+
+# run this script to get inflection
+get_inflection <- function(profile_data, posix_roi, fit_type = "linear"){
+  roi<-list(x = posixct_to_decimal(c(posix_roi$x_start, posix_roi$x_end), prof$datetime), y = c(posix_roi$y_min, posix_roi$y_max))
+  poi<-seek_inflection(dplyr::filter(profile_data,base ==1 | ascending == 1), roi, fit_type = fit_type)
+  return(poi)
 }

@@ -5,8 +5,8 @@ define_roi <- function(profile_data, threshold = 2.3) {
   profile_data <- profile_data %>% dplyr::arrange(datetime)
 
   # Extract relevant points based on base and ascending flags
-  base_points <- profile_data %>% filter(base == 1)
-  ascending_points <- profile_data %>% filter(ascending == 1)
+  base_points <- profile_data %>% dplyr::filter(base == 1)
+  ascending_points <- profile_data %>% dplyr::filter(ascending == 1)
 
   if (nrow(base_points) < 2) {
     # If the base segment is a single node
@@ -17,7 +17,7 @@ define_roi <- function(profile_data, threshold = 2.3) {
     #x_start <- as.POSIXct(mean(as.numeric(base_points$datetime[(nrow(base_points) - 1):nrow(base_points)])), origin = "1970-01-01")
   }
 
-  if (nrow(profile_data %>% filter(base == 0 & ascending == 0)) > 0) {
+  if (nrow(profile_data %>% dplyr::filter(base == 0 & ascending == 0)) > 0) {
     # Include intermediate segments and up to 95% of the first ascending segment
     x_end <- ascending_points$datetime[1] + 0.95 * (ascending_points$datetime[2] - ascending_points$datetime[1])
   } else {
