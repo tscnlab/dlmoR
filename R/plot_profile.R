@@ -57,10 +57,16 @@ plot_fit<- function(plot, profile_data, dlmoFit){
   plot<- plot +
     ggplot2::geom_segment( # m * (x - poi_x) + poi_y
       x = dplyr::filter(profile_data, base == 1)$datetime[1],
+      #TODO this works!!
       y = dlmoFit$left_params * (xstart_num - dlmoFit$inflection_point$x) + dlmoFit$inflection_point$y,
+      #y = -.1119806 * (xstart_num - 20.58333) + 0.4,
+      #TODO this works!!!
       xend = ipx_posix,
+      #xend = decimal_to_posixct(20.58333, profile_data$datetime),
+      # TODO this works!!
       yend = dlmoFit$inflection_point$y,
-      color = "darkgrey",
+      #yend = 0.4,
+      color = "pink",
       size = 1
     )
 
@@ -69,26 +75,32 @@ plot_fit<- function(plot, profile_data, dlmoFit){
   if(length(dlmoFit$right_params) == 1){
     # TODO
   }
-  else{
-    plot<- plot +
+  else{ # parabolic fit plot
+    plot <- plot +
       ggplot2::geom_function(
-      fun = function (x) {
-        x_numeric<- posixct_to_decimal(x, profile_data$datetime)
-      # convert x (numeric) to a numeric equivalent of posixct
-      #x_numeric<- as.numeric(x)
-      #print(range(x_numeric))
-      # apply polynomial function
-      y<- dlmoFit$right_params[1] * x_numeric^2 +
-          dlmoFit$right_params[2] * x_numeric +
-          dlmoFit$right_params[3]
-      print(y)
-      y
-      },
-      color = "darkgrey",
-      xlim = c(dlmoFit$inflection_point$x, xend_num),
-      size = 1,
-      n = 1000
-    )
+        fun = function(x) {
+          # Convert x (POSIXct) to decimal hours
+          x_numeric <- posixct_to_decimal(x, profile_data$datetime)
+          #x_numeric <- c(dlmoFit$inflection_point$x, xend_num)
+
+          # Evaluate the polynomial function in decimal hours
+          # TODO THIS WORKS!!!!
+           y <- dlmoFit$right_params[1] * x_numeric^2 +
+             dlmoFit$right_params[2] * x_numeric +
+             dlmoFit$right_params[3]
+          #y<- -3.378851 * x_numeric^2 + 159.363581 * x_numeric - 1848.303449
+          return(y)
+        },
+        color = 'pink',
+        size = 1,
+        n = 1000,
+        xlim = c(
+          # TODO this works!
+          decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime),
+          #decimal_to_posixct(20.58333, profile_data$datetime),
+          decimal_to_posixct(xend_num, profile_data$datetime)
+        )
+      )
   }
   ggplot2::scale_x_datetime(
     limits = c(decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime),
@@ -102,8 +114,12 @@ return(plot)
 plot_ip <- function(plot, profile_data, dlmoip){
   plot<- plot +
     ggplot2::geom_point(
+      # TODO This works!!
       x = decimal_to_posixct(dlmoip$x, profile_data$datetime),
+      #x = decimal_to_posixct(20.58333, profile_data$datetime),
+      # TODO This works!!
       y = dlmoip$y,
+      #y = 0.4,
       color = "darkorchid",
       size = 4,
       shape = 18
@@ -175,7 +191,6 @@ plot_profile <- function(profile_data, show_segments = TRUE, show_parallelogram 
   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = .data$datetime, y = .data$melatonin)) +
     # Plot a single dotted line for the full profile (mapped to "Full Profile")
     ggplot2::geom_point(
-      ggplot2::aes(color = "Full Profile", group = 1, linetype = "Full Profile"),
       color = 'grey',
       size = 2
     ) + ggplot2::geom_line(color = 'grey', linetype = "dotted", size = 1)+
@@ -225,14 +240,14 @@ plot_profile <- function(profile_data, show_segments = TRUE, show_parallelogram 
     plot <- plot_roi(plot, roi)
   }
 
-  # Add DLMO inflection point
-  if (show_dlmoIP){
-    plot<- plot_ip(plot,profile_data, dlmoFit$inflection_point)
-  }
-
   # Add DLMO fit lines
   if (show_fit){
     plot<- plot_fit(plot, profile_data, dlmoFit)
+  }
+
+  # Add DLMO inflection point
+  if (show_dlmoIP){
+    plot<- plot_ip(plot,profile_data, dlmoFit$inflection_point)
   }
   # Return the plot object
   return(plot)

@@ -91,30 +91,27 @@ fit_profile <- function(x, y, poi, slope_initial, fit_type = "linear") {
     fit_type = fit_type,
     method = "L-BFGS-B"
   )
-
+  #print(list(residual = optim_result$value, params = optim_result$par))
   return(list(residual = optim_result$value, params = optim_result$par))
 }
 
 # Define a function to fit two splines around a point of interest
 fit <- function(data, poi, fit_type = "linear") {
   x <- posixct_to_decimal(data$datetime, data$datetime)
-  y <- prof$melatonin
-
+  y <- data$melatonin
   poi_x <- poi$x
   poi_y <- poi$y
 
   # Left fit
   left_indices <- which(x <= poi_x)
-  # print(decimal_to_posixct(x[left_indices],data$datetime))
-  # print("poi")
-  # print(decimal_to_posixct(poi_x,data$datetime))
   slope_initial_left <- (poi_y - y[left_indices][1]) / (poi_x - x[left_indices][1])
-  result_left <- fit_profile(x = x[left_indices], y = y[left_indices], poi = poi, slope_initial = slope_initial_left, fit_type = "parabolic")
+  result_left <- fit_profile(x = x[left_indices], y = y[left_indices], poi = poi, slope_initial = slope_initial_left, fit_type = "linear")
 
   # Right fit
   right_indices <- which(x > poi_x)
   slope_initial_right <- (y[right_indices][length(right_indices)] - poi_y) / (x[right_indices][length(right_indices)] - poi_x)
-  result_right <- fit_profile(x = x[right_indices], y = y[right_indices], poi = poi, slope_initial = slope_initial_right, fit_type = "parabolic")
+  result_right <- fit_profile(x = x[right_indices], y = y[right_indices], poi = poi, slope_initial = slope_initial_right, fit_type = "linear")
+
 
   total_residuals <- result_left$residual + result_right$residual
 
@@ -138,8 +135,8 @@ seek_inflection <- function(data, roi, step_x = 0.05, step_y = 0.1, fit_type = "
     # print(res)
     if (result$residual < best_residual) {
       best_residual <- result$residual
-      print("best_residual")
-      print(best_residual)
+      #print("best_residual")
+      #print(best_residual)
       best_point <- poi
       best_params_left <- result$left_params
       best_params_right <- result$right_params
@@ -151,7 +148,7 @@ seek_inflection <- function(data, roi, step_x = 0.05, step_y = 0.1, fit_type = "
 
 # run this script to get inflection
 get_inflection <- function(profile_data, posix_roi, fit_type = "linear"){
-  roi<-list(x = posixct_to_decimal(c(posix_roi$x_start, posix_roi$x_end), prof$datetime), y = c(posix_roi$y_min, posix_roi$y_max))
+  roi<-list(x = posixct_to_decimal(c(posix_roi$x_start, posix_roi$x_end), profile_data$datetime), y = c(posix_roi$y_min, posix_roi$y_max))
   poi<-seek_inflection(dplyr::filter(profile_data,base ==1 | ascending == 1), roi, fit_type = fit_type)
   return(poi)
 }
