@@ -1,0 +1,144 @@
+* using log directory 'C:/Users/sthalji/Documents/Projects/dlmoR/dlmoR.Rcheck'
+* using R version 4.4.1 (2024-06-14 ucrt)
+* using platform: x86_64-w64-mingw32
+* R was compiled by
+    gcc.exe (GCC) 13.2.0
+    GNU Fortran (GCC) 13.2.0
+* running under: Windows 11 x64 (build 22631)
+* using session charset: UTF-8
+* using options '--no-manual --as-cran'
+* checking for file 'dlmoR/DESCRIPTION' ... OK
+* this is package 'dlmoR' version '0.0.0.9000'
+* package encoding: UTF-8
+* checking package namespace information ... OK
+* checking package dependencies ... OK
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... OK
+* checking for portable file names ... OK
+* checking serialization versions ... OK
+* checking whether package 'dlmoR' can be installed ... OK
+* checking installed package size ... OK
+* checking package directory ... OK
+* checking for future file timestamps ... NOTE
+unable to verify current time
+* checking DESCRIPTION meta-information ... OK
+* checking top-level files ... OK
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking code files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking loading without being on the library search path ... OK
+* checking dependencies in R code ... NOTE
+Aufrufe von 'library' oder 'require' nicht angemeldet von:
+  'dplyr' 'tibble'
+Aufrufe von 'library' oder 'require' im Paket-Code:
+  'dplyr' 'tibble'
+  Please use :: or requireNamespace() instead.
+  See section 'Suggested packages' in the 'Writing R Extensions' manual.
+Namensraum im Imports Feld nicht importiert aus: 'ggplot2'
+  All declared Imports should be used.
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... NOTE
+.read_melatonin_data: no visible global function definition for
+  'read_delim'
+check_rise_threshold: no visible global function definition for '%>%'
+check_rise_threshold: no visible global function definition for
+  'tibble'
+check_rise_threshold: no visible global function definition for
+  'mutate'
+check_rise_threshold: no visible binding for global variable 'value'
+check_rise_threshold: no visible global function definition for
+  'row_number'
+check_rise_threshold: no visible global function definition for 'lag'
+check_rise_threshold: no visible binding for global variable
+  'above_threshold'
+check_rise_threshold: no visible binding for global variable
+  'prev_below_threshold'
+check_rise_threshold: no visible binding for global variable
+  'transition'
+check_rise_threshold: no visible global function definition for
+  'group_by'
+check_rise_threshold: no visible binding for global variable 'group'
+check_rise_threshold: no visible global function definition for
+  'summarize'
+check_rise_threshold: no visible global function definition for
+  'filter'
+check_rise_threshold: no visible binding for global variable
+  'sustained_length'
+read_melatonin_data1: no visible global function definition for
+  'read.csv'
+validate_df_structure: no visible global function definition for
+  'as_tibble'
+validate_df_structure: no visible global function definition for '%>%'
+validate_df_structure: no visible global function definition for
+  'rename'
+validate_df_structure: no visible binding for global variable 'time'
+validate_df_structure: no visible global function definition for
+  'mutate'
+validate_df_structure: no visible global function definition for
+  'as_hms'
+validate_df_structure: no visible binding for global variable
+  'datetime'
+Undefined global functions or variables:
+  %>% above_threshold as_hms as_tibble datetime filter group group_by
+  lag mutate prev_below_threshold read.csv read_delim rename row_number
+  summarize sustained_length tibble time transition value
+Consider adding
+  importFrom("stats", "filter", "lag", "time")
+  importFrom("utils", "read.csv")
+to your NAMESPACE file.
+* checking Rd files ... OK
+* checking Rd metadata ... OK
+* checking Rd line widths ... OK
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... WARNING
+Undokumentierte Code-Objekte:
+  'preprocess_profile'
+All user-level objects in a package should have documentation entries.
+See chapter 'Writing R documentation files' in the 'Writing R
+Extensions' manual.
+* checking for code/documentation mismatches ... OK
+* checking Rd \usage sections ... WARNING
+Undocumented arguments in Rd file 'trim_data.Rd'
+  'threshold'
+
+Functions with \usage entries need to have the appropriate \alias
+entries, and all their arguments documented.
+The \usage entries must correspond to syntactically valid R code.
+See chapter 'Writing R documentation files' in the 'Writing R
+Extensions' manual.
+* checking Rd contents ... NOTE
+Argument items with no description in Rd file 'trim_data.Rd':
+  'data'
+* checking for unstated dependencies in examples ... OK
+* checking examples ... ERROR
+Running examples in 'dlmoR-Ex.R' failed
+The error most likely occurred in:
+
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: calculate_dlmo
+> ### Title: Calculate Dim-Light Melatonin Onset (DLMO)
+> ### Aliases: calculate_dlmo
+> 
+> ### ** Examples
+> 
+> # Using a data frame directly:
+> df <- data.frame(time = seq(1, 6), melatonin = c(5, 7, 9, 11, 13, 15))
+> calculate_dlmo(df)
+Error in as_tibble(data) : could not find function "as_tibble"
+Calls: calculate_dlmo -> validate_df_structure
+Execution halted
+* checking for non-standard things in the check directory ... OK
+* checking for detritus in the temp directory ... OK
+* DONE
+Status: 1 ERROR, 2 WARNINGs, 4 NOTEs

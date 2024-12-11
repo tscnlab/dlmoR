@@ -91,7 +91,6 @@ fit_profile <- function(x, y, poi, slope_initial, fit_type = "linear") {
     fit_type = fit_type,
     method = "L-BFGS-B"
   )
-  #print(list(residual = optim_result$value, params = optim_result$par))
   return(list(residual = optim_result$value, params = optim_result$par))
 }
 
@@ -110,7 +109,7 @@ fit <- function(data, poi, fit_type = "linear") {
   # Right fit
   right_indices <- which(x > poi_x)
   slope_initial_right <- (y[right_indices][length(right_indices)] - poi_y) / (x[right_indices][length(right_indices)] - poi_x)
-  result_right <- fit_profile(x = x[right_indices], y = y[right_indices], poi = poi, slope_initial = slope_initial_right, fit_type = "linear")
+  result_right <- fit_profile(x = x[right_indices], y = y[right_indices], poi = poi, slope_initial = slope_initial_right, fit_type = "parabolic")
 
 
   total_residuals <- result_left$residual + result_right$residual

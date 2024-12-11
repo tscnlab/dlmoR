@@ -101,20 +101,25 @@ define_ascending_segment <- function(profile_data, threshold = 2.3, interval_lim
     # Check if there is a preceding point
     if (first_ascending_index > 1) {
       preceding_row <- profile_data[first_ascending_index - 1, ]
+      preceding_row2<- profile_data[first_ascending_index - 2, ] #TODO 11.12.24
       first_ascending_slope <- first_ascending_row$slope
       preceding_slope <- preceding_row$slope
+      preceding2_slope <- preceding_row2$slope #TODO 11.12.24
 
       # Check the slope rule
-      if (abs(preceding_slope) >= abs(first_ascending_slope) / 2) {
+      # if (abs(preceding_slope) >= abs(first_ascending_slope) / 2) { #TODO 11.12.24
+      if (abs(preceding2_slope) >= abs(preceding_slope) / 2) {
         # Mark the previous point as ascending
         profile_data <- profile_data %>%
           dplyr::mutate(
-            ascending = dplyr::if_else(.data$datetime == preceding_row$datetime, 1, .data$ascending)
+            #ascending = dplyr::if_else(.data$datetime == preceding_row$datetime, 1, .data$ascending) #TODO 11.12.24
+            ascending = dplyr::if_else(.data$datetime == preceding_row2$datetime, 1, .data$ascending)
           )
       }
     }
   }
-
+  print("pre-truncation ascending")
+print(profile_data, n =28)
   # Drop intermediate columns
   profile_data <- profile_data %>%
     dplyr::select(-.data$transition_to_above, -.data$rise_group)
