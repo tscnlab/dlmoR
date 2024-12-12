@@ -24,8 +24,8 @@
 #       y = "Melatonin Concentration"
 #     ) +
 #     ggplot2::theme_minimal() +
-#     # Show the legend on the right
-#     ggplot2::theme(legend.position = "right")
+#     # Show the legend on the ascending
+#     ggplot2::theme(legend.position = "ascending")
 # }
 
 # plot_roi <- function(plot, roi){
@@ -53,12 +53,12 @@ plot_fit<- function(plot, profile_data, dlmoFit){
   xend_num = posixct_to_decimal(tail(dplyr::filter(profile_data, ascending == 1)$datetime,n=1), profile_data$datetime)
   ipx_posix = decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime)
 
-  # left fit line (by default always linear) #TODO insert warning if fit is not linear for left segment
+  # base fit line (by default always linear) #TODO insert warning if fit is not linear for base segment
   plot<- plot +
     ggplot2::geom_segment( # m * (x - poi_x) + poi_y
       x = dplyr::filter(profile_data, base == 1)$datetime[1],
       #TODO this works!!
-      y = dlmoFit$left_params * (xstart_num - dlmoFit$inflection_point$x) + dlmoFit$inflection_point$y,
+      y = dlmoFit$base_params * (xstart_num - dlmoFit$inflection_point$x) + dlmoFit$inflection_point$y,
       #y = -.1119806 * (xstart_num - 20.58333) + 0.4,
       #TODO this works!!!
       xend = ipx_posix,
@@ -70,9 +70,9 @@ plot_fit<- function(plot, profile_data, dlmoFit){
       size = 1
     )
 
-  # right fit line (either linear or parabolic)
+  # ascending fit line (either linear or parabolic)
   # check fit type (length 1 = linear, length 3 = parabolic)
-  if(length(dlmoFit$right_params) == 1){
+  if(length(dlmoFit$ascending_params) == 1){
     # TODO
   }
   else{ # parabolic fit plot
@@ -85,9 +85,9 @@ plot_fit<- function(plot, profile_data, dlmoFit){
 
           # Evaluate the polynomial function in decimal hours
           # TODO THIS WORKS!!!!
-           y <- dlmoFit$right_params[1] * x_numeric^2 +
-             dlmoFit$right_params[2] * x_numeric +
-             dlmoFit$right_params[3]
+           y <- dlmoFit$ascending_params[1] * x_numeric^2 +
+             dlmoFit$ascending_params[2] * x_numeric +
+             dlmoFit$ascending_params[3]
           #y<- -3.378851 * x_numeric^2 + 159.363581 * x_numeric - 1848.303449
           return(y)
         },
@@ -153,19 +153,19 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
   x1_posix <- pll_result$pll_datetime_1
   slope <- pll_result$pll_slope
 
-  # Filter for ascending data
-  profile_data_ascending <- profile_data %>% dplyr::filter(.data$ascending == 1)
-  y0 <- min(profile_data_ascending$melatonin)
-  y1 <- max(profile_data_ascending$melatonin)
-
-  # Convert datetime to numeric for parallelogram calculations
-  x0_numeric <- posixct_to_decimal(x0_posix, profile_data$datetime)
-  x1_numeric <- posixct_to_decimal(x1_posix, profile_data$datetime)
-
-
-  # Get corners of the parallelogram
-  corners <- get_corners(x0_numeric, y0, x1_numeric, y1, slope)
-
+  # # Filter for ascending data
+  # profile_data_ascending <- profile_data %>% dplyr::filter(.data$ascending == 1)
+  # y0 <- min(profile_data_ascending$melatonin)
+  # y1 <- max(profile_data_ascending$melatonin)
+  #
+  # # Convert datetime to numeric for parallelogram calculations
+  # x0_numeric <- posixct_to_decimal(x0_posix, profile_data$datetime)
+  # x1_numeric <- posixct_to_decimal(x1_posix, profile_data$datetime)
+  #
+  #
+  # # Get corners of the parallelogram
+  # corners <- get_corners(x0_numeric, y0, x1_numeric, y1, slope)
+    corners <- pll_result$corners
   # Convert numeric x-values back to datetime for plotting
   corners_datetime <- lapply(corners, function(corner) {
     list(datetime = decimal_to_posixct(corner[1], profile_data$datetime),
@@ -206,8 +206,8 @@ plot_profile <- function(profile_data, show_segments = TRUE, show_parallelogram 
       y = "Melatonin concentration [pg/mL]"
     ) +
     ggplot2::theme_minimal() +
-    # Show the legend on the right
-    ggplot2::theme(legend.position = "right") +
+    # Show the legend on the ascending
+    ggplot2::theme(legend.position = "ascending") +
     # Customize line types in the legend
     ggplot2::scale_linetype_manual(values = c("Full Profile" = "dotted"))
 

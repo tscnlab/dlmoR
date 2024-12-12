@@ -17,12 +17,15 @@ define_roi <- function(profile_data, threshold = 2.3) {
     #x_start <- as.POSIXct(mean(as.numeric(base_points$datetime[(nrow(base_points) - 1):nrow(base_points)])), origin = "1970-01-01")
   }
 
-  if (nrow(profile_data %>% dplyr::filter(base == 0 & ascending == 0)) > 0) {
+  if (nrow(profile_data %>% dplyr::filter(base == 0 & ascending == 0)) > 0) { #TODO FIX THIS TO INCORPORATE INTERMEDIATE
     # Include intermediate segments and up to 95% of the first ascending segment
-    x_end <- ascending_points$datetime[1] + 0.95 * (ascending_points$datetime[2] - ascending_points$datetime[1])
+    # x_end <- ascending_points$datetime[1] + 0.95 * (ascending_points$datetime[2] - ascending_points$datetime[1])
+    x_end <- tail(base_points$datetime,n=1) + 0.95 * (ascending_points$datetime[1] - tail(base_points$datetime,n=1))
   } else {
     # If no intermediate segments
-    x_end <- ascending_points$datetime[1] + 0.95 * (ascending_points$datetime[2] - ascending_points$datetime[1])
+    # x_end <- ascending_points$datetime[1] + 0.95 * (ascending_points$datetime[2] - ascending_points$datetime[1])
+    x_end <- tail(base_points$datetime,n=1) + 0.95 * (ascending_points$datetime[1] - tail(base_points$datetime,n=1))
+
   }
 
   # Define the vertical bounds

@@ -159,7 +159,7 @@
 # }
 #
 
-truncate_ascending_segment <- function(profile_data) {
+truncate_ascending_segment <- function(profile_data) { #TODO THIS SCRIPT CURRENTLY DOES NOT TRUNCATE PARALLELOGRAMMMM; merge with wip script
   # Identify rows that belong to the ascending segment
   ascending_data <- profile_data %>% dplyr::filter(.data$ascending == 1)
 
