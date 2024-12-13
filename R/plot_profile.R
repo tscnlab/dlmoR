@@ -176,13 +176,37 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
   # Create a dataframe for the parallelogram
   parallelogram_df <- do.call(rbind, lapply(corners_datetime, as.data.frame))
 
+  # TODO commented out 13.12.2024
+  # Add the parallelogram as a polygon to the plot
+  # plot <- plot +
+  #   ggplot2::geom_polygon(
+  #     data = parallelogram_df,
+  #     ggplot2::aes(x = .data$datetime, y = .data$melatonin),
+  #     fill = "red", alpha = 0.3
+  #   )
+  # Extract diagonal points
+  diagonal_1 <- parallelogram_df[c(1, 3), ]  # Connect corner 1 and 3
+  diagonal_2 <- parallelogram_df[c(2, 4), ]  # Connect corner 2 and 4
+
   # Add the parallelogram as a polygon to the plot
   plot <- plot +
     ggplot2::geom_polygon(
       data = parallelogram_df,
       ggplot2::aes(x = .data$datetime, y = .data$melatonin),
       fill = "red", alpha = 0.3
+    ) +
+    # Add diagonals as lines
+    ggplot2::geom_line(
+      data = diagonal_1,
+      ggplot2::aes(x = .data$datetime, y = .data$melatonin),
+      color = "blue", linetype = "dashed"
+    ) +
+    ggplot2::geom_line(
+      data = diagonal_2,
+      ggplot2::aes(x = .data$datetime, y = .data$melatonin),
+      color = "blue", linetype = "dashed"
     )
+
 
   return(plot)
 }

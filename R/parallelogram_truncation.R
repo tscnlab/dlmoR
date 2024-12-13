@@ -1,5 +1,6 @@
 # Function to apply the parallelogram truncation and convert back to datetime
-parallelogram_truncation <- function(profile_data) {
+parallelogram_fit <- function(profile_data) {
+  flag<-FALSE
 
   # Filter the profile_data to use only the rows where ascending == 1
   profile_data_ascending <- profile_data %>% dplyr::filter(ascending == 1)
@@ -42,7 +43,8 @@ parallelogram_truncation <- function(profile_data) {
     ~ tibble::tibble(x = .[1], y = .[2]),
     .id = "corner"
   )
-print(corners_tibble)
+
+
   # corners_tibble <- corners_tibble %>%
   #   dplyr::mutate(x = dplyr::if_else(corner == "ur", 26, x))
   # Calculate slopes of the diagonals
@@ -58,9 +60,11 @@ print(corners_tibble)
   # Add warnings
   if (diagonal_slopes$ratio < 0) {
     warning("The ratio of the slopes is negative.")
+    flag <- TRUE
   }
   if(diagonal_slopes$ratio < 0.5){
-    warning("the diagonal slope ratio is less than 1/2, segment has been trimmed")
+    warning("the diagonal slope ratio is less than 1/2")
+    flag <- TRUE
   }
 
   #print(diagonal_slopes$ratio)
@@ -69,5 +73,5 @@ print(corners_tibble)
     pll_datetime_1 <- decimal_to_posixct(x1_numeric, profile_data$datetime)
 
   # Return the result as a list with datetime values
-  return(list(pll_datetime_0 = pll_datetime_0, pll_datetime_1 = pll_datetime_1, pll_slope = slope, corners = corners))
+  return(list(pll_datetime_0 = pll_datetime_0, pll_datetime_1 = pll_datetime_1, pll_slope = slope, corners = corners, flag = flag))
 }

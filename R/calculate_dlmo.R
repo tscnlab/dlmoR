@@ -34,10 +34,10 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3) {
   profile<-define_base_segment(profile)
   .check_base_profile_consistency(profile)
   profile<-define_ascending_segment(profile)
-  profile<-truncate_ascending_segment(profile)
-  profile<-truncate_base_segment(profile)
+  prf<-truncate_ascending_segment(profile)
+  profile<-truncate_base_segment(prf$profile)
   profile<-define_intermediate_segment(profile)
-  return(profile)
+  return(list(prof = profile, prl = prf$plll))
 }
 
 #' Helper Function to Read-in Melatonin Data from a CSV-File

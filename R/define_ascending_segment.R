@@ -118,8 +118,8 @@ define_ascending_segment <- function(profile_data, threshold = 2.3, interval_lim
       }
     }
   }
-  print("pre-truncation ascending")
-print(profile_data, n =28)
+  #print("pre-truncation ascending")
+#print(profile_data, n =28)
   # Drop intermediate columns
   profile_data <- profile_data %>%
     dplyr::select(-.data$transition_to_above, -.data$rise_group)

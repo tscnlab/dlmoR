@@ -159,8 +159,9 @@
 # }
 #
 
-truncate_ascending_segment <- function(profile_data) { #TODO THIS SCRIPT CURRENTLY DOES NOT TRUNCATE PARALLELOGRAMMMM; merge with wip script
-  # Identify rows that belong to the ascending segment
+truncate_ascending_segment_orig <- function(profile_data) { #TODO THIS SCRIPT CURRENTLY DOES NOT TRUNCATE PARALLELOGRAMMMM; merge with wip script
+ print("old")
+   # Identify rows that belong to the ascending segment
   ascending_data <- profile_data %>% dplyr::filter(.data$ascending == 1)
 
   # If no ascending segment exists, issue a warning and return the data unchanged
@@ -205,8 +206,8 @@ truncate_ascending_segment <- function(profile_data) { #TODO THIS SCRIPT CURRENT
   profile_data <- profile_data %>% dplyr::select(-valid_ascending)
 
   # Return the modified profile tibble with the truncated ascending segment
-  print("post-truncation")
-  print(profile_data, n = 28)
+  #print("post-truncation")
+  #print(profile_data, n = 28)
   return(profile_data)
 }
 
