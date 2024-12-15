@@ -1,5 +1,5 @@
 truncate_ascending_segment <- function(profile_data) {
-  print("allo")
+  #print("allo")
   # Ensure there is an ascending segment to work with
   ascending_data <- profile_data %>% dplyr::filter(.data$ascending == 1)
 
@@ -15,7 +15,7 @@ truncate_ascending_segment <- function(profile_data) {
 
   # Iteratively truncate until all rules are satisfied
   while (!check_rules(profile_data, max_slope)) {
-    print("hi")
+    #print("hi")
     # Identify the last ascending index
     last_ascending_index <- max(which(profile_data$ascending == 1))
 
@@ -29,8 +29,8 @@ truncate_ascending_segment <- function(profile_data) {
         )
       )
   }
-  print("before rule 3")
-  print(profile_data, n =28)
+  # print("before rule 3")
+  # print(profile_data, n =28)
   # Find the steepest slope in the ascending segment (ignoring NA values)
   max_slope <- max(profile_data$slope[profile_data$ascending == 1], na.rm = TRUE)
 

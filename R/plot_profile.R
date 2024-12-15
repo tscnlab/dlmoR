@@ -66,14 +66,31 @@ plot_fit<- function(plot, profile_data, dlmoFit){
       # TODO this works!!
       yend = dlmoFit$inflection_point$y,
       #yend = 0.4,
-      color = "pink",
+      color = "#C77CFF",
       size = 1
     )
 
   # ascending fit line (either linear or parabolic)
   # check fit type (length 1 = linear, length 3 = parabolic)
   if(length(dlmoFit$ascending_params) == 1){
-    # TODO
+    plot<- plot +
+      ggplot2::geom_segment( # m * (poi_x - x) + poi_y
+        #ascending_data = dplyr::filter(profile_data, ascending == 1)$datetime,
+        x = ipx_posix,
+        #TODO this works!!
+        y = dlmoFit$inflection_point$y,
+        #y = dlmoFit$ascending_params * (dlmoFit$inflection_point$x - xend_num) + dlmoFit$inflection_point$y,
+        #y = -.1119806 * (xstart_num - 20.58333) + 0.4,
+        #TODO this works!!!
+        xend = dplyr::filter(profile_data, ascending == 1)$datetime[length(dplyr::filter(profile_data, ascending == 1)$datetime)],
+        #xend = decimal_to_posixct(20.58333, profile_data$datetime),
+        # TODO this works!!
+        #yend = dlmoFit$inflection_point$y,
+        yend = dplyr::filter(profile_data, ascending == 1)$melatonin[length(dplyr::filter(profile_data, ascending == 1)$melatonin)],
+        #yend = 0.4,
+        color = "#C77CFF",
+        size = 1
+      )
   }
   else{ # parabolic fit plot
     plot <- plot +
@@ -91,7 +108,7 @@ plot_fit<- function(plot, profile_data, dlmoFit){
           #y<- -3.378851 * x_numeric^2 + 159.363581 * x_numeric - 1848.303449
           return(y)
         },
-        color = 'pink',
+        color = '#C77CFF',
         size = 1,
         n = 1000,
         xlim = c(
@@ -199,12 +216,12 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
     ggplot2::geom_line(
       data = diagonal_1,
       ggplot2::aes(x = .data$datetime, y = .data$melatonin),
-      color = "blue", linetype = "dashed"
+      color = "red", linetype = "dashed", size = 0.5
     ) +
     ggplot2::geom_line(
       data = diagonal_2,
       ggplot2::aes(x = .data$datetime, y = .data$melatonin),
-      color = "blue", linetype = "dashed"
+      color = "red", linetype = "dashed", size = 0.5
     )
 
 

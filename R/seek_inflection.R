@@ -66,21 +66,23 @@ poi_constraints<-function(params, slope_bounds, poi_x, fit_type = "linear"){
   #Constraint to ensure that slope at poi meets all conditions
     if (dplyr::between(slope_value, slope_bounds[1],slope_bounds[2])){
     slope_value <- 0
+    } else{
+      slope_value <- min(c(slope_bounds[1]-slope_value)^2,(slope_bounds[2]-slope_value)^2)
     }
-    return(slope_value^2)
+    return(slope_value)
 }
 
 # Define objective function for constraining base fit edges along y axis
-base_constraint <- function(y, poi_y, threshold = 2.3){ #TODO bring in threshold externally, not hardcoded
+base_constraint <- function(y, min_y, poi_y, threshold = 2.3){ #TODO bring in threshold externally, not hardcoded
   if (dplyr::between(y[1],0,threshold)){
   left_constr<-0
 }else{
   left_constr<-min((y[1]-threshold)^2,y[1]^2)
 }
-  if (dplyr::between(poi_y,0,threshold)){
+  if (dplyr::between(poi_y,min_y,threshold)){
     right_constr<-0
   }else{
-    right_constr<-min((poi_y-threshold)^2,poi_y^2)
+    right_constr<-min((poi_y-threshold)^2,(poi_y-min_y)^2)
   }
   return(left_constr+right_constr)
 }
@@ -96,7 +98,7 @@ objective_function <- function(params, x, y, poi, fit_type, slope_bounds, base_i
   } else if (fit_type == "linear"){ #base
     m <- params[1]
     y_pred <- m * (x - poi_x) + poi_y
-    constr_cost <- base_constraint(y_pred, poi_y)*1000
+    constr_cost <- base_constraint(y_pred, min(y), poi_y)*100
   }
   else {  # Parabolic
     a <- params[1]
@@ -133,6 +135,12 @@ fit_profile <- function(x, y, poi, slope_initial, fit_type = "linear", region = 
     slope_bounds = c(-Inf, Inf)
   } else{
     slope_lowerbound = max(c(0,base_tangent,0.5*ascending_linear_tangent))
+    # print("base tangent")
+    # print(base_tangent)
+    # print("1/2 ascending")
+    # print(0.5*ascending_linear_tangent)
+    # print("slope lower bound")
+    # print(slope_lowerbound)
     slope_upperbound = Inf
     slope_bounds = c(slope_lowerbound, slope_upperbound)
   }
@@ -170,12 +178,15 @@ fit <- function(data, poi, fit_type = "linear") {
   ascending_indices <- which(x > poi_x)
   slope_initial_ascending <- (y[ascending_indices][length(ascending_indices)] - poi_y) / (x[ascending_indices][length(ascending_indices)] - poi_x)
   result_ascending <- fit_profile(x = x[ascending_indices], y = y[ascending_indices], poi = poi, slope_initial = slope_initial_ascending, fit_type = "linear", region = "ascending", base_id = base_id[ascending_indices])
+  # print("initial ascending linear fit")
+  # print(result_ascending)
 
   ascending_indices <- which(x > poi_x)
+  if(length(ascending_indices) > 2){
   slope_initial_ascending<- result_ascending$params[1]
   # slope_initial_ascending<-(y[ascending_indices][length(ascending_indices)] - poi_y) / (x[ascending_indices][length(ascending_indices)] - poi_x)
   result_ascending <- fit_profile(x = x[ascending_indices], y = y[ascending_indices], poi = poi, slope_initial = slope_initial_ascending, fit_type = "parabolic", base_tangent = -result_base$params[1], ascending_linear_tangent = result_ascending$params[1], region = "ascending", base_id = base_id[ascending_indices])
-
+  }
   total_residuals <- result_base$residual + result_ascending$residual
   # total_residuals <- result_ascending$residual
   return(list(residual = total_residuals, base_params = result_base$params, ascending_params = result_ascending$params))
