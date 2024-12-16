@@ -59,6 +59,7 @@ constraints <- function(params, x, y, y0, y1) {
 }
 
 # Helper Function for the Objective
+# TODO from morning of 16.12.2024
 objective <- function(params, x, y, y0, y1) {
   x0 <- params[1]
   x1 <- params[2]
@@ -77,17 +78,48 @@ objective <- function(params, x, y, y0, y1) {
   return(area + 1e3 * c_penalty^2)
 }
 
+# objective <- function(params, x, y, y0, y1) {
+#   x0 <- params[1]
+#   x1 <- params[2]
+#   slope <- params[3]
+#   corners <- get_corners(x0, y0, x1, y1, slope)
+#   width <- corners[[2]] - corners[[1]]
+#   height <- corners[[4]] - corners[[1]]
+#   area <- (width*height)
+#   c_penalty <- constraints(params, x, y, y0, y1)
+#   c_penalty <- lapply(c_penalty, function(x) {
+#     if (x > 0) 0 else x
+#   })
+#   print(c_penalty)
+#   return(area + 1e2 * sum(c_penalty*c_penalty))
+# }
+
 # Main Function to Optimize Parallelogram
 optimize_parallelogram <- function(x, y) {
   y0 <- min(y)
   y1 <- max(y)
   x0_initial <- min(x)*0.9
   x1_initial <- max(x)*1.1
-  # x0_initial <- min(x)
-  # x1_initial <- max(x)
-  slope_initial <- (y1 - y0) / (x1_initial - x0_initial)
+   slope_initial <- (y1 - y0) / (x1_initial - x0_initial)
+   initial_guess <- c(x0_initial, x1_initial, slope_initial)
 
-  initial_guess <- c(x0_initial, x1_initial, slope_initial)
+  # x0_initial <- x[1]
+  # x_slope_2 <- x[2]
+  # x1_initial <- tail(x)
+  # slope_initial <- (y1 - y0) / (x_slope_2 - x0_initial)
+  # initial_guess <- c(x0_initial*0.8, x1_initial*1.2, slope_initial)
+
+
+  #   y0 <- min(y)
+  # y1 <- max(y)
+  # x0_initial <- min(x)*0.8
+  # x_slope_2 = x[which(x == min(x))+1]
+  # x1_initial <- max(x)*1.2
+  # # x0_initial <- min(x)
+  # # x1_initial <- max(x)
+  # slope_initial <- (y1 - y0) / (x_slope_2 - x0_initial)
+  # print(slope_initial)
+  # initial_guess <- c(x0_initial, x1_initial, slope_initial)
 
   result <- stats::optim(
     par = initial_guess,

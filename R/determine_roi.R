@@ -7,8 +7,13 @@ define_roi <- function(profile_data, threshold = 2.3) {
   # Extract relevant points based on base and ascending flags
   base_points <- profile_data %>% dplyr::filter(base == 1)
   ascending_points <- profile_data %>% dplyr::filter(ascending == 1)
-
-  if (nrow(base_points) < 2) {
+  intermediate_points <- profile_data %>% dplyr::filter(intermediate == 1)
+  print("intermediate"%in%colnames(profile_data))
+  if ("intermediate"%in%colnames(profile_data)){
+    x_start <- intermediate_points$datetime[1]
+    print("x-start")
+    print(x_start)
+  } else if (nrow(base_points) < 2) {
     # If the base segment is a single node
     x_start <- base_points$datetime[1]
   } else {

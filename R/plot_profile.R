@@ -210,7 +210,7 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
     ggplot2::geom_polygon(
       data = parallelogram_df,
       ggplot2::aes(x = .data$datetime, y = .data$melatonin),
-      fill = "red", alpha = 0.3
+      fill = "red", alpha = 0.1
     ) +
     # Add diagonals as lines
     ggplot2::geom_line(
@@ -228,7 +228,7 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
   return(plot)
 }
 
-plot_profile <- function(profile_data, show_segments = TRUE, show_parallelogram = FALSE, pll_result = NULL, show_roi = FALSE, roi = NULL, show_dlmoIP = TRUE, dlmoFit = NULL, show_fit = FALSE) {
+plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3, show_segments = TRUE, show_parallelogram = FALSE, pll_result = NULL, show_roi = FALSE, roi = NULL, show_dlmoIP = TRUE, dlmoFit = NULL, show_fit = FALSE) {
   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = .data$datetime, y = .data$melatonin)) +
     # Plot a single dotted line for the full profile (mapped to "Full Profile")
     ggplot2::geom_point(
@@ -268,8 +268,18 @@ plot_profile <- function(profile_data, show_segments = TRUE, show_parallelogram 
         ggplot2::aes(x = .data$datetime, y = .data$melatonin, color = "Ascending Segment"),
         color = 'lightgreen',
         size = 2
+      )+
+    if("intermediate"%in%colnames(profile_data)){
+      # Overlay points for the intermediate segment (mapped to "Intermediate Segment")
+      ggplot2::geom_point(
+        data = dplyr::filter(profile_data, .data$intermediate == 1),
+        ggplot2::aes(x = .data$datetime, y = .data$melatonin, color = "Intermediate Segment"),
+        color = 'darkgoldenrod1',
+        size = 2
       )
+    }
   }
+
 
   # Add parallelogram overlay if show_parallelogram is TRUE
   if (show_parallelogram) {
@@ -289,6 +299,11 @@ plot_profile <- function(profile_data, show_segments = TRUE, show_parallelogram 
   # Add DLMO inflection point
   if (show_dlmoIP){
     plot<- plot_ip(plot,profile_data, dlmoFit$inflection_point)
+  }
+
+  # Add threshold line
+  if (show_threshold){
+    plot<- plot + ggplot2::geom_hline(ggplot2::aes(yintercept = threshold), color = "burlywood3", size = 1)
   }
   # Return the plot object
   return(plot)

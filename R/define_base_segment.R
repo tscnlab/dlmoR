@@ -31,7 +31,9 @@ define_base_segment <- function(profile_tibble, threshold = 2.3) {
     ) %>%
     # Propagate the base segment until the rightmost identified base
     dplyr::mutate(
-      base = dplyr::if_else(dplyr::row_number() <= max(which(.data$base == 1), na.rm = TRUE) + 1, 1, .data$base, missing = .data$base)
+      base = dplyr::if_else(dplyr::row_number() <= max(which(.data$base == 1), na.rm = TRUE) , 1, .data$base, missing = .data$base)
+     # base = dplyr::if_else(dplyr::row_number() <= max(which(.data$base == 1), na.rm = TRUE) + 1, 1, .data$base, missing = .data$base)
+
     )
 
   # Return the full tibble with datetime, melatonin, time, slope, and base columns
