@@ -114,6 +114,7 @@ objective_function <- function(params, x, y, poi, fit_type, slope_bounds, base_i
   # print(length(residuals))
   # print(length(base_id))
   residuals <- residuals*(1-base_id)+0.5*residuals*base_id #give base points 1/2 influence on fit
+  #residuals <- 0.5*residuals # give points on left 1/2 influence on fit as points on right
   l2_cost <- mean(residuals^2) # considering switching to mean so that fit is agnostic of number of data points
   return(l2_cost + constr_cost)  # Value to minimize
 }
@@ -165,6 +166,9 @@ fit <- function(data, poi, fit_type = "linear") {
   x <- posixct_to_decimal(data$datetime, data$datetime)
   y <- data$melatonin
   base_id<-data$base
+  #print("base_id")
+  #print(base_id)
+
   poi_x <- poi$x
   poi_y <- poi$y
 
@@ -172,17 +176,33 @@ fit <- function(data, poi, fit_type = "linear") {
   base_indices <- which(x <= poi_x)
   # slope_initial_base <- (poi_y - y[base_indices][1]) / (poi_x - x[base_indices][1])
   slope_initial_base <- 0
+  #print("base indices")
+  #print(base_indices)
+  #print("base_id[base_indices]")
+  #print(base_id[base_indices])
   result_base <- fit_profile(x = x[base_indices], y = y[base_indices], poi = poi, slope_initial = slope_initial_base, fit_type = "linear", region = "base", base_id = base_id[base_indices])
 
   # Ascending fit
   ascending_indices <- which(x > poi_x)
+  # print("x")
+  # print(x)
+  # print("ascending")
+  # print(ascending_indices)
+  # print("poi_X")
+  # print(poi_x)
+
   slope_initial_ascending <- (y[ascending_indices][length(ascending_indices)] - poi_y) / (x[ascending_indices][length(ascending_indices)] - poi_x)
   result_ascending <- fit_profile(x = x[ascending_indices], y = y[ascending_indices], poi = poi, slope_initial = slope_initial_ascending, fit_type = "linear", region = "ascending", base_id = base_id[ascending_indices])
   # print("initial ascending linear fit")
   # print(result_ascending)
 
   ascending_indices <- which(x > poi_x)
+  print("ascending indices")
+  print(ascending_indices)
+  print("base_id[ascending_indices]")
+  print(base_id[ascending_indices])
   if(length(ascending_indices) > 2){
+  #print("parabola!")
   slope_initial_ascending<- result_ascending$params[1]
   # slope_initial_ascending<-(y[ascending_indices][length(ascending_indices)] - poi_y) / (x[ascending_indices][length(ascending_indices)] - poi_x)
   result_ascending <- fit_profile(x = x[ascending_indices], y = y[ascending_indices], poi = poi, slope_initial = slope_initial_ascending, fit_type = "parabolic", base_tangent = -result_base$params[1], ascending_linear_tangent = result_ascending$params[1], region = "ascending", base_id = base_id[ascending_indices])
@@ -194,6 +214,7 @@ fit <- function(data, poi, fit_type = "linear") {
 
 # Define the function to seek the point of inflection
 seek_inflection <- function(data, roi, step_x = 0.05, step_y = 0.1, fit_type = "linear") {
+#seek_inflection <- function(data, roi, step_x = 0.025, step_y = 0.05, fit_type = "linear") {
   grid_points <- make_grid(roi, step_x, step_y)
   best_residual <- Inf
   best_point <- NULL
@@ -214,14 +235,31 @@ seek_inflection <- function(data, roi, step_x = 0.05, step_y = 0.1, fit_type = "
       best_params_ascending <- result$ascending_params
     }
   }
-  print("best_residual")
-  print(best_residual)
+
+  roi <- list(x = c(best_point$x-step_x, best_point$x+step_x), y = c(best_point$y-step_y, best_point$y+step_y))
+  grid_points <- make_grid(roi, 0.01, 0.01)
+
+  for (i in seq_len(nrow(grid_points))) {
+    poi <- grid_points[i, ]
+    result <- fit(data, poi, fit_type)
+    # res[i]<-result$residual
+    # print("res")
+    # print(res)
+    if (result$residual < best_residual) {
+      best_residual <- result$residual
+      best_point <- poi
+      best_params_base <- result$base_params
+      best_params_ascending <- result$ascending_params
+    }
+  }
+  #print("best_residual")
+  #print(best_residual)
   return(list(inflection_point = best_point, base_params = best_params_base, ascending_params = best_params_ascending))
 }
 
 # run this script to get inflection
 get_inflection <- function(profile_data, posix_roi, fit_type = "linear"){
   roi<-list(x = posixct_to_decimal(c(posix_roi$x_start, posix_roi$x_end), profile_data$datetime), y = c(posix_roi$y_min, posix_roi$y_max))
-  poi<-seek_inflection(dplyr::filter(profile_data,base ==1 | ascending == 1), roi, fit_type = fit_type)
+  poi<-seek_inflection(dplyr::filter(profile_data,base == 1 | ascending == 1 | intermediate == 1), roi, fit_type = fit_type)
   return(poi)
 }

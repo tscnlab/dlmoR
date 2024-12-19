@@ -15,7 +15,7 @@ truncate_ascending_segment <- function(profile_data) {
 
   # Iteratively truncate until all rules are satisfied
   while (!check_rules(profile_data, max_slope)) {
-    print(profile_data, n = 22)
+    #print(profile_data, n = 22)
     # Identify the last ascending index
     last_ascending_index <- max(which(profile_data$ascending == 1))
 
@@ -55,7 +55,7 @@ truncate_ascending_segment <- function(profile_data) {
   #if (profile_data$slope[last_ascending_index-1] < 0.5 * max_slope){
   #if (rightmost_slope < 0.5 * max_slope) {
    # return(FALSE)
-print("cutttt")
+  #print("cutttt")
   # Identify the last ascending index
   #last_ascending_index <- max(which(profile_data$ascending == 1))
 
@@ -69,29 +69,30 @@ print("cutttt")
       )
     )
   }
-  print("after rule 3")
-  print(profile_data, n = 28)
+  #print("after rule 3")
+  #print(profile_data, n = 28)
   #print("post-truncation prof")
   #print(profile_data, n = 28)
   plll<-parallelogram_fit(profile_data)
-  print(plll)
+  #print(plll)
   return(list(profile = profile_data, plll = plll))
 }
 
 
 # Helper function to check if rules are satisfied
 check_last <- function(profile_data){
-  print(profile_data, n = 22)
+  #print(profile_data, n = 28)
   max_slope <- max(profile_data$slope[profile_data$ascending == 1], na.rm = TRUE)
 
   # Extract the two rightmost points in the ascending segment
   # Identify the last ascending index
   last_ascending_index <- max(which(profile_data$ascending == 1))
-  print("last ascending")
-  print(last_ascending_index)
-  print("max slope")
-  print(max_slope)
-  if (profile_data$slope[last_ascending_index-1] < 0.5 * max_slope){
+  # print("last ascending")
+  # print(last_ascending_index)
+  # print(profile_data$slope[last_ascending_index])
+  # print("max slope")
+  # print(max_slope)
+  if (profile_data$slope[last_ascending_index] < 0.5 * max_slope){
     return(FALSE)
   }
   return(TRUE)
@@ -130,7 +131,7 @@ check_rules <- function(profile_data, max_slope) {
   # if (diag_ratio < 0.5 || diag_ratio < 0) {
   #   return(FALSE)
   plll<- parallelogram_fit(profile_data)
-  print(plll)
+  #print(plll)
   if(plll$flag){
     return(FALSE)
   }
