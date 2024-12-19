@@ -7,9 +7,9 @@ define_roi <- function(profile_data, threshold = 2.3) {
   # Extract relevant points based on base and ascending flags
   base_points <- profile_data %>% dplyr::filter(base == 1)
   ascending_points <- profile_data %>% dplyr::filter(ascending == 1)
-  intermediate_points <- profile_data %>% dplyr::filter(intermediate == 1)
   #print("intermediate"%in%colnames(profile_data))
   if ("intermediate"%in%colnames(profile_data)){
+    intermediate_points <- profile_data %>% dplyr::filter(intermediate == 1)
     x_start <- tail(base_points$datetime,n=1) + 0.1 * (intermediate_points$datetime[1] - tail(base_points$datetime,n=1))
     x_end <- tail(intermediate_points$datetime,n=1) + 0.95 * (ascending_points$datetime[1] - tail(intermediate_points$datetime,n=1))
     #print("x-start")

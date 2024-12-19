@@ -132,34 +132,89 @@ fit_profile <- function(x, y, poi, slope_initial, fit_type = "linear", region = 
 
   if(region == "base"){
     slope_bounds = c(-.2,.2)
+    edge_bounds = list(left = c(0,2.3), right = c(min(y), 2.3))
+    return(fit_linear(x,y,poi,base_id, slope_bounds, edge_bounds))
   } else if(region == "ascending" & fit_type == "linear") { #ascending
     slope_bounds = c(-Inf, Inf)
-  } else{
+    return(fit_linear(x,y,poi,base_id, slope_bounds))
+  } else{ # parabolic fit on right side
     slope_lowerbound = max(c(0,base_tangent,0.5*ascending_linear_tangent))
-    # print("base tangent")
-    # print(base_tangent)
-    # print("1/2 ascending")
-    # print(0.5*ascending_linear_tangent)
-    # print("slope lower bound")
-    # print(slope_lowerbound)
     slope_upperbound = Inf
     slope_bounds = c(slope_lowerbound, slope_upperbound)
+
+    optim_result <- stats::optim(
+      par = initial_params,
+      fn = objective_function,
+      x = x,
+      y = y,
+      poi = poi,
+      fit_type = fit_type,
+      slope_bounds = slope_bounds,
+      base_id = base_id,
+      region = region,
+      method = "L-BFGS-B"
+    )
+    return(list(residual = optim_result$value, params = optim_result$par))
   }
-  optim_result <- stats::optim(
-    par = initial_params,
-    fn = objective_function,
-    x = x,
-    y = y,
-    poi = poi,
-    fit_type = fit_type,
-    slope_bounds = slope_bounds,
-    base_id = base_id,
-    region = region,
-    method = "L-BFGS-B"
-  )
-  return(list(residual = optim_result$value, params = optim_result$par))
+
 }
 
+# perform linear fit
+fit_linear <- function(x, y, poi, base_id = NULL, slope_bounds = NULL, edge_bounds = NULL){
+  x_diff<- x - poi$x
+  # print("xdiff")
+  # print(x_diff)
+  y_diff<- y - poi$y
+  # print("ydiff")
+  # print(y_diff)
+  w<- (1-base_id)+0.5*base_id
+  # print("w")
+  # print(w)
+  num<- sum(w*x_diff*y_diff)
+  # print("num")
+  # print(num)
+  denom<- sum(w*x_diff^2)
+  # print("denom")
+  # print(denom)
+  slope<- num/denom
+  # linear fit slope bounds
+  if(slope<min(slope_bounds)){
+    slope<-min(slope_bounds)
+  }else if(slope>max(slope_bounds)){
+    slope<-max(slope_bounds)
+  }
+
+  #linear fit edge bounds
+  if(!is.null(edge_bounds)){ #left side fit
+    left_edge<-slope*(x[1]-poi$x)+poi$y
+    right_edge<-poi$y
+
+    # left edge bounds
+    if(!dplyr::between(left_edge,edge_bounds$left[1],edge_bounds$left[2])){
+      if(left_edge<edge_bounds$left[1]){
+        left_edge<-edge_bounds$left[1]
+      }else{
+        left_edge<-edge_bounds$left[2]
+      }
+      slope<-(left_edge-right_edge)/(x[1]-poi$x)
+    }
+
+    # right edge bounds
+    if(!dplyr::between(right_edge,edge_bounds$right[1],edge_bounds$right[2])){
+      if(right_edge<edge_bounds$right[1]){
+        right_edge<-edge_bounds$right[1]
+      }else{
+        right_edge<-edge_bounds$right[2]
+      }
+      slope<-(left_edge-right_edge)/(x[1]-poi$x)
+    }
+  }
+  y_pred<-slope*(x-poi$x)+poi$y
+  residuals <- y-y_pred
+  residuals <- residuals*(1-base_id)+0.5*residuals*base_id #give base points 1/2 influence on fit
+  # list(residual = optim_result$value, params = optim_result$par)
+  return(list(residual = mean(residuals^2), params = c(slope)))
+}
 
 # Define a function to fit two splines around a point of interest
 fit <- function(data, poi, fit_type = "linear") {
@@ -176,10 +231,7 @@ fit <- function(data, poi, fit_type = "linear") {
   base_indices <- which(x <= poi_x)
   # slope_initial_base <- (poi_y - y[base_indices][1]) / (poi_x - x[base_indices][1])
   slope_initial_base <- 0
-  #print("base indices")
-  #print(base_indices)
-  #print("base_id[base_indices]")
-  #print(base_id[base_indices])
+
   result_base <- fit_profile(x = x[base_indices], y = y[base_indices], poi = poi, slope_initial = slope_initial_base, fit_type = "linear", region = "base", base_id = base_id[base_indices])
 
   # Ascending fit
@@ -197,18 +249,17 @@ fit <- function(data, poi, fit_type = "linear") {
   # print(result_ascending)
 
   ascending_indices <- which(x > poi_x)
-  print("ascending indices")
-  print(ascending_indices)
-  print("base_id[ascending_indices]")
-  print(base_id[ascending_indices])
   if(length(ascending_indices) > 2){
-  #print("parabola!")
   slope_initial_ascending<- result_ascending$params[1]
   # slope_initial_ascending<-(y[ascending_indices][length(ascending_indices)] - poi_y) / (x[ascending_indices][length(ascending_indices)] - poi_x)
   result_ascending <- fit_profile(x = x[ascending_indices], y = y[ascending_indices], poi = poi, slope_initial = slope_initial_ascending, fit_type = "parabolic", base_tangent = -result_base$params[1], ascending_linear_tangent = result_ascending$params[1], region = "ascending", base_id = base_id[ascending_indices])
   }
   total_residuals <- result_base$residual + result_ascending$residual
   # total_residuals <- result_ascending$residual
+  # print("result_base")
+  # print(result_base)
+  # print("result_ascending")
+  # print(result_ascending)
   return(list(residual = total_residuals, base_params = result_base$params, ascending_params = result_ascending$params))
 }
 
@@ -236,7 +287,7 @@ seek_inflection <- function(data, roi, step_x = 0.05, step_y = 0.1, fit_type = "
     }
   }
 
-  roi <- list(x = c(best_point$x-step_x, best_point$x+step_x), y = c(best_point$y-step_y, best_point$y+step_y))
+  roi <- list(x = c(best_point$x-step_x*2, best_point$x+step_x*2), y = c(best_point$y-step_y*2, best_point$y+step_y*2))
   grid_points <- make_grid(roi, 0.01, 0.01)
 
   for (i in seq_len(nrow(grid_points))) {
@@ -260,6 +311,10 @@ seek_inflection <- function(data, roi, step_x = 0.05, step_y = 0.1, fit_type = "
 # run this script to get inflection
 get_inflection <- function(profile_data, posix_roi, fit_type = "linear"){
   roi<-list(x = posixct_to_decimal(c(posix_roi$x_start, posix_roi$x_end), profile_data$datetime), y = c(posix_roi$y_min, posix_roi$y_max))
+  if ("intermediate"%in%colnames(profile_data)){
   poi<-seek_inflection(dplyr::filter(profile_data,base == 1 | ascending == 1 | intermediate == 1), roi, fit_type = fit_type)
+  }else{
+    poi<-seek_inflection(dplyr::filter(profile_data,base == 1 | ascending == 1), roi, fit_type = fit_type)
+  }
   return(poi)
 }
