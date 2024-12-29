@@ -66,7 +66,7 @@ plot_fit<- function(plot, profile_data, dlmoFit){
       # TODO this works!!
       yend = dlmoFit$inflection_point$y,
       #yend = 0.4,
-      color = "#C77CFF",
+      color = "deeppink",
       size = 1
     )
 
@@ -88,7 +88,7 @@ plot_fit<- function(plot, profile_data, dlmoFit){
         #yend = dlmoFit$inflection_point$y,
         yend = dplyr::filter(profile_data, ascending == 1)$melatonin[length(dplyr::filter(profile_data, ascending == 1)$melatonin)],
         #yend = 0.4,
-        color = "#C77CFF",
+        color = "deeppink",
         size = 1
       )
   }
@@ -108,7 +108,7 @@ plot_fit<- function(plot, profile_data, dlmoFit){
           #y<- -3.378851 * x_numeric^2 + 159.363581 * x_numeric - 1848.303449
           return(y)
         },
-        color = '#C77CFF',
+        color = 'deeppink',
         size = 1,
         n = 1000,
         xlim = c(
@@ -137,9 +137,10 @@ plot_ip <- function(plot, profile_data, dlmoip){
       # TODO This works!!
       y = dlmoip$y,
       #y = 0.4,
-      color = "darkorchid",
-      size = 4,
-      shape = 18
+      color = "deeppink",
+      fill = "deeppink",
+      size = 3,
+      shape = 23
     )
   return(plot)
 }
@@ -150,15 +151,43 @@ plot_roi <- function(plot, roi) {
     ggplot2::geom_segment(
       x = roi$x_start, xend = roi$x_end,
       y = -0.2, yend = -0.2,
-      color = "#C77CFF", size = 1.5
+      color = "orchid3", size = 1.5
     ) +
     ggplot2::geom_rect(
       xmin = roi$x_start, xmax = roi$x_end,
       ymin = roi$y_min, ymax = roi$y_max,
-      fill = "#C77CFF", alpha = 0.01
+      fill = "orchid3", alpha = 0.025
     )
   return(plot)
 }
+
+plot_roi_heatmap <- function(plot, data = NULL, roi_grid_big = NULL, roi_grid_small = NULL, residuals_big = NULL, residuals_small = NULL, show_roi_big = FALSE, show_roi_small = FALSE){ #TODO make this cleaner
+  if(show_roi_big & !is.null(roi_grid_big)){
+print("allo!")
+  # convert grid x coordinate to datetime
+    dt_roi_grid_big <- data.frame(
+      x = decimal_to_posixct(roi_grid_big$x, data$datetime),
+      y = roi_grid_big$y
+    )
+  #print(dt_roi_grid_big)
+  plot <- plot + ggplot2::geom_point(data=dt_roi_grid_big, ggplot2::aes(x = x, y = y, color = log(residuals_big))) +
+    ggplot2::scale_color_gradient(low = "deeppink", high = "cyan")  # Color gradient from blue to red
+    #ggplot2::scale_color_gradient(low = "orchid1", high = "orchid4")  # Color gradient from blue to red
+  } else if(show_roi_small & !is.null(roi_grid_small)){
+print("hi!")
+    # convert grid x coordinate to datetime
+    dt_roi_grid_small <- data.frame(
+      x = decimal_to_posixct(roi_grid_small$x, data$datetime),
+      y = roi_grid_small$y
+    )
+
+    plot <- plot + ggplot2::geom_point(data=dt_roi_grid_small, ggplot2::aes(x = x, y = y, color = log(residuals_small)), size = 0.5) +
+      ggplot2::scale_color_gradient(low = "deeppink",
+                                    high = "cyan",
+                                    guide = "colorbar")  # Color gradient from blue to red
+  }
+  }
+
 
 plot_parallelogram <- function(plot, profile_data, pll_result) {
   if (is.null(pll_result)) {
@@ -228,7 +257,7 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
   return(plot)
 }
 
-plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3, show_segments = TRUE, show_parallelogram = FALSE, pll_result = NULL, show_roi = FALSE, roi = NULL, show_dlmoIP = TRUE, dlmoFit = NULL, show_fit = FALSE) {
+plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3, show_segments = TRUE, show_parallelogram = FALSE, pll_result = NULL, show_roi = FALSE, roi = NULL, show_dlmoIP = TRUE, dlmoFit = NULL, show_fit = FALSE, show_roi_heatmap = FALSE, show_roi_small = FALSE, show_roi_big = FALSE) {
   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = .data$datetime, y = .data$melatonin)) +
     # Plot a single dotted line for the full profile (mapped to "Full Profile")
     ggplot2::geom_point(
@@ -252,6 +281,43 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3, s
     # Customize line types in the legend
     ggplot2::scale_linetype_manual(values = c("Full Profile" = "dotted"))
 
+
+
+
+  # Add parallelogram overlay if show_parallelogram is TRUE
+  if (show_parallelogram) {
+    plot <- plot_parallelogram(plot, profile_data, pll_result)
+  }
+
+  # Add region of interest overlay, if show_roi is TRUE
+  if (show_roi){
+    plot <- plot_roi(plot, roi)
+  }
+
+  # Add ROI heatmap, if show_roi_heatmap is TRUE
+
+  if (show_roi_heatmap){
+    plot <- plot_roi_heatmap(plot, data = profile_data, roi_grid_big = dlmoFit$grid_big, roi_grid_small = dlmoFit$grid_small, residuals_big = dlmoFit$res_big,residuals_small = dlmoFit$res_small, show_roi_small = show_roi_small, show_roi_big = show_roi_big)
+  }
+
+  # Plot a single dotted line for the full profile (mapped to "Full Profile")
+  plot<- plot + ggplot2::geom_line(color = 'grey', linetype = "dotted", size = 1)
+
+  # Add DLMO fit lines
+  if (show_fit){
+    plot<- plot_fit(plot, profile_data, dlmoFit)
+  }
+
+  # Add DLMO inflection point
+  if (show_dlmoIP){
+    plot<- plot_ip(plot,profile_data, dlmoFit$inflection_point)
+  }
+
+  # Add threshold line
+  if (show_threshold){
+    plot<- plot + ggplot2::geom_hline(ggplot2::aes(yintercept = threshold), color = "burlywood3", size = 1)
+  }
+
   # Add base and ascending segments if show_segments is TRUE
   if (show_segments) {
     plot <- plot +
@@ -269,42 +335,20 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3, s
         color = 'lightgreen',
         size = 2
       )+
-    if("intermediate"%in%colnames(profile_data)){
-      # Overlay points for the intermediate segment (mapped to "Intermediate Segment")
-      ggplot2::geom_point(
-        data = dplyr::filter(profile_data, .data$intermediate == 1),
-        ggplot2::aes(x = .data$datetime, y = .data$melatonin, color = "Intermediate Segment"),
-        color = 'darkgoldenrod1',
-        size = 2
-      )
-    }
+      if("intermediate"%in%colnames(profile_data)){
+        # Overlay points for the intermediate segment (mapped to "Intermediate Segment")
+        ggplot2::geom_point(
+          data = dplyr::filter(profile_data, .data$intermediate == 1),
+          ggplot2::aes(x = .data$datetime, y = .data$melatonin, color = "Intermediate Segment"),
+          color = 'darkgoldenrod1',
+          size = 2
+        )
+      }
   }
 
 
-  # Add parallelogram overlay if show_parallelogram is TRUE
-  if (show_parallelogram) {
-    plot <- plot_parallelogram(plot, profile_data, pll_result)
-  }
 
-  # Add region of interest overlay, if show_roi is TRUE
-  if (show_roi){
-    plot <- plot_roi(plot, roi)
-  }
 
-  # Add DLMO fit lines
-  if (show_fit){
-    plot<- plot_fit(plot, profile_data, dlmoFit)
-  }
-
-  # Add DLMO inflection point
-  if (show_dlmoIP){
-    plot<- plot_ip(plot,profile_data, dlmoFit$inflection_point)
-  }
-
-  # Add threshold line
-  if (show_threshold){
-    plot<- plot + ggplot2::geom_hline(ggplot2::aes(yintercept = threshold), color = "burlywood3", size = 1)
-  }
   # Return the plot object
   return(plot)
 }

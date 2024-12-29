@@ -48,12 +48,10 @@
 #   return(profile_data)
 # }
 
-define_ascending_segment <- function(profile_data, threshold = 2.3, interval_limit = lubridate::hours(2)) {
+define_ascending_segment_orig <- function(profile_data, threshold = 2.3, interval_limit = lubridate::hours(2)) {
   # Ensure datetime is sorted
   profile_data <- profile_data %>% dplyr::arrange(.data$datetime)
 
-
-  # Rule 1: Segment that crosses threshold and all subsequent segments if above threshold are "ascending"
   # Identify segments crossing the threshold
   profile_data <- profile_data %>%
     dplyr::mutate(
@@ -91,6 +89,15 @@ define_ascending_segment <- function(profile_data, threshold = 2.3, interval_lim
     dplyr::mutate(
       ascending = dplyr::if_else(.data$rise_group %in% valid_rise_groups & .data$melatonin > threshold, 1, 0)
     )
+
+
+
+
+
+
+
+
+
 
   # Add the extra rule: check if the previous point before the first ascending is steep enough
   first_ascending_row <- profile_data %>%

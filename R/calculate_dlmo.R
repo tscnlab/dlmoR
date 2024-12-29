@@ -50,7 +50,7 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3) {
   ipx<-get_inflection(prf$profile, roix)
   # print("ip")
   # print(ipx)
-  vis<-plot_profile(prf$profile, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx, show_fit = TRUE)
+  vis<-plot_profile(prf$profile, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx, show_fit = TRUE, show_roi_heatmap = FALSE, show_roi_small = FALSE, show_roi_big = FALSE)
   #print("ouch4")
   return(list(prof = prf$profile, prl = prf$plll, roi = roix, ip = ipx, dlmoplot = vis))
 }
