@@ -70,7 +70,9 @@ civibe_melatonin_FD_dh_daysplit <- civibe_melatonin_FD_daysplit %>%
   purrr::map(~ .x %>%
         dplyr::mutate(decimalhours = posixct_to_decimal(datetime, datetime)))
 
-
+civibe_melatonin_FD_dh_daysplit <- civibe_melatonin_FD_dh_daysplit %>%
+  purrr::map(~ .x %>%
+        dplyr::mutate(decimalhours = round(decimalhours, 5)))  # Round to 5 decimal points
 # Access the split data
 #civibe_melatonin_FD_daysplit[["civibe_melatonin_FD201_day1"]] # Example for day1 of ID 201
 #civibe_melatonin_FD_daysplit[["civibe_melatonin_FD201_day2"]] # Example for day2 of ID 201
