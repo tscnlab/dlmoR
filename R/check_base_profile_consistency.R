@@ -36,7 +36,7 @@
 #' .check_base_profile_consistency(profile_data)
 #'
 #' @keywords internal
-.check_base_profile_consistency <- function(profile_data) {
+.check_base_profile_consistency <- function(profile_data, threshold = 2.3) {
   # Check for NA values in the base segment
   warning_na <- dplyr::filter(profile_data, .data$base == 1) %>%
     dplyr::mutate(warning_na = is.na(.data$melatonin)) %>%
@@ -49,7 +49,7 @@
 
   # Check for descents across threshold in the base segment
   warning_threshold_descend <- dplyr::filter(profile_data, .data$base == 1) %>%
-    dplyr::mutate(warning_threshold_descend = .data$melatonin > 2.3 & dplyr::lead(.data$melatonin, default = 0) <= 2.3) %>%
+    dplyr::mutate(warning_threshold_descend = .data$melatonin > threshold & dplyr::lead(.data$melatonin, default = 0) <= threshold) %>%
     dplyr::filter(warning_threshold_descend)
 
   if (nrow(warning_threshold_descend) > 0) {
@@ -59,7 +59,7 @@
 
   # Check for large slope differences in the base segment
   warning_large_diff <- dplyr::filter(profile_data, .data$base == 1) %>%
-    dplyr::mutate(warning_large_diff = abs(.data$slope) > 0.5 * 2.3) %>%
+    dplyr::mutate(warning_large_diff = abs(.data$slope) > 0.5 * threshold) %>%
     dplyr::filter(warning_large_diff)
 
   if (nrow(warning_large_diff) > 0) {

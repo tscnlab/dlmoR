@@ -12,7 +12,7 @@
 #' @return A numeric or time value indicating the calculated DLMO time.
 #' @export
 #'
-calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3) {
+calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, interval_limit = lubridate::hours(2)) {
   #filename <- system.file("extdata/CiViBe_204_FD_day1.csv", package = "dlmoR")
   # Check if input is provided either directly or via file
   if (is.null(data) && is.null(file_path)) {
@@ -30,27 +30,27 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3) {
   # return(data)
 
   # Validate melatonin profile
-  prf<-preprocess_profile(data)
-  prf<-define_base_segment(prf)
-  .check_base_profile_consistency(prf)
-  prf<-define_ascending_segment(prf)
+  prf<-preprocess_profile(data, threshold = threshold)
+  prf<-define_base_segment(prf, threshold = threshold)
+  .check_base_profile_consistency(prf, threshold = threshold)
+  prf<-define_ascending_segment(prf, threshold = threshold, interval_limit = interval_limit)
   prf<-truncate_ascending_segment(prf)
   # print("profile before base truncation")
   # print(prf$profile, n = 25)
-  prf$profile<-truncate_base_segment(prf$profile)
+  prf$profile<-truncate_base_segment(prf$profile, threshold = threshold)
   # print("profile after base truncation")
   # print(prf$profile, n = 25)
   prf$profile<-define_intermediate_segment(prf$profile)
   # print("ouch1")
   # print("profile")
-  # print(prf$profile, n = 25)
+  # print(prf$profile, n = 2)
   roix<-define_roi(profile_data = prf$profile, threshold = threshold)
   # print("roi")
   # print(roix)
-  ipx<-get_inflection(prf$profile, roix)
+  ipx<-get_inflection(prf$profile, threshold = threshold, roix)
   # print("ip")
   # print(ipx)
-  vis<-plot_profile(prf$profile, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx, show_fit = TRUE, show_roi_heatmap = TRUE, show_roi_small = FALSE, show_roi_big = TRUE)
+  vis<-plot_profile(prf$profile, show_threshold = TRUE, threshold = threshold, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx, show_fit = TRUE, show_roi_heatmap = TRUE, show_roi_small = FALSE, show_roi_big = TRUE)
   #print("ouch4")
   return(list(prof = prf$profile, prl = prf$plll, roi = roix, ip = ipx, dlmoplot = vis))
 }

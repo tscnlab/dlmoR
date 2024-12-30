@@ -156,10 +156,10 @@ preprocess_profile <- function(profile, threshold = 2.3, min_increase_points = 3
   }
 
   # Step 1: Check for rise threshold (only for internal use, not added to final result)
-  processed_data <- check_rise_threshold(profile, threshold, min_increase_points)
+  processed_data <- check_rise_threshold(profile, threshold = threshold, min_increase_points)
 
   # Step 2: Trim the profile based on the threshold
-  trimmed_data <- trim_end_below_threshold(processed_data, threshold)
+  trimmed_data <- trim_end_below_threshold(processed_data, threshold = threshold)
 
   return(trimmed_data)  # Return the trimmed tibble with datetime, melatonin, and time
 }

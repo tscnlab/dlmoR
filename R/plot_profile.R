@@ -145,7 +145,7 @@ plot_ip <- function(plot, profile_data, dlmoip){
   return(plot)
 }
 
-plot_roi <- function(plot, roi) {
+plot_roi <- function(plot, roi, roi_line_only) {
   # Add ROI segment and rectangle to the plot
   plot <- plot +
     ggplot2::geom_segment(
@@ -153,11 +153,12 @@ plot_roi <- function(plot, roi) {
       y = -0.2, yend = -0.2,
       color = "orchid3", size = 1.5
     ) +
+    if(!roi_line_only){
     ggplot2::geom_rect(
       xmin = roi$x_start, xmax = roi$x_end,
       ymin = roi$y_min, ymax = roi$y_max,
-      fill = "orchid3", alpha = 0.025
-    )
+      fill = "orchid3", alpha = 0.01
+    )}
   return(plot)
 }
 
@@ -257,7 +258,16 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
   return(plot)
 }
 
-plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3, show_segments = TRUE, show_parallelogram = FALSE, pll_result = NULL, show_roi = FALSE, roi = NULL, show_dlmoIP = TRUE, dlmoFit = NULL, show_fit = FALSE, show_roi_heatmap = FALSE, show_roi_small = FALSE, show_roi_big = FALSE) {
+plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3, show_segments = TRUE, show_parallelogram = FALSE, pll_result = NULL, show_roi = FALSE, roi_line_only = TRUE, roi = NULL, show_dlmoIP = TRUE, dlmoFit = NULL, show_fit = FALSE, show_roi_heatmap = FALSE, show_roi_small = FALSE, show_roi_big = FALSE) {
+  # Define the title conditionally
+  plot_title <- if (!is.null(dlmoFit)) {
+    dlmo_time <- hms::as_hms(decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime))
+
+    paste("Melatonin profile\nDLMO time:", as.character(dlmo_time))
+  } else {
+    "Melatonin profile"
+  }
+
   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = .data$datetime, y = .data$melatonin)) +
     # Plot a single dotted line for the full profile (mapped to "Full Profile")
     ggplot2::geom_point(
@@ -271,7 +281,7 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3, s
     ) +
     # Add plot labels
     ggplot2::labs(
-      title = "Melatonin profile",
+      title = plot_title,
       x = "Local time [hh:mm]",
       y = "Melatonin concentration [pg/mL]"
     ) +
@@ -291,7 +301,7 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3, s
 
   # Add region of interest overlay, if show_roi is TRUE
   if (show_roi){
-    plot <- plot_roi(plot, roi)
+    plot <- plot_roi(plot, roi, roi_line_only)
   }
 
   # Add ROI heatmap, if show_roi_heatmap is TRUE
