@@ -132,9 +132,9 @@ check_rules <- function(profile_data, max_slope) {
   #   return(FALSE)
   plll<- parallelogram_fit(profile_data)
   #print(plll)
-  if(plll$flag){
-    return(FALSE)
-  }
+if(plll$flag){
+   return(FALSE)
+ }
   return(TRUE)
 }
 

@@ -48,7 +48,7 @@
 #   return(profile_data)
 # }
 
-define_ascending_segment <- function(profile_data, threshold = 2.3, interval_limit = lubridate::hours(2)) {
+define_ascending_segment_good <- function(profile_data, threshold = 2.3, interval_limit = lubridate::hours(2)) {
   # Ensure datetime is sorted
   profile_data <- profile_data %>% dplyr::arrange(.data$datetime)
 

@@ -72,7 +72,8 @@ parallelogram_fit <- function(profile_data) {
   # Convert the optimized numeric x0 and x1 back to datetime
     pll_datetime_0 <- decimal_to_posixct(x0_numeric, profile_data$datetime)
     pll_datetime_1 <- decimal_to_posixct(x1_numeric, profile_data$datetime)
-
+    print("pll corners")
+    print(corners)
   # Return the result as a list with datetime values
   return(list(pll_datetime_0 = pll_datetime_0, pll_datetime_1 = pll_datetime_1, pll_slope = slope, corners = corners, flag = flag))
 }

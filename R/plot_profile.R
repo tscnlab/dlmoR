@@ -102,9 +102,9 @@ plot_fit<- function(plot, profile_data, dlmoFit){
 
           # Evaluate the polynomial function in decimal hours
           # TODO THIS WORKS!!!!
-           y <- dlmoFit$ascending_params[1] * x_numeric^2 +
-             dlmoFit$ascending_params[2] * x_numeric +
-             dlmoFit$ascending_params[3]
+           y <- dlmoFit$ascending_params$a * x_numeric^2 +
+             dlmoFit$ascending_params$b * x_numeric +
+             dlmoFit$ascending_params$c
           #y<- -3.378851 * x_numeric^2 + 159.363581 * x_numeric - 1848.303449
           return(y)
         },
