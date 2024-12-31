@@ -20,8 +20,10 @@ parallelogram_fit <- function(profile_data) {
 
   x_pll <- c(lpba_dec, x_values)
   y_pll <- c(lpba$melatonin, y_values)
-  #print(x_pll)
-  #print(y_pll)
+  print("x_pll")
+  print(x_pll)
+  print("y_pll")
+  print(y_pll)
  # y0 <- min(profile_data_ascending$melatonin)
 #  y1 <- max(profile_data_ascending$melatonin)
   y0 <- min(y_pll)
