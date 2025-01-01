@@ -351,17 +351,18 @@ seek_inflection <- function(data, threshold = threshold, roi, step_x = 0.1, step
   grid_small <- grid_points
   res_small<-NULL
 
-  # for (i in seq_len(nrow(grid_points))) {
-  #   poi <- grid_points[i, ]
-  #   result <- fit(data, poi, fit_type, threshold = threshold)
-  #   res_small[i]<-result$residual
-  #   if (result$residual < best_residual) {
-  #     best_residual <- result$residual
-  #     best_point <- poi
-  #     best_params_base <- result$base_params
-  #     best_params_ascending <- result$ascending_params
-  #   }
-  # }
+  ###### fine grid search ###########
+  for (i in seq_len(nrow(grid_points))) {
+    poi <- grid_points[i, ]
+    result <- fit(data, poi, fit_type, threshold = threshold)
+    res_small[i]<-result$residual
+    if (result$residual < best_residual) {
+      best_residual <- result$residual
+      best_point <- poi
+      best_params_base <- result$base_params
+      best_params_ascending <- result$ascending_params
+    }
+  }
 
   # print(sort(res_small)[1:10])
   # best_10_per <- order(res_small)[1:10]

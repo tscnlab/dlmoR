@@ -30,16 +30,16 @@ constraints <- function(params, x, y, y0, y1) {
   upper_left <- corners[[4]]
 
   y_lower <- ifelse(
-    x <= lower_right[1], 
-    y0, 
+    x <= lower_right[1],
+    y0,
     y0 + slope * (x - lower_right[1])
   )
   y_upper <- ifelse(
-    x >= upper_left[1], 
-    y1, 
+    x >= upper_left[1],
+    y1,
     y1 + slope * (x - upper_left[1])
   )
-  
+
   x_lower <- min(lower_left[1], upper_left[1])
   x_upper <- max(lower_right[1], upper_right[1])
 
@@ -50,7 +50,7 @@ constraints <- function(params, x, y, y0, y1) {
     x - x_lower,       # Point is right of the left edge
     x_upper - x        # Point is left of the right edge
   )
-  
+
 }
 
 # Helper Function for the Objective
@@ -58,7 +58,7 @@ objective <- function(params, x, y, y0, y1) {
   x0 <- params[1]
   x1 <- params[2]
   slope <- params[3]
-  
+
   corners <- get_corners(x0, y0, x1, y1, slope)
   width <- abs(corners$lr[1] - corners$ll[1])
   height <- abs(corners$ul[2] - corners$ll[2])
@@ -86,7 +86,7 @@ optimize_parallelogram <- function(x, y) {
 
   slope_initial <- (y1 - y0) / (x_slope_2 - x0_initial)
   initial_guess <- c(x0_initial*0.8, x1_initial*1.2, slope_initial)
-  
+
   result <- stats::optim(
     par = initial_guess,
     fn = function(params) objective(params, x, y, y0, y1),
@@ -97,7 +97,7 @@ optimize_parallelogram <- function(x, y) {
     x0 <- result$par[1]
   x1 <- result$par[2]
   slope <- result$par[3]
-  
+
   corners <- get_corners(x0, y0, x1, y1, slope)
   print(corners)
 
@@ -121,8 +121,8 @@ optimize_parallelogram <- function(x, y) {
 #   c(1.1, 0.1, 7.5, 13, 14, 16, 19)
 # )
 
-optimize_parallelogram(
-  c(18.56, 20.05),
-  c(1.84, 9.203)
-)
+# optimize_parallelogram(
+#   c(18.56, 20.05),
+#   c(1.84, 9.203)
+# )
 
