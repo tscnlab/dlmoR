@@ -47,8 +47,9 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
   prf$profile<-define_intermediate_segment(prf$profile)
   # print("ouch1")
   # print("profile")
+  print("prof just before roi")
   print(prf$profile, n = 23)
-  #print(prf$plll)
+
   roix<-define_roi(profile_data = prf$profile, threshold = threshold)
   print("roi")
    print(roix)

@@ -91,6 +91,7 @@ optimize_parallelogram <- function(x, y) {
     par = initial_guess,
     fn = function(params) objective(params, x, y, y0, y1),
     method = "SANN",
+    control=list(maxit=100000)
   )
 
 
@@ -99,7 +100,7 @@ optimize_parallelogram <- function(x, y) {
   slope <- result$par[3]
 
   corners <- get_corners(x0, y0, x1, y1, slope)
-  print(corners)
+  #print(corners)
 
   result$par
 }

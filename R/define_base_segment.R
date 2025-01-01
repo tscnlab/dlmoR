@@ -7,11 +7,12 @@
 
 define_base_segment <- function(profile_tibble, threshold = 2.3) {
   # Extract melatonin values from the input tibble (profile_tibble)
+  profile_tibble <- profile_tibble %>% dplyr::arrange(.data$datetime)
   profile <- profile_tibble$melatonin
   decimal_time <- posixct_to_decimal(profile_tibble$datetime, profile_tibble$datetime)
   # Calculate slopes based on the melatonin profile
   slopes <- calculate_slopes(profile, decimal_time)
-
+  print(slopes)
   # Create a tibble for the full profile with slopes and base labels
   profile_data <- profile_tibble %>%
     dplyr::mutate(

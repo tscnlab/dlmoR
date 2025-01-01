@@ -20,9 +20,10 @@ parallelogram_fit <- function(profile_data) {
 
   x_pll <- c(lpba_dec, x_values)
   y_pll <- c(lpba$melatonin, y_values)
-  print("x_pll")
+
+  print("xll")
   print(x_pll)
-  print("y_pll")
+  print("yll")
   print(y_pll)
  # y0 <- min(profile_data_ascending$melatonin)
 #  y1 <- max(profile_data_ascending$melatonin)
@@ -58,8 +59,17 @@ parallelogram_fit <- function(profile_data) {
       slope_diag2 = (y[which(corner == "ul")] - y[which(corner == "lr")]) /
         (x[which(corner == "ul")] - x[which(corner == "lr")])
     ) %>%
-    dplyr::mutate(ratio = abs(slope_diag1 / slope_diag2))
+    #dplyr::mutate(ratio = abs(slope_diag1 / slope_diag2))
+    dplyr::mutate(ratio = (slope_diag1 / slope_diag2))
+    #dplyr::mutate(ratio = (slope_diag2 / slope_diag1))
 
+
+  print("diag slope ratio")
+  #print("inverted diag slope ratio")
+
+  print(diagonal_slopes$ratio)
+  print("corners")
+  print(corners_tibble)
   # Add warnings
   if (diagonal_slopes$ratio < 0) {
     warning("The ratio of the slopes is negative.")
@@ -74,8 +84,7 @@ parallelogram_fit <- function(profile_data) {
   # Convert the optimized numeric x0 and x1 back to datetime
     pll_datetime_0 <- decimal_to_posixct(x0_numeric, profile_data$datetime)
     pll_datetime_1 <- decimal_to_posixct(x1_numeric, profile_data$datetime)
-    print("pll corners")
-    print(corners)
+
   # Return the result as a list with datetime values
   return(list(pll_datetime_0 = pll_datetime_0, pll_datetime_1 = pll_datetime_1, pll_slope = slope, corners = corners, flag = flag))
 }
