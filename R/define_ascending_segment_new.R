@@ -291,6 +291,57 @@ define_ascending_segment <- function(profile_data, threshold = 2.3, interval_lim
     dplyr::left_join(non_base_data %>% dplyr::select(datetime, ascending), by = "datetime") %>%
     dplyr::mutate(ascending = dplyr::coalesce(.data$ascending, 0))
 
+    # Exclude base segments when identifying steep segments
+    non_base_data <- profile_data %>%
+      dplyr::filter(.data$base != 1)  # Assuming a `base` column exists and marks base segments
+
+    # Identify steepest slope and relevant segments among non-base rows
+    steepest_slope <- max(abs(non_base_data$slope), na.rm = TRUE)
+
+    # Identify segments with slopes >= half of the steepest slope
+    steep_segments <- non_base_data %>%
+      dplyr::filter(abs(.data$slope) >= steepest_slope / 2) %>%
+      dplyr::pull(.data$datetime)
+
+    # Include segments between steep segments
+    if (length(steep_segments) > 1) {
+      min_datetime <- min(steep_segments)
+      max_datetime <- max(steep_segments)
+
+      profile_data <- profile_data %>%
+        dplyr::mutate(
+          ascending = dplyr::if_else(
+            (.data$datetime >= min_datetime & .data$datetime <= max_datetime & .data$base != 1) | .data$ascending == 1,
+            1,
+            0
+          )
+        )
+    }
+
+
+    # Add the extra rule: check if the previous point before the first ascending is steep enough
+    first_ascending_row <- profile_data %>%
+      dplyr::filter(.data$ascending == 1) %>%
+      dplyr::slice(1)
+
+    if (nrow(first_ascending_row) > 0) {
+      first_ascending_index <- which(profile_data$datetime == first_ascending_row$datetime)
+
+      # Check if there is a preceding point
+      if (first_ascending_index > 1) {
+        preceding_row <- profile_data[first_ascending_index - 1, ]
+        first_ascending_slope <- first_ascending_row$slope
+        preceding_slope <- preceding_row$slope
+
+        # Check the slope rule
+        if (abs(preceding_slope) >= abs(first_ascending_slope) / 2) {
+          profile_data <- profile_data %>%
+            dplyr::mutate(
+              ascending = dplyr::if_else(.data$datetime == preceding_row$datetime, 1, .data$ascending)
+            )
+        }
+      }
+    }
   profile_data <- profile_data %>%
     dplyr::select(-tidyselect::any_of(c("transition_to_above", "rise_group")))
 
