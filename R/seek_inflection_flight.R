@@ -239,7 +239,7 @@ fit <- function(data, poi, fit_type = "linear", threshold = threshold) {
 
   poi_x <- poi$x
   poi_y <- poi$y
-  weight_base <- FALSE #TL TURN OFF WEIGHTING HERE
+  weight_base <- TRUE #TL TURN OFF WEIGHTING HERE
   # Base fit
   left_indcs <- which(x <= poi_x)
   result_base <- fit_profile(x = x[left_indcs], y = y[left_indcs], poi = poi, fit_type = "linear", region = "base", base_id = base_id[left_indcs], weight_base=weight_base, threshold = threshold)
