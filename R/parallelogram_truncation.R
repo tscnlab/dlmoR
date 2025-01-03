@@ -21,10 +21,10 @@ parallelogram_fit <- function(profile_data) {
   x_pll <- c(lpba_dec, x_values)
   y_pll <- c(lpba$melatonin, y_values)
 
-  print("xll")
-  print(x_pll)
-  print("yll")
-  print(y_pll)
+  #print("xll")
+  #print(x_pll)
+  #print("yll")
+  #print(y_pll)
  # y0 <- min(profile_data_ascending$melatonin)
 #  y1 <- max(profile_data_ascending$melatonin)
   y0 <- min(y_pll)
@@ -64,12 +64,12 @@ parallelogram_fit <- function(profile_data) {
     #dplyr::mutate(ratio = (slope_diag2 / slope_diag1))
 
 
-  print("diag slope ratio")
-  #print("inverted diag slope ratio")
-
-  print(diagonal_slopes$ratio)
-  print("corners")
-  print(corners_tibble)
+  # print("diag slope ratio")
+  # #print("inverted diag slope ratio")
+  #
+  # print(diagonal_slopes$ratio)
+  # print("corners")
+  # print(corners_tibble)
   # Add warnings
   if (diagonal_slopes$ratio < 0) {
     warning("The ratio of the slopes is negative.")

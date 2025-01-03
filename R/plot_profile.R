@@ -137,8 +137,8 @@ plot_ip <- function(plot, profile_data, dlmoip){
       # TODO This works!!
       y = dlmoip$y,
       #y = 0.4,
-      color = "deeppink",
-      fill = "deeppink",
+      color = "deeppink4",
+      fill = "deeppink4",
       size = 3,
       shape = 23
     )

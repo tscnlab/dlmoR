@@ -17,7 +17,7 @@ define_roi <- function(profile_data, threshold = 2.3) {
 
   } else if (nrow(base_points) < 2) {
     # If the base segment is a single node, roi starts at this node
-    x_start <- base_points$datetime[1]
+    x_start <- base_points$datetime[1] + 0.05 * (ascending_points$datetime[1] - tail(base_points$datetime,n=1))
     x_end <- tail(base_points$datetime,n=1) + 0.95 * (ascending_points$datetime[1] - tail(base_points$datetime,n=1))
   } else {
     # Otherwise, take the midpoint of the last two base points

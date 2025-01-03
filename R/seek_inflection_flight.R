@@ -234,18 +234,43 @@ fit_linear <- function(x, y, poi, base_id = NULL, slope_bounds = NULL, edge_boun
 # Define a function to fit two splines around a point of interest
 fit <- function(data, poi, fit_type = "linear", threshold = threshold) {
   x <- posixct_to_decimal(data$datetime, data$datetime)
+  # print("x")
+  # print(x)
   y <- data$melatonin
+  # print("y")
+  # print(y)
   base_id<-data$base
-
+  # print("base_id")
+  # print(base_id)
   poi_x <- poi$x
   poi_y <- poi$y
+  # print("poix")
+  # print(poi_x)
+  # print("poiy")
+  # print(poi_y)
   weight_base <- TRUE #TL TURN OFF WEIGHTING HERE
   # Base fit
   left_indcs <- which(x <= poi_x)
+  # print("left_indcs")
+  # print(left_indcs)
+  # print("x[left_indcs]")
+  # print(x[left_indcs])
+  # print("y[left_indcs]")
+  # print(y[left_indcs])
+  # print("base_id[left_indcs]")
+  # print(base_id[left_indcs])
   result_base <- fit_profile(x = x[left_indcs], y = y[left_indcs], poi = poi, fit_type = "linear", region = "base", base_id = base_id[left_indcs], weight_base=weight_base, threshold = threshold)
 
   # Ascending fit
   right_indcs <- which(x > poi_x)
+  # print("right_indcs")
+  # print(right_indcs)
+  # print("x[right_indcs]")
+  # print(x[right_indcs])
+  # print("y[right_indcs]")
+  # print(y[right_indcs])
+  # print("base_id[right_indcs]")
+  # print(base_id[right_indcs])
   result_ascending <- fit_profile(x = x[right_indcs], y = y[right_indcs], poi = poi, fit_type = "linear", region = "ascending", base_id = base_id[right_indcs], weight_base=weight_base, threshold = threshold)
 
 if(length(right_indcs) > 2){
@@ -283,8 +308,8 @@ reduce_grid <- function(res_big, grid_big, step_x, step_y, step_size_small, thre
   best_points <- grid_big[best_10_per,]
   min_y <- max(min(best_points$y) - step_y, min(grid_big$y))
   max_y <- min(max(best_points$y) + step_y, max(grid_big$y))
-  min_x <- min(best_points$x) - step_x
-  max_x <- max(best_points$x) + step_x
+  min_x <- max(min(best_points$x) - step_x, min(grid_big$x))
+  max_x <- min(max(best_points$x) + step_x, max(grid_big$x))
 
   roi <- list(x = c(min_x, max_x), y = c(min_y, max_y))
   grid_points <- make_grid(roi, step_size_small, step_size_small)
@@ -294,17 +319,17 @@ reduce_grid <- function(res_big, grid_big, step_x, step_y, step_size_small, thre
   res_small<-NULL
 
   ###### fine grid search ###########
-  # for (i in seq_len(nrow(grid_points))) {
-  #   poi <- grid_points[i, ]
-  #   result <- fit(data, poi, fit_type, threshold = threshold)
-  #   res_small[i]<-result$residual
-  #   if (result$residual < best_residual) {
-  #     best_residual <- result$residual
-  #     best_point <- poi
-  #     best_params_base <- result$base_params
-  #     best_params_ascending <- result$ascending_params
-  #   }
-  # }
+  for (i in seq_len(nrow(grid_points))) {
+    poi <- grid_points[i, ]
+    result <- fit(data, poi, fit_type, threshold = threshold)
+    res_small[i]<-result$residual
+    if (result$residual < best_residual) {
+      best_residual <- result$residual
+      best_point <- poi
+      best_params_base <- result$base_params
+      best_params_ascending <- result$ascending_params
+    }
+  }
   return(list(inflection_point = best_point, base_params = best_params_base, ascending_params = best_params_ascending, grid_big = grid_big, res_big = res_big, grid_small = grid_small, res_small = res_small))
 }
 

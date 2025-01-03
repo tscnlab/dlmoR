@@ -296,11 +296,11 @@ define_ascending_segment <- function(profile_data, threshold = 2.3, interval_lim
       dplyr::filter(.data$base != 1)  # Assuming a `base` column exists and marks base segments
 
     # Identify steepest slope and relevant segments among non-base rows
-    steepest_slope <- max(abs(non_base_data$slope), na.rm = TRUE)
+    steepest_slope <- max(non_base_data$slope, na.rm = TRUE) #TODO 3.1.2025 removed abs
 
     # Identify segments with slopes >= half of the steepest slope
     steep_segments <- non_base_data %>%
-      dplyr::filter(abs(.data$slope) >= steepest_slope / 2) %>%
+      dplyr::filter(.data$slope >= steepest_slope / 2) %>% #TODO 3.1.2025 removed abs
       dplyr::pull(.data$datetime)
 
     # Include segments between steep segments
@@ -320,28 +320,70 @@ define_ascending_segment <- function(profile_data, threshold = 2.3, interval_lim
 
 
     # Add the extra rule: check if the previous point before the first ascending is steep enough
+    # first_ascending_row <- profile_data %>%
+    #   dplyr::filter(.data$ascending == 1) %>%
+    #   dplyr::slice(1)
+    #
+    # if (nrow(first_ascending_row) > 0) {
+    #   first_ascending_index <- which(profile_data$datetime == first_ascending_row$datetime)
+    #   last_base_index <- which(profile_data$datetime == last_base_point$datetime)
+    #
+    #   # Check if there is a preceding point
+    #   if (first_ascending_index > 1) {
+    #     preceding_row <- profile_data[first_ascending_index - 1, ]
+    #     preceding_row_index <- which(profile_data$datetime == preceding_row$datetime)
+    #     first_ascending_slope <- first_ascending_row$slope
+    #     preceding_slope <- preceding_row$slope
+    #
+    #     # Check the slope rule
+    #     if (((preceding_slope) >= first_ascending_slope / 2) && (preceding_row_index != last_base_index)) {
+    #       profile_data <- profile_data %>%
+    #         dplyr::mutate(
+    #           ascending = dplyr::if_else(.data$datetime == preceding_row$datetime, 1, .data$ascending)
+    #         )
+    #     }
+    #   }
+    # }
+
+    # Add the extra rule: check if the previous point before the first ascending is steep enough
     first_ascending_row <- profile_data %>%
       dplyr::filter(.data$ascending == 1) %>%
       dplyr::slice(1)
 
     if (nrow(first_ascending_row) > 0) {
       first_ascending_index <- which(profile_data$datetime == first_ascending_row$datetime)
+      last_base_index <- which(profile_data$datetime == last_base_point$datetime)
 
       # Check if there is a preceding point
       if (first_ascending_index > 1) {
-        preceding_row <- profile_data[first_ascending_index - 1, ]
-        first_ascending_slope <- first_ascending_row$slope
-        preceding_slope <- preceding_row$slope
+        # Start from the first preceding row and continue iterating
+        current_index <- first_ascending_index - 1
+        keep_checking <- TRUE
 
-        # Check the slope rule
-        if (abs(preceding_slope) >= abs(first_ascending_slope) / 2) {
-          profile_data <- profile_data %>%
-            dplyr::mutate(
-              ascending = dplyr::if_else(.data$datetime == preceding_row$datetime, 1, .data$ascending)
-            )
+        while (current_index > 0 && keep_checking) {
+          preceding_row <- profile_data[current_index, ]
+          preceding_row_index <- which(profile_data$datetime == preceding_row$datetime)
+          first_ascending_slope <- first_ascending_row$slope
+          preceding_slope <- preceding_row$slope
+
+          # Check the slope rule
+          if ((preceding_slope >= first_ascending_slope / 2) && (preceding_row_index != last_base_index)) {
+            # Mark the row as ascending and move to the previous row
+            profile_data <- profile_data %>%
+              dplyr::mutate(
+                ascending = dplyr::if_else(.data$datetime == preceding_row$datetime, 1, .data$ascending)
+              )
+
+            # Move to the previous preceding row
+            current_index <- current_index - 1
+          } else {
+            # Stop the loop if the rule is not satisfied
+            keep_checking <- FALSE
+          }
         }
       }
     }
+
   profile_data <- profile_data %>%
     dplyr::select(-tidyselect::any_of(c("transition_to_above", "rise_group")))
 
