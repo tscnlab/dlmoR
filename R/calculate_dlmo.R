@@ -44,7 +44,7 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
   prf$profile<-truncate_base_segment(prf$profile, threshold = threshold)
   #print("profile after base truncation")
   #print(prf$profile, n = 25)
-  prf$profile<-define_intermediate_segment(prf$profile)
+  prf$profile<-define_intermediate_segment(prf$profile, threshold = threshold)
   # print("ouch1")
   # print("profile")
   #print("prof just before roi")
