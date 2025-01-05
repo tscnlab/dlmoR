@@ -1,0 +1,22 @@
+filename <- system.file("output/second_Visit_3_PB_8.csv", package = "dlmoR")
+data<- .read_melatonin_data(filename)
+data<-validate_df_structure(data)
+threshold = 5
+prf<-preprocess_profile(data, threshold = threshold)
+prfplot<-plot_profile(prf, show_threshold = TRUE, threshold = threshold, show_segments = FALSE, show_parallelogram = FALSE, pll_result = prf$plll, show_roi = FALSE, roi = roix, show_dlmoIP = FALSE, dlmoFit = NULL, show_fit = FALSE, show_roi_heatmap = FALSE, show_roi_small = FALSE, show_roi_big = FALSE)
+print(prfplot)
+prf<-define_base_segment(prf, threshold = threshold)
+
+.check_base_profile_consistency(prf, threshold = threshold)
+interval_limit = lubridate::hours(2)
+prf<-define_ascending_segment(prf, threshold = threshold, interval_limit = interval_limit)
+prf<-truncate_ascending_segment(prf)
+prf$profile<-truncate_base_segment(prf$profile, threshold = threshold)
+prf$profile<-define_intermediate_segment(prf$profile, threshold = threshold)
+roix<-define_roi(profile_data = prf$profile, threshold = threshold)
+ipx<-get_inflection(prf$profile, threshold = threshold, roix)
+
+# prfplot<-plot_profile(prf$profile, show_threshold = TRUE, threshold = threshold, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = FALSE, roi = roix, show_dlmoIP = FALSE, dlmoFit = NULL, show_fit = FALSE, show_roi_heatmap = FALSE, show_roi_small = FALSE, show_roi_big = FALSE)
+
+prfplot<-plot_profile(prf$profile, show_threshold = TRUE, threshold = threshold, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx, show_fit = TRUE, show_roi_heatmap = TRUE, show_roi_small = TRUE, show_roi_big = FALSE)
+print(prfplot)

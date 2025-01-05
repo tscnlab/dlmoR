@@ -1,3 +1,5 @@
+# script for processing raw Blume data (melatonin_data.csv), cutting it into individual data files, and then running dlmoR on it and saving the outputs and plots
+
 library(dplyr)
 library(readr)
 library(tidyr)
