@@ -48,20 +48,31 @@ parallelogram_fit <- function(profile_data) {
     .id = "corner"
   )
 
+  #### original calculation : ratio of diagonals
+ # Calculate slopes of the diagonals
+  # diagonal_slopes <- corners_tibble %>%
+  #   dplyr::summarize(
+  #     slope_diag1 = (y[which(corner == "ur")] - y[which(corner == "ll")]) /
+  #       (x[which(corner == "ur")] - x[which(corner == "ll")]),
+  #     slope_diag2 = (y[which(corner == "ul")] - y[which(corner == "lr")]) /
+  #       (x[which(corner == "ul")] - x[which(corner == "lr")])
+  #   ) %>%
+  #     dplyr::mutate(ratio = (slope_diag1 / slope_diag2))
 
-  # corners_tibble <- corners_tibble %>%
-  #   dplyr::mutate(x = dplyr::if_else(corner == "ur", 26, x))
-  # Calculate slopes of the diagonals
-  diagonal_slopes <- corners_tibble %>%
-    dplyr::summarize(
-      slope_diag1 = (y[which(corner == "ur")] - y[which(corner == "ll")]) /
-        (x[which(corner == "ur")] - x[which(corner == "ll")]),
-      slope_diag2 = (y[which(corner == "ul")] - y[which(corner == "lr")]) /
-        (x[which(corner == "ul")] - x[which(corner == "lr")])
-    ) %>%
-    #dplyr::mutate(ratio = abs(slope_diag1 / slope_diag2))
-    dplyr::mutate(ratio = (slope_diag1 / slope_diag2))
-    #dplyr::mutate(ratio = (slope_diag2 / slope_diag1))
+  ### new implementation: ratio of right lateral side to left diagonal
+# Calculate slopes of the diagonals
+  # ratio: lateral/long
+ diagonal_slopes <- corners_tibble %>%
+   dplyr::summarize(
+     slope_diag1 = (y[which(corner == "ur")] - y[which(corner == "lr")]) / # TODO changed ll to lr
+       (x[which(corner == "ur")] - x[which(corner == "lr")]), #TODO changed ll to lr
+     slope_diag2 = (y[which(corner == "ur")] - y[which(corner == "ll")]) /
+       (x[which(corner == "ur")] - x[which(corner == "ll")])
+   ) %>%
+   dplyr::mutate(ratio = (slope_diag1 / slope_diag2))
+
+
+
 
 
   # print("diag slope ratio")
@@ -75,7 +86,8 @@ parallelogram_fit <- function(profile_data) {
     warning("The ratio of the slopes is negative.")
     flag <- TRUE
   }
-  if(diagonal_slopes$ratio < 0.5){
+  # if(diagonal_slopes$ratio < 0.5){ #TODO changed from 0.5 to 0.48
+  if(diagonal_slopes$ratio < 0.48){ #TODO changed from 0.5 to 0.48
     warning("the diagonal slope ratio is less than 1/2")
     flag <- TRUE
   }

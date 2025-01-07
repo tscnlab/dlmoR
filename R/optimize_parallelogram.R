@@ -79,19 +79,33 @@ objective <- function(params, x, y, y0, y1) {
 optimize_parallelogram <- function(x, y) {
   y0 <- min(y)
   y1 <- max(y)
-
+  #
+  # x0_initial <- x[1]
+  # x_slope_2 <- x[2]
+  # x1_initial <- tail(x, n=1)
+  #
+  # slope_initial <- (y1 - y0) / (x_slope_2 - x0_initial)
+  # initial_guess <- c(x0_initial*0.8, x1_initial*1.2, slope_initial)
+  # x0_initial <- x[1]
+  # x_slope_2 <- x[2]
+  # x1_initial <- tail(x, n=1)
+  # slope_initial <- 0.5 * (y1 - y0) / (x_slope_2 - x0_initial)
+  # delta_y <-y1-y0
+  # x_right_initial <- x1_initial - delta_y / slope_initial
+  # initial_guess <- c(x0_initial*0.8, x_right_initial*1.1, slope_initial)
   x0_initial <- x[1]
-  x_slope_2 <- x[2]
   x1_initial <- tail(x, n=1)
-
-  slope_initial <- (y1 - y0) / (x_slope_2 - x0_initial)
-  initial_guess <- c(x0_initial*0.8, x1_initial*1.2, slope_initial)
+  slope_initial <- (y1 - y0) / (x1_initial - x0_initial)
+  delta_y <- y1 -y0
+  x_right_initial <- x1_initial - delta_y / slope_initial
+  initial_guess <- c(x0_initial*0.8, x_right_initial*1.1, slope_initial)
 
   result <- stats::optim(
     par = initial_guess,
     fn = function(params) objective(params, x, y, y0, y1),
+    #method ="L-BFGS"
     method = "SANN",
-    control=list(maxit=100000)
+    control=list(maxit=200000) # TODO only n eed with SANN
   )
 
 
