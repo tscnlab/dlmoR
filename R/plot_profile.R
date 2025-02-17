@@ -1,365 +1,527 @@
-# # last best version
-# plot_base_segment <- function(profile_data) {
-#   ggplot2::ggplot(profile_data, ggplot2::aes(x = .data$datetime, y = .data$melatonin)) +
-#     # Plot a single continuous line for the full profile (mapped to "Full Profile")
-#     ggplot2::geom_line(
-#       ggplot2::aes(color = "Full Profile", group = 1),
-#       size = 1.25
-#     ) +
-#     # Overlay points for the base segment (mapped to "Base Segment")
-#     ggplot2::geom_line(
-#       data = dplyr::filter(profile_data, .data$base == 1),
-#       ggplot2::aes(x = .data$datetime, y = .data$melatonin, color = "Base Segment"),
-#       size = 1.25
-#     ) +
-#     # Format the x-axis to show only time
-#     ggplot2::scale_x_datetime(
-#       labels = scales::date_format("%H:%M"),
-#       date_breaks = "2 hours"
-#     ) +
-#     # Add plot labels
-#     ggplot2::labs(
-#       title = "Melatonin Profile with Base Segment Highlighted",
-#       x = "Time",
-#       y = "Melatonin Concentration"
-#     ) +
-#     ggplot2::theme_minimal() +
-#     # Show the legend on the ascending
-#     ggplot2::theme(legend.position = "ascending")
-# }
+#' Add DLMO Fit Lines to a Melatonin Profile Plot
+#'
+#' This function overlays the estimated DLMO fit lines (base and ascending phase) onto a melatonin profile plot.
+#' The fit can be either **linear** or **parabolic**, depending on the `dlmoFit` results.
+#'
+#' @param plot A ggplot object. The base plot of the melatonin profile.
+#' @param profile_data A dataframe containing melatonin concentration data, with required columns:
+#'   \itemize{
+#'     \item `datetime` (POSIXct) – Time of measurement.
+#'     \item `melatonin` (numeric) – Melatonin concentration levels.
+#'     \item `base` (binary) – Indicator column for base segment points.
+#'     \item `ascending` (binary) – Indicator column for ascending segment points.
+#'   }
+#' @param dlmoFit A list containing the estimated DLMO inflection point and fit parameters, including:
+#'   \itemize{
+#'     \item `inflection_point$x` (decimal hours) – The estimated x-coordinate of the inflection point.
+#'     \item `inflection_point$y` (numeric) – The estimated y-coordinate of the inflection point.
+#'     \item `base_params` (numeric) – Slope of the linear base fit.
+#'     \item `ascending_params` (list) – Either a single slope (for linear) or coefficients `a, b, c` (for parabolic).
+#'   }
+#'
+#' @return A ggplot object with the fitted lines added.
+#' @details
+#' - The **base fit** is always **linear** and is drawn from the start of the base segment to the inflection point.
+#' - The **ascending fit** can be either **linear** or **parabolic**:
+#'   \itemize{
+#'     \item **Linear fit:** A simple straight line extending from the inflection point to the last ascending point.
+#'     \item **Parabolic fit:** A nonlinear curve extending from the inflection point to the last ascending point.
+#'   }
+#' - Uses `posixct_to_decimal()` and `decimal_to_posixct()` to convert between time formats.
+#'
+#' @examples
+#' \dontrun{
+#'   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = datetime, y = melatonin)) +
+#'       ggplot2::geom_point()
+#'   dlmoFit <- list(inflection_point = list(x = 20.5, y = 3.2),
+#'                   base_params = 0.1,
+#'                   ascending_params = list(a = -0.03, b = 2.1, c = 0.5))
+#'   plot_fit(plot, profile_data, dlmoFit)
+#' }
+#' @export
+plot_fit <- function(plot, profile_data, dlmoFit) {
+  # Convert base and ascending timepoints to decimal hours
+  xstart_num <- posixct_to_decimal(dplyr::filter(profile_data, base == 1)$datetime[1], profile_data$datetime)
+  xend_num <- posixct_to_decimal(tail(dplyr::filter(profile_data, ascending == 1)$datetime, n = 1), profile_data$datetime)
 
-# plot_roi <- function(plot, roi){
-#  # add roi segment to plot
-#   plot <- plot +
-#       ggplot2::geom_line() +
-#       ggplot2::geom_segment(
-#         ggplot2::aes(x = roi$x_start, xend = roi$x_end,
-#             y = -0.05, yend = -0.05),
-#         color = "purple", size = 1.5
-#       ) +
-# # add roi rectangle to plot
-#        ggplot2::geom_rect(
-#          ggplot2::aes(xmin = roi$x_start, xmax = roi$x_end,
-#              ymin = roi$y_min, ymax = roi$y_max),
-#          fill = "purple", alpha = 0.01
-#       )
-#   return(plot)
-# }
+  # Convert the inflection point x back to POSIXct for plotting
+  ipx_posix <- decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime)
 
-# add DLMO fit lines to plot
-plot_fit<- function(plot, profile_data, dlmoFit){
-  # convert between  posixct and decimal hours
-  xstart_num = posixct_to_decimal(dplyr::filter(profile_data, base == 1)$datetime[1], profile_data$datetime)
-  xend_num = posixct_to_decimal(tail(dplyr::filter(profile_data, ascending == 1)$datetime,n=1), profile_data$datetime)
-  ipx_posix = decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime)
-
-  # base fit line (by default always linear) #TODO insert warning if fit is not linear for base segment
-  plot<- plot +
-    ggplot2::geom_segment( # m * (x - poi_x) + poi_y
-      x = dplyr::filter(profile_data, base == 1)$datetime[1],
-      #TODO this works!!
-      y = dlmoFit$base_params * (xstart_num - dlmoFit$inflection_point$x) + dlmoFit$inflection_point$y,
-      #y = -.1119806 * (xstart_num - 20.58333) + 0.4,
-      #TODO this works!!!
-      xend = ipx_posix,
-      #xend = decimal_to_posixct(20.58333, profile_data$datetime),
-      # TODO this works!!
+  # --- BASE SEGMENT FIT ---
+  # Always linear: y = m * (x - poi_x) + poi_y
+  plot <- plot +
+    ggplot2::geom_segment(
+      x = dplyr::filter(profile_data, base == 1)$datetime[1],  # Start from first base point
+      y = dlmoFit$base_params * (xstart_num - dlmoFit$inflection_point$x) + dlmoFit$inflection_point$y,  # Compute y-start using linear equation
+      xend = ipx_posix,  # End at the inflection point
       yend = dlmoFit$inflection_point$y,
-      #yend = 0.4,
-      color = "deeppink",
+      color = "darkgray",
       size = 1
     )
 
-  # ascending fit line (either linear or parabolic)
-  # check fit type (length 1 = linear, length 3 = parabolic)
-  if(length(dlmoFit$ascending_params) == 1){
-    plot<- plot +
-      ggplot2::geom_segment( # m * (poi_x - x) + poi_y
-        #ascending_data = dplyr::filter(profile_data, ascending == 1)$datetime,
-        x = ipx_posix,
-        #TODO this works!!
+  # --- ASCENDING SEGMENT FIT ---
+  if (length(dlmoFit$ascending_params) == 1) {  # If ascending fit is linear
+    plot <- plot +
+      ggplot2::geom_segment(
+        x = ipx_posix,  # Start from inflection point
         y = dlmoFit$inflection_point$y,
-        #y = dlmoFit$ascending_params * (dlmoFit$inflection_point$x - xend_num) + dlmoFit$inflection_point$y,
-        #y = -.1119806 * (xstart_num - 20.58333) + 0.4,
-        #TODO this works!!!
-        xend = dplyr::filter(profile_data, ascending == 1)$datetime[length(dplyr::filter(profile_data, ascending == 1)$datetime)],
-        #xend = decimal_to_posixct(20.58333, profile_data$datetime),
-        # TODO this works!!
-        #yend = dlmoFit$inflection_point$y,
-        yend = dplyr::filter(profile_data, ascending == 1)$melatonin[length(dplyr::filter(profile_data, ascending == 1)$melatonin)],
-        #yend = 0.4,
-        color = "deeppink",
+        xend = dplyr::filter(profile_data, ascending == 1)$datetime[length(dplyr::filter(profile_data, ascending == 1)$datetime)],  # Last ascending point
+        yend = dplyr::filter(profile_data, ascending == 1)$melatonin[length(dplyr::filter(profile_data, ascending == 1)$melatonin)],  # Last ascending melatonin value
+        color = "darkgray",
         size = 1
       )
-  }
-  else{ # parabolic fit plot
+  } else {  # If ascending fit is parabolic
     plot <- plot +
       ggplot2::geom_function(
         fun = function(x) {
           # Convert x (POSIXct) to decimal hours
           x_numeric <- posixct_to_decimal(x, profile_data$datetime)
-          #x_numeric <- c(dlmoFit$inflection_point$x, xend_num)
 
-          # Evaluate the polynomial function in decimal hours
-          # TODO THIS WORKS!!!!
-           y <- dlmoFit$ascending_params$a * x_numeric^2 +
-             dlmoFit$ascending_params$b * x_numeric +
-             dlmoFit$ascending_params$c
-          #y<- -3.378851 * x_numeric^2 + 159.363581 * x_numeric - 1848.303449
+          # Evaluate the parabolic function y = ax^2 + bx + c
+          y <- dlmoFit$ascending_params$a * x_numeric^2 +
+            dlmoFit$ascending_params$b * x_numeric +
+            dlmoFit$ascending_params$c
           return(y)
         },
-        color = 'deeppink',
+        color = 'darkgray',
         size = 1,
         n = 1000,
         xlim = c(
-          # TODO this works!
-          decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime),
-          #decimal_to_posixct(20.58333, profile_data$datetime),
-          decimal_to_posixct(xend_num, profile_data$datetime)
+          decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime),  # Inflection point
+          decimal_to_posixct(xend_num, profile_data$datetime)  # Last ascending point
         )
       )
   }
+
+  # Format x-axis with time labels
   ggplot2::scale_x_datetime(
     limits = c(decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime),
                decimal_to_posixct(xend_num, profile_data$datetime)),
-    date_labels = "%H:%M", # Adjust date labels as needed
-    date_breaks = "1 hour" # Adjust date breaks as needed
+    date_labels = "%H:%M",  # Display hour and minute
+    date_breaks = "1 hour"   # Set breaks at every hour
   )
-return(plot)
-}
-# add DLMO inflection point to plot
-plot_ip <- function(plot, profile_data, dlmoip){
-  plot<- plot +
-    ggplot2::geom_point(
-      # TODO This works!!
-      x = decimal_to_posixct(dlmoip$x, profile_data$datetime),
-      #x = decimal_to_posixct(20.58333, profile_data$datetime),
-      # TODO This works!!
-      y = dlmoip$y,
-      #y = 0.4,
-      color = "deeppink4",
-      fill = "deeppink4",
-      size = 3,
-      shape = 23
-    )
+
   return(plot)
 }
 
+
+
+#' Add DLMO Inflection Point to the Plot
+#'
+#' This function adds a **DLMO inflection point** as a distinct marker to an existing melatonin profile plot.
+#' The inflection point is represented by a **filled deep pink square**.
+#'
+#' @param plot A ggplot object. The base plot of the melatonin profile.
+#' @param profile_data A dataframe containing melatonin concentration data, with required columns:
+#'   \itemize{
+#'     \item `datetime` (POSIXct) – Time of measurement.
+#'   }
+#' @param dlmoip A list containing the estimated **inflection point** coordinates:
+#'   \itemize{
+#'     \item `x` (numeric) – The estimated inflection point time (in decimal hours).
+#'     \item `y` (numeric) – The estimated melatonin concentration at the inflection point.
+#'   }
+#'
+#' @return A ggplot object with the inflection point added.
+#'
+#' @details
+#' - The **inflection point** represents the DLMO time stamp, at which melatonin concentration begins to rise significantly.
+#' - The function **converts** the inflection point `x` from **decimal hours** back to **POSIXct** for proper placement.
+#' - The point is **styled** as a **deep pink** filled square.
+#'
+#' @examples
+#' \dontrun{
+#'   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = datetime, y = melatonin)) +
+#'       ggplot2::geom_point()
+#'   dlmoip <- list(x = 20.5, y = 3.2)  # Inflection point at 20.5 decimal hours, y = 3.2 pg/mL
+#'   plot_ip(plot, profile_data, dlmoip)
+#' }
+#' @export
+plot_ip <- function(plot, profile_data, dlmoip) {
+  plot <- plot +
+    ggplot2::geom_point(
+      x = decimal_to_posixct(dlmoip$x, profile_data$datetime),  # Convert decimal hours to POSIXct for x-axis
+      y = dlmoip$y,  # Inflection point melatonin concentration
+      color = "deeppink4",  # Outline color
+      fill = "deeppink4",  # Fill color
+      size = 3,  # Point size
+      shape = 23  # Square shape with fill
+    )
+
+  return(plot)
+}
+
+
+
+#' Add Region of Interest (ROI) to a Plot
+#'
+#' This function overlays the **Region of Interest (ROI)** on an existing melatonin profile plot.
+#' It adds a **horizontal segment** to mark the ROI range and optionally a **shaded rectangle** to highlight the full area that is parsed during the DLMO search.
+#'
+#' @param plot A ggplot object. The base plot to which the ROI should be added.
+#' @param roi A list containing the **Region of Interest (ROI) coordinates**:
+#'   \itemize{
+#'     \item `x_start` (POSIXct) – The starting time of the ROI.
+#'     \item `x_end` (POSIXct) – The ending time of the ROI.
+#'     \item `y_min` (numeric) – The minimum melatonin concentration in the ROI.
+#'     \item `y_max` (numeric) – The maximum melatonin concentration in the ROI.
+#'   }
+#' @param roi_line_only Logical. If `TRUE`, only the **horizontal segment** is plotted.
+#'   If `FALSE`, a **semi-transparent rectangle** is added to indicate the **full ROI region**.
+#'
+#' @return A ggplot object with the ROI overlay.
+#'
+#' @details
+#' - The **horizontal segment** is plotted at `y = -0.2` to clearly mark the time range of the ROI.
+#' - If `roi_line_only = FALSE`, the **rectangle spans** from `y_min` to `y_max` with a light **orchid3** fill.
+#'
+#' @examples
+#' \dontrun{
+#'   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = datetime, y = melatonin)) +
+#'       ggplot2::geom_point()
+#'   roi <- list(x_start = as.POSIXct("2024-04-16 18:00:00"),
+#'               x_end = as.POSIXct("2024-04-16 22:00:00"),
+#'               y_min = 0.2, y_max = 2.5)
+#'   plot_roi(plot, roi, roi_line_only = FALSE)
+#' }
+#' @export
 plot_roi <- function(plot, roi, roi_line_only) {
-  # Add ROI segment and rectangle to the plot
+  # Add the ROI horizontal segment to indicate the time range
   plot <- plot +
     ggplot2::geom_segment(
-      x = roi$x_start, xend = roi$x_end,
-      y = -0.2, yend = -0.2,
-      color = "orchid3", size = 1.5
-    ) +
-    if(!roi_line_only){
-    ggplot2::geom_rect(
-      xmin = roi$x_start, xmax = roi$x_end,
-      ymin = roi$y_min, ymax = roi$y_max,
-      fill = "orchid3", alpha = 0.01
-    )}
+      x = roi$x_start, xend = roi$x_end,  # Horizontal ROI range
+      y = -0.2, yend = -0.2,  # Fixed y-position for clarity
+      color = "orchid3", size = 1.5  # Color and thickness of the line
+    )
+
+  # Optionally add a shaded rectangle for the full ROI region
+  if (!roi_line_only) {
+    plot <- plot +
+      ggplot2::geom_rect(
+        xmin = roi$x_start, xmax = roi$x_end,  # Time range of ROI
+        ymin = roi$y_min, ymax = roi$y_max,  # Melatonin concentration range
+        fill = "orchid3", alpha = 0.01  # Light transparent shading
+      )
+  }
+
   return(plot)
 }
 
-plot_roi_heatmap <- function(plot, data = NULL, roi_grid_big = NULL, roi_grid_small = NULL, residuals_big = NULL, residuals_small = NULL, show_roi_big = FALSE, show_roi_small = FALSE){ #TODO make this cleaner
-  if(show_roi_big & !is.null(roi_grid_big)){
-print("allo!")
-  # convert grid x coordinate to datetime
+
+
+#' Add ROI Heatmap to a Plot
+#'
+#' This function overlays a **heatmap of residuals** on a melatonin profile plot, visualizing
+#' the **goodness of fit** across the **Region of Interest (ROI)** search grid.
+#'
+#' @param plot A ggplot object. The base plot to which the heatmap should be added.
+#' @param data A dataframe containing the melatonin profile with `datetime` and `melatonin` values.
+#' @param roi_grid_big A dataframe containing **coarse grid points** (large-scale ROI search).
+#' @param roi_grid_small A dataframe containing **fine grid points** (refined ROI search).
+#' @param residuals_big A numeric vector of residuals corresponding to `roi_grid_big`.
+#' @param residuals_small A numeric vector of residuals corresponding to `roi_grid_small`.
+#' @param show_roi_big Logical. If `TRUE`, overlays **coarse grid residuals** as a heatmap.
+#' @param show_roi_small Logical. If `TRUE`, overlays **fine grid residuals** as a heatmap.
+#'
+#' @return A ggplot object with the residual heatmap overlay.
+#'
+#' @details
+#' - **Coarse Grid (`roi_grid_big`)**: Provides an **initial broad search** for the inflection point.
+#' - **Fine Grid (`roi_grid_small`)**: Focuses on **refining** the best-fit region.
+#' - The **color gradient** represents residual values, with lower residuals indicating **better fit**.
+#' - Residuals are **log-transformed** for visualization.
+#'
+#' @examples
+#' \dontrun{
+#'   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = datetime, y = melatonin)) +
+#'       ggplot2::geom_point()
+#'   plot <- plot_roi_heatmap(plot, data = profile_data,
+#'                            roi_grid_big = grid_big, residuals_big = res_big,
+#'                            show_roi_big = TRUE)
+#' }
+#' @export
+plot_roi_heatmap <- function(plot, data = NULL, roi_grid_big = NULL, roi_grid_small = NULL,
+                             residuals_big = NULL, residuals_small = NULL,
+                             show_roi_big = FALSE, show_roi_small = FALSE) {
+  # Ensure at least one grid is selected for visualization
+  if (show_roi_big & !is.null(roi_grid_big) & !show_roi_small) {
+
+    # Convert x-coordinates from decimal hours to POSIXct timestamps
     dt_roi_grid_big <- data.frame(
       x = decimal_to_posixct(roi_grid_big$x, data$datetime),
       y = roi_grid_big$y
     )
-  #print(dt_roi_grid_big)
-  plot <- plot + ggplot2::geom_point(data=dt_roi_grid_big, ggplot2::aes(x = x, y = y, color = log(residuals_big))) +
-    ggplot2::scale_color_gradient(low = "deeppink", high = "cyan")  # Color gradient from blue to red
-    #ggplot2::scale_color_gradient(low = "orchid1", high = "orchid4")  # Color gradient from blue to red
-  } else if(show_roi_small & !is.null(roi_grid_small)){
-print("hi!")
-    # convert grid x coordinate to datetime
+
+    # Add coarse grid heatmap to plot
+    plot <- plot + ggplot2::geom_point(
+      data = dt_roi_grid_big, ggplot2::aes(x = x, y = y, color = log(residuals_big)),
+      size = 1.25
+    ) +
+      ggplot2::scale_color_gradient(low = "cyan", high = "deeppink")  # Color gradient from blue to pink
+  }
+
+  # If fine grid heatmap is selected
+  else if (show_roi_small & !is.null(roi_grid_small) & !show_roi_big) {
+    # Convert x-coordinates from decimal hours to POSIXct timestamps
     dt_roi_grid_small <- data.frame(
       x = decimal_to_posixct(roi_grid_small$x, data$datetime),
       y = roi_grid_small$y
     )
 
-    plot <- plot + ggplot2::geom_point(data=dt_roi_grid_small, ggplot2::aes(x = x, y = y, color = log(residuals_small)), size = 0.5) +
-      ggplot2::scale_color_gradient(low = "deeppink",
-                                    high = "cyan",
-                                    guide = "colorbar")  # Color gradient from blue to red
-  }
-  }
-
-
-plot_parallelogram <- function(plot, profile_data, pll_result) {
-  if (is.null(pll_result)) {
-    stop("pll_result must be provided to plot the parallelogram.")
-  }
-
-  # Extract optimized parameters
-  x0_posix <- pll_result$pll_datetime_0
-  x1_posix <- pll_result$pll_datetime_1
-  slope <- pll_result$pll_slope
-
-  # # Filter for ascending data
-  # profile_data_ascending <- profile_data %>% dplyr::filter(.data$ascending == 1)
-  # y0 <- min(profile_data_ascending$melatonin)
-  # y1 <- max(profile_data_ascending$melatonin)
-  #
-  # # Convert datetime to numeric for parallelogram calculations
-  # x0_numeric <- posixct_to_decimal(x0_posix, profile_data$datetime)
-  # x1_numeric <- posixct_to_decimal(x1_posix, profile_data$datetime)
-  #
-  #
-  # # Get corners of the parallelogram
-  # corners <- get_corners(x0_numeric, y0, x1_numeric, y1, slope)
-    corners <- pll_result$corners
-  # Convert numeric x-values back to datetime for plotting
-  corners_datetime <- lapply(corners, function(corner) {
-    list(datetime = decimal_to_posixct(corner[1], profile_data$datetime),
-         melatonin = corner[2])
-  })
-
-
-  # Create a dataframe for the parallelogram
-  parallelogram_df <- do.call(rbind, lapply(corners_datetime, as.data.frame))
-
-  # TODO commented out 13.12.2024
-  # Add the parallelogram as a polygon to the plot
-  # plot <- plot +
-  #   ggplot2::geom_polygon(
-  #     data = parallelogram_df,
-  #     ggplot2::aes(x = .data$datetime, y = .data$melatonin),
-  #     fill = "red", alpha = 0.3
-  #   )
-  # Extract diagonal points
-  diagonal_1 <- parallelogram_df[c(1, 3), ]  # Connect corner 1 and 3
-  diagonal_2 <- parallelogram_df[c(2, 4), ]  # Connect corner 2 and 4
-
-  # Add the parallelogram as a polygon to the plot
-  plot <- plot +
-    ggplot2::geom_polygon(
-      data = parallelogram_df,
-      ggplot2::aes(x = .data$datetime, y = .data$melatonin),
-      fill = "red", alpha = 0.1
+    # Add fine grid heatmap to plot
+    plot <- plot + ggplot2::geom_point(
+      data = dt_roi_grid_small, ggplot2::aes(x = x, y = y, color = log(residuals_small)),
+      size = 0.5
     ) +
-    # Add diagonals as lines
-    ggplot2::geom_line(
-      data = diagonal_1,
-      ggplot2::aes(x = .data$datetime, y = .data$melatonin),
-      color = "red", linetype = "dashed", size = 0.5
-    ) +
-    ggplot2::geom_line(
-      data = diagonal_2,
-      ggplot2::aes(x = .data$datetime, y = .data$melatonin),
-      color = "red", linetype = "dashed", size = 0.5
+      ggplot2::scale_color_gradient(low = "cyan", high = "deeppink", guide = "colorbar")
+  }
+
+  # If both coarse and fine grids are selected
+  else if (show_roi_big & show_roi_small) {
+    print("Displaying both coarse and fine grid heatmaps")
+
+    # Convert x-coordinates from decimal hours to POSIXct timestamps
+    dt_roi_grid_big <- data.frame(
+      x = decimal_to_posixct(roi_grid_big$x, data$datetime),
+      y = roi_grid_big$y
     )
 
+    dt_roi_grid_small <- data.frame(
+      x = decimal_to_posixct(roi_grid_small$x, data$datetime),
+      y = roi_grid_small$y
+    )
+
+    # Add both heatmaps to plot
+    plot <- plot +
+      ggplot2::geom_point(data = dt_roi_grid_big, ggplot2::aes(x = x, y = y, color = log(residuals_big))) +
+      ggplot2::scale_color_gradient(low = "cyan", high = "deeppink") +
+      ggplot2::geom_point(data = dt_roi_grid_small, ggplot2::aes(x = x, y = y, color = log(residuals_small)), size = 0.5) +
+      ggplot2::scale_color_gradient(low = "cyan", high = "deeppink", guide = "colorbar")
+  }
 
   return(plot)
 }
 
-plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3, show_segments = TRUE, show_parallelogram = FALSE, pll_result = NULL, show_roi = FALSE, roi_line_only = TRUE, roi = NULL, show_dlmoIP = TRUE, dlmoFit = NULL, show_fit = FALSE, show_roi_heatmap = FALSE, show_roi_small = FALSE, show_roi_big = FALSE) {
-  # Define the title conditionally
+
+
+#' Overlay a Parallelogram on a Melatonin Profile Plot
+#'
+#' This function adds a **parallelogram visualization** to a melatonin profile plot.
+#' The best-fit parallelogram encompasses all ascending points with the smallest area parallelogram
+#' possible. The ratio of parallelogram latera edge to long diagonal is used as a criterion
+#' for trimming the ascending region to ensure that only a sufficiently fast enough melatonin
+#' rise is taken into consideration when fitting the profile and searching for the DLMO point.
+#'
+#' @param plot A ggplot object. The base plot to which the parallelogram will be added.
+#' @param profile_data A dataframe containing melatonin concentration data with `datetime` values.
+#' @param pll_result A list containing the **optimized parallelogram parameters**, including:
+#'   \itemize{
+#'     \item `pll_datetime_0`: POSIXct timestamp for the left boundary.
+#'     \item `pll_datetime_1`: POSIXct timestamp for the right boundary.
+#'     \item `pll_slope`: Numeric. The slope of the parallelogram's edges.
+#'     \item `corners`: A list of four corner coordinates (`ll`, `lr`, `ur`, `ul`).
+#'   }
+#' @return A ggplot object with the parallelogram overlay.
+#'
+#' @details
+#' - The **parallelogram** is generated using the **optimized fit** from `parallelogram_fit()`.
+#' - The **edges** of the parallelogram indicate a **bounded region of interest (ROI)**.
+#' - Two **diagonal dashed lines** highlight the **shape constraints** used during optimization.
+#' - Uses **red fill** with **transparency (alpha = 0.1)** to avoid obscuring data.
+#'
+#' @examples
+#' \dontrun{
+#'   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = datetime, y = melatonin)) +
+#'       ggplot2::geom_point()
+#'   plot <- plot_parallelogram(plot, profile_data, pll_result)
+#' }
+#' @export
+plot_parallelogram <- function(plot, profile_data, pll_result) {
+  # Ensure parallelogram results are provided
+  if (is.null(pll_result)) {
+    stop("pll_result must be provided to plot the parallelogram.")
+  }
+
+  # Extract optimized parallelogram parameters
+  x0_posix <- pll_result$pll_datetime_0  # Left boundary
+  x1_posix <- pll_result$pll_datetime_1  # Right boundary
+  slope <- pll_result$pll_slope          # Edge slope
+  corners <- pll_result$corners          # Corner coordinates
+
+  # Convert corner x-values from numeric (decimal hours) to POSIXct timestamps
+  corners_datetime <- lapply(corners, function(corner) {
+    list(datetime = decimal_to_posixct(corner[1], profile_data$datetime),
+         melatonin = corner[2])  # Preserve melatonin concentration
+  })
+
+  # Create a dataframe for the parallelogram
+  parallelogram_df <- do.call(rbind, lapply(corners_datetime, as.data.frame))
+
+  # Identify diagonal points (1 → 3 and 2 → 4) for visualization
+  diagonal_1 <- parallelogram_df[c(1, 3), ]  # Connect lower-left to upper-right
+  diagonal_2 <- parallelogram_df[c(2, 4), ]  # Connect lower-right to upper-left
+
+  # Add parallelogram overlay and diagonals to the plot
+  plot <- plot +
+    ggplot2::geom_polygon(
+      data = parallelogram_df,
+      ggplot2::aes(x = .data$datetime, y = .data$melatonin),
+      fill = "red", alpha = 0.1  # Semi-transparent red fill
+    ) +
+    ggplot2::geom_line(
+      data = diagonal_1,
+      ggplot2::aes(x = .data$datetime, y = .data$melatonin),
+      color = "red", linetype = "dashed", size = 0.5  # Dashed diagonal line 1
+    ) +
+    ggplot2::geom_line(
+      data = diagonal_2,
+      ggplot2::aes(x = .data$datetime, y = .data$melatonin),
+      color = "red", linetype = "dashed", size = 0.5  # Dashed diagonal line 2
+    )
+
+  return(plot)
+}
+
+
+#' Generate a Melatonin Profile Plot
+#'
+#' This function creates a plot of melatonin concentration over time with various
+#' optional overlays, including **DLMO fit lines, DLMO time stamp, threshold lines,**
+#' **melatonin profile segment highlights, best-fit parallelogram, and ROI residual heatmaps**.
+#'
+#' @param profile_data A dataframe containing melatonin concentration data with `datetime` values.
+#' @param show_threshold Logical. If `TRUE`, adds a **horizontal threshold line** at `threshold` value.
+#' @param threshold Numeric. The threshold value for melatonin concentration (default `2.3 pg/mL`).
+#' @param show_segments Logical. If `TRUE`, highlights **base, intermediate, and ascending segments**.
+#' @param show_parallelogram Logical. If `TRUE`, overlays a **parallelogram** on the plot.
+#' @param pll_result List containing parallelogram parameters, including:
+#'   \itemize{
+#'     \item `pll_datetime_0`: POSIXct timestamp for the left boundary.
+#'     \item `pll_datetime_1`: POSIXct timestamp for the right boundary.
+#'     \item `pll_slope`: Numeric. The slope of the parallelogram edges.
+#'     \item `corners`: List of corner coordinates (`ll`, `lr`, `ur`, `ul`).
+#'   }
+#' @param show_roi Logical. If `TRUE`, overlays the **region of interest (ROI)**.
+#' @param roi_line_only Logical. If `TRUE`, only plots the **ROI boundaries**, not the shaded area.
+#' @param roi List containing ROI boundaries (`x_start`, `x_end`, `y_min`, `y_max`).
+#' @param show_dlmoIP Logical. If `TRUE`, marks the **DLMO inflection point**.
+#' @param dlmoFit List containing **DLMO fit results**, including:
+#'   \itemize{
+#'     \item `inflection_point`: A list with `x` (decimal hours) and `y` (melatonin level).
+#'     \item `base_params`: Parameters of the **base segment fit**.
+#'     \item `ascending_params`: Parameters of the **ascending segment fit**.
+#'     \item `grid_big`: Coarse search grid for inflection point.
+#'     \item `grid_small`: Fine search grid for inflection point.
+#'     \item `res_big`: Residuals from coarse grid search.
+#'     \item `res_small`: Residuals from fine grid search.
+#'   }
+#' @param show_fit Logical. If `TRUE`, overlays **DLMO fit lines**.
+#' @param show_roi_heatmap Logical. If `TRUE`, adds a **heatmap** for **ROI residuals**.
+#' @param show_roi_small Logical. If `TRUE`, plots the **fine-resolution** ROI grid.
+#' @param show_roi_big Logical. If `TRUE`, plots the **coarse-resolution** ROI grid.
+#' @return A `ggplot2` object with the melatonin profile and optional overlays.
+#'
+#' @details
+#' - This function **plots melatonin concentration** over time with flexible overlays.
+#' - The **DLMO fit** is visualized as a **piecewise-linear or parabolic** fit.
+#' - The **inflection point** is highlighted using a **pink marker**.
+#' - A **parallelogram** can be overlaid to show **truncated ascending segments**.
+#' - The **ROI heatmap** provides a **residuals-based visualization** of the inflection search.
+#'
+#' @examples
+#' \dontrun{
+#'   plot <- plot_profile(profile_data, show_threshold = TRUE, show_segments = TRUE, show_dlmoIP = TRUE)
+#'   print(plot)
+#' }
+#' @export
+plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
+                         show_segments = TRUE, show_parallelogram = FALSE, pll_result = NULL,
+                         show_roi = FALSE, roi_line_only = TRUE, roi = NULL,
+                         show_dlmoIP = TRUE, dlmoFit = NULL, show_fit = FALSE,
+                         show_roi_heatmap = FALSE, show_roi_small = FALSE, show_roi_big = FALSE) {
+
+  # Define the title conditionally based on DLMO Fit presence
   plot_title <- if (!is.null(dlmoFit)) {
     dlmo_time <- hms::as_hms(decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime))
-
     paste("Melatonin profile\nDLMO time:", as.character(dlmo_time))
   } else {
     "Melatonin profile"
   }
 
+  # Initialize base plot
   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = .data$datetime, y = .data$melatonin)) +
-    # Plot a single dotted line for the full profile (mapped to "Full Profile")
-    ggplot2::geom_point(
-      color = 'grey',
-      size = 2
-    ) + ggplot2::geom_line(color = 'grey', linetype = "dotted", size = 1)+
-    # Format the x-axis to show only time
-    ggplot2::scale_x_datetime(
-      labels = scales::date_format("%H:%M"),
-      date_breaks = "2 hours"
-    ) +
-    # Add plot labels
-    ggplot2::labs(
-      title = plot_title,
-      x = "Local time [hh:mm]",
-      y = "Melatonin concentration [pg/mL]"
-    ) +
+    ggplot2::geom_point(color = 'grey', size = 2) +  # Scatter plot of raw data
+    ggplot2::geom_line(color = 'grey', linetype = "dotted", size = 1) +  # Connect points with dotted line
+    ggplot2::scale_x_datetime(labels = scales::date_format("%H:%M"), date_breaks = "2 hours") +  # Format x-axis
+    ggplot2::labs(title = plot_title, x = "Local time [hh:mm]", y = "Melatonin concentration [pg/mL]") +
     ggplot2::theme_minimal() +
-    # Show the legend on the ascending
     ggplot2::theme(legend.position = "ascending") +
-    # Customize line types in the legend
     ggplot2::scale_linetype_manual(values = c("Full Profile" = "dotted"))
 
-
-
-
-  # Add parallelogram overlay if show_parallelogram is TRUE
+  # Overlay Parallelogram if enabled
   if (show_parallelogram) {
     plot <- plot_parallelogram(plot, profile_data, pll_result)
   }
 
-  # Add region of interest overlay, if show_roi is TRUE
-  if (show_roi){
+  # Overlay Region of Interest (ROI)
+  if (show_roi) {
     plot <- plot_roi(plot, roi, roi_line_only)
   }
 
-  # Add ROI heatmap, if show_roi_heatmap is TRUE
-
-  if (show_roi_heatmap){
-    plot <- plot_roi_heatmap(plot, data = profile_data, roi_grid_big = dlmoFit$grid_big, roi_grid_small = dlmoFit$grid_small, residuals_big = dlmoFit$res_big,residuals_small = dlmoFit$res_small, show_roi_small = show_roi_small, show_roi_big = show_roi_big)
+  # Add ROI heatmap if enabled
+  if (show_roi_heatmap) {
+    plot <- plot_roi_heatmap(plot, data = profile_data, roi_grid_big = dlmoFit$grid_big,
+                             roi_grid_small = dlmoFit$grid_small, residuals_big = dlmoFit$res_big,
+                             residuals_small = dlmoFit$res_small, show_roi_small = show_roi_small,
+                             show_roi_big = show_roi_big)
   }
 
-  # Plot a single dotted line for the full profile (mapped to "Full Profile")
-  plot<- plot + ggplot2::geom_line(color = 'grey', linetype = "dotted", size = 1)
+  # Re-add full profile line to ensure clarity
+  plot <- plot + ggplot2::geom_line(color = 'grey', linetype = "dotted", size = 1)
 
-  # Add DLMO fit lines
-  if (show_fit){
-    plot<- plot_fit(plot, profile_data, dlmoFit)
+  # Overlay DLMO Fit if enabled
+  if (show_fit) {
+    plot <- plot_fit(plot, profile_data, dlmoFit)
   }
 
-  # Add DLMO inflection point
-  if (show_dlmoIP){
-    plot<- plot_ip(plot,profile_data, dlmoFit$inflection_point)
+  # Mark Inflection Point (DLMO) if enabled
+  if (show_dlmoIP) {
+    plot <- plot_ip(plot, profile_data, dlmoFit$inflection_point)
   }
 
-  # Add threshold line
-  if (show_threshold){
-    plot<- plot + ggplot2::geom_hline(ggplot2::aes(yintercept = threshold), color = "burlywood3", size = 1)
+  # Add threshold line if enabled
+  if (show_threshold) {
+    plot <- plot + ggplot2::geom_hline(ggplot2::aes(yintercept = threshold), color = "burlywood3", size = 1)
   }
 
-  # Add base and ascending segments if show_segments is TRUE
+  # Highlight Base and Ascending Segments
   if (show_segments) {
     plot <- plot +
-      # Overlay points for the base segment (mapped to "Base Segment")
       ggplot2::geom_point(
         data = dplyr::filter(profile_data, .data$base == 1),
         ggplot2::aes(x = .data$datetime, y = .data$melatonin, color = "Base Segment"),
         color = '#56B4E9',
         size = 2
       ) +
-      # Overlay points for the ascending segment (mapped to "Ascending Segment")
       ggplot2::geom_point(
         data = dplyr::filter(profile_data, .data$ascending == 1),
         ggplot2::aes(x = .data$datetime, y = .data$melatonin, color = "Ascending Segment"),
         color = 'lightgreen',
         size = 2
-      )+
-      if("intermediate"%in%colnames(profile_data)){
-        # Overlay points for the intermediate segment (mapped to "Intermediate Segment")
+      )
+
+    # Highlight Intermediate Segment if present
+    if ("intermediate" %in% colnames(profile_data)) {
+      plot <- plot +
         ggplot2::geom_point(
           data = dplyr::filter(profile_data, .data$intermediate == 1),
           ggplot2::aes(x = .data$datetime, y = .data$melatonin, color = "Intermediate Segment"),
           color = 'darkgoldenrod1',
           size = 2
         )
-      }
+    }
   }
 
-
-
-
-  # Return the plot object
+  # Return the final plot
   return(plot)
 }
-

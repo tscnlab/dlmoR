@@ -1,132 +1,181 @@
-# define_ascending_segment <- function(profile_data, threshold = 2.3, interval_limit = lubridate::hours(2)) {
-#   # Ensure datetime is sorted
-#   profile_data <- profile_data %>% dplyr::arrange(.data$datetime)
-#
-#   # Identify segments crossing the threshold
-#   profile_data <- profile_data %>%
-#     dplyr::mutate(
-#       transition_to_above = .data$melatonin > threshold &
-#         dplyr::lag(.data$melatonin <= threshold, default = FALSE)
-#     )
-#
-#   # Assign groups for each rise above the threshold
-#   profile_data <- profile_data %>%
-#     dplyr::mutate(
-#       rise_group = dplyr::if_else(.data$transition_to_above,
-#                                   cumsum(.data$transition_to_above),
-#                                   NA_integer_)
-#     )
-#
-#   # Fill rise_group downwards
-#   profile_data <- profile_data %>%
-#     tidyr::fill(.data$rise_group, .direction = "down")
-#
-#   # Filter valid rise groups by time intervals
-#   rise_times <- profile_data %>%
-#     dplyr::filter(!is.na(.data$rise_group)) %>%
-#     dplyr::group_by(.data$rise_group) %>%
-#     dplyr::summarize(start_time = min(.data$datetime), .groups = "drop")
-#
-#   rise_times <- rise_times %>%
-#     dplyr::mutate(interval = .data$start_time - dplyr::lag(.data$start_time))
-#
-#   valid_rise_groups <- rise_times %>%
-#     dplyr::filter(is.na(.data$interval) | .data$interval >= interval_limit) %>%
-#     dplyr::pull(.data$rise_group)
-#
-#   # Add the ascending column based on valid rise groups
-#   profile_data <- profile_data %>%
-#     dplyr::mutate(
-#       ascending = dplyr::if_else(.data$rise_group %in% valid_rise_groups & .data$melatonin > threshold, 1, 0, 0)
-#     )
-#
-#   # Drop intermediate columns
-#   profile_data <- profile_data %>%
-#     dplyr::select(-transition_to_above, -rise_group)
-#
-#   # Return the profile tibble with the ascending column added
-#   return(profile_data)
-# }
+#' Define the ascending segment of a melatonin profile
+#'
+#' This function identifies and labels the ascending segment of a melatonin profile,
+#' where melatonin concentrations rise above a specified threshold and satisfy specific
+#' time interval and slope conditions. It also incorporates additional rules to refine
+#' the identification of ascending points.
+#'
+#' @param profile_data A tibble containing melatonin profile data with the following columns:
+#'   - `datetime`: A POSIXct column representing timestamps for each measurement.
+#'   - `melatonin`: A numeric column representing melatonin concentrations.
+#'   - `base`: A binary column (1 for base segments, 0 otherwise) indicating low melatonin baseline segments.
+#'   - `slope`: A numeric column representing the rate of change in melatonin concentrations between consecutive points.
+#' @param threshold Numeric. The melatonin concentration threshold to define the ascending segment (default = 2.3 pg/mL).
+#' @param interval_limit Numeric or lubridate duration. Specifies the minimum time interval between
+#' consecutive threshold crossings to consider them as independent ascending events. If numeric, it is interpreted as hours (default = 2 hours).
+#' @return A tibble with the following columns:
+#'   - `datetime`: The original timestamps.
+#'   - `melatonin`: The input melatonin concentrations.
+#'   - `base`: The input base column (1 for base segments, 0 otherwise).
+#'   - `slope`: The calculated slope of the profile.
+#'   - `ascending`: A binary indicator (1 for points in the ascending segment, 0 otherwise).
+#'
+#' The function implements the following rules:
+#' 1. Identifies segments where melatonin rises above the threshold.
+#' 2. Filters valid threshold crossings based on a specified time interval (`interval_limit`).
+#' 3. Refines ascending points by incorporating slope checks to ensure steep transitions.
+#' 4. Includes segments between steepest points as part of the ascending segment.
+#' 5. Ensures the segment immediately before the first ascending point is included if its slope meets the defined criteria.
+#'
+#' @examples
+#' # Example data
+#' library(dplyr)
+#' library(lubridate)
+#'
+#' profile_data <- tibble(
+#'   datetime = seq(ymd_hms("2023-01-01 20:00:00"), by = "15 min", length.out = 12),
+#'   melatonin = c(1.2, 1.4, 1.5, 1.7, 2.0, 2.3, 2.8, 3.5, 4.2, 4.7, 5.0, 5.2),
+#'   slope = c(NA, diff(c(1.2, 1.4, 1.5, 1.7, 2.0, 2.3, 2.8, 3.5, 4.2, 4.7, 5.0, 5.2))),
+#'   base = c(1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0)
+#' )
+#'
+#' # Define the ascending segment using a threshold of 2.3
+#' ascending_segment <- define_ascending_segment(
+#'   profile_data = profile_data,
+#'   threshold = 2.3,
+#'   interval_limit = lubridate::hours(2)
+#' )
+#'
+#' # View the results
+#' print(ascending_segment)
+#'
+#' @export
 
-define_ascending_segment_good <- function(profile_data, threshold = 2.3, interval_limit = lubridate::hours(2)) {
-  # Ensure datetime is sorted
+define_ascending_segment <- function(profile_data, threshold = 2.3, interval_limit = lubridate::hours(2)) {
+  # Ensure datetime is sorted in ascending order
   profile_data <- profile_data %>% dplyr::arrange(.data$datetime)
 
+  # Identify the melatonin value of the last base point (where base == 1)
+  last_base_point <- profile_data %>%
+    dplyr::filter(.data$base == 1) %>%
+    dplyr::slice_tail(n = 1)
 
-  # Rule 1: Segment that crosses threshold and all subsequent segments if above threshold are "ascending"
-  # Identify segments crossing the threshold
-  profile_data <- profile_data %>%
+  # Extract the melatonin value of the last base point or set to NA if no base exists
+  last_base_melatonin <- if (nrow(last_base_point) > 0) last_base_point$melatonin else NA_real_
+
+  # Exclude base segments before threshold checks
+  non_base_data <- profile_data %>%
+    dplyr::filter(.data$base != 1)
+
+  # Identify transitions where melatonin rises above the threshold
+  # Transition occurs if melatonin exceeds the threshold and the previous value was below or equal to the threshold
+  non_base_data <- non_base_data %>%
     dplyr::mutate(
       transition_to_above = .data$melatonin > threshold &
-        dplyr::lag(.data$melatonin <= threshold, default = FALSE)
+        (dplyr::lag(.data$melatonin, default = last_base_melatonin) <= threshold)
     )
 
-  # Assign groups for each rise above the threshold
-  profile_data <- profile_data %>%
+  # Assign groups to each rise above the threshold
+  # Groups are defined cumulatively based on transitions
+  non_base_data <- non_base_data %>%
     dplyr::mutate(
       rise_group = dplyr::if_else(.data$transition_to_above,
                                   cumsum(.data$transition_to_above),
                                   NA_integer_)
-    )
+    ) %>%
+    tidyr::fill(.data$rise_group, .direction = "down") # Propagate group values downwards
 
-  # Fill rise_group downwards
-  profile_data <- profile_data %>%
-    tidyr::fill(.data$rise_group, .direction = "down")
-
-  # Filter valid rise groups by time intervals
-  rise_times <- profile_data %>%
+  # Calculate the start time of each rise group
+  rise_times <- non_base_data %>%
     dplyr::filter(!is.na(.data$rise_group)) %>%
     dplyr::group_by(.data$rise_group) %>%
     dplyr::summarize(start_time = min(.data$datetime), .groups = "drop")
 
+  # Compute the time intervals between consecutive rise groups
   rise_times <- rise_times %>%
     dplyr::mutate(interval = .data$start_time - dplyr::lag(.data$start_time))
 
+  # Identify valid rise groups based on the interval limit
   valid_rise_groups <- rise_times %>%
     dplyr::filter(is.na(.data$interval) | .data$interval >= interval_limit) %>%
     dplyr::pull(.data$rise_group)
 
-  # Add the ascending column based on valid rise groups
-  profile_data <- profile_data %>%
+  # Mark rows as ascending if they belong to valid rise groups and exceed the threshold
+  non_base_data <- non_base_data %>%
     dplyr::mutate(
       ascending = dplyr::if_else(.data$rise_group %in% valid_rise_groups & .data$melatonin > threshold, 1, 0)
     )
 
-  # Add the extra rule: check if the previous point before the first ascending is steep enough
+  # Merge the updated ascending column back into the original profile_data
+  profile_data <- profile_data %>%
+    dplyr::left_join(non_base_data %>% dplyr::select(datetime, ascending), by = "datetime") %>%
+    dplyr::mutate(ascending = dplyr::coalesce(.data$ascending, 0)) # Fill NA with 0 for non-ascending rows
+
+  # Exclude base segments to identify steepest slopes
+  non_base_data <- profile_data %>%
+    dplyr::filter(.data$base != 1)
+
+  # Identify the steepest slope among non-base rows
+  steepest_slope <- max(non_base_data$slope, na.rm = TRUE)
+
+  # Identify segments with slopes >= half of the steepest slope
+  steep_segments <- non_base_data %>%
+    dplyr::filter(.data$slope >= steepest_slope / 2) %>%
+    dplyr::pull(.data$datetime)
+
+  # Include segments between the steepest points as part of the ascending segment
+  if (length(steep_segments) > 1) {
+    min_datetime <- min(steep_segments)
+    max_datetime <- max(steep_segments)
+
+    profile_data <- profile_data %>%
+      dplyr::mutate(
+        ascending = dplyr::if_else(
+          (.data$datetime >= min_datetime & .data$datetime <= max_datetime & .data$base != 1) | .data$ascending == 1,
+          1,
+          0
+        )
+      )
+  }
+
+  # Ensure the row before the first ascending point is included if the slope condition is met
   first_ascending_row <- profile_data %>%
     dplyr::filter(.data$ascending == 1) %>%
-    dplyr::slice(1)  # Get the first ascending point
+    dplyr::slice(1)
 
   if (nrow(first_ascending_row) > 0) {
     first_ascending_index <- which(profile_data$datetime == first_ascending_row$datetime)
+    last_base_index <- which(profile_data$datetime == last_base_point$datetime)
 
-    # Check if there is a preceding point
+    # Iterate over preceding rows to check the slope condition
     if (first_ascending_index > 1) {
-      preceding_row <- profile_data[first_ascending_index - 1, ]
-      #preceding_row2<- profile_data[first_ascending_index - 2, ] #TODO 11.12.24
-      first_ascending_slope <- first_ascending_row$slope
-      preceding_slope <- preceding_row$slope
-      #preceding2_slope <- preceding_row2$slope #TODO 11.12.24
+      current_index <- first_ascending_index - 1
+      keep_checking <- TRUE
 
-      # Check the slope rule
-      if (abs(preceding_slope) >= abs(first_ascending_slope) / 2) { #TODO 11.12.24
-      #if (abs(preceding2_slope) >= abs(preceding_slope) / 2) {
-        # Mark the previous point as ascending
-        profile_data <- profile_data %>%
-          dplyr::mutate(
-            ascending = dplyr::if_else(.data$datetime == preceding_row$datetime, 1, .data$ascending) #TODO 11.12.24
-            #ascending = dplyr::if_else(.data$datetime == preceding_row2$datetime, 1, .data$ascending)
-          )
+      while (current_index > 0 && keep_checking) {
+        preceding_row <- profile_data[current_index, ]
+        preceding_row_index <- which(profile_data$datetime == preceding_row$datetime)
+        first_ascending_slope <- first_ascending_row$slope
+        preceding_slope <- preceding_row$slope
+
+        # Include the row if its slope meets the criteria
+        if ((preceding_slope >= first_ascending_slope / 2) && (preceding_row_index != last_base_index)) {
+          profile_data <- profile_data %>%
+            dplyr::mutate(
+              ascending = dplyr::if_else(.data$datetime == preceding_row$datetime, 1, .data$ascending)
+            )
+          current_index <- current_index - 1 # Move to the previous row
+        } else {
+          keep_checking <- FALSE # Stop checking if the criteria are not met
+        }
       }
     }
   }
-  #print("pre-truncation ascending")
-#print(profile_data, n =28)
-  # Drop intermediate columns
-  profile_data <- profile_data %>%
-    dplyr::select(-.data$transition_to_above, -.data$rise_group)
 
-  # Return the profile tibble with the ascending column added
+  # Drop intermediate columns used for calculations
+  profile_data <- profile_data %>%
+    dplyr::select(-tidyselect::any_of(c("transition_to_above", "rise_group")))
+
+  # Return the updated profile_data with the ascending column
   return(profile_data)
 }
-

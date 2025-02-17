@@ -1,213 +1,142 @@
-# truncate_ascending_segment <- function(profile_data) {
-#   # Identify rows that belong to the ascending segment
-#   ascending_data <- profile_data %>% dplyr::filter(.data$ascending == 1)
-#
-#   if (nrow(ascending_data) == 0) {
-#     warning("No ascending segments found in the profile data.")
-#     return(profile_data)  # If there are no ascending segments, return the data as it is
-#   }
-#
-#   # Find the steepest slope in the ascending segment (ignoring NA values)
-#   max_slope <- max(ascending_data$slope, na.rm = TRUE)
-#
-#   # Find the index of the last ascending point
-#   last_ascending_index <- max(which(profile_data$ascending == 1))
-#
-#   # Check slopes from the second to last ascending segment
-#   # We create a condition to truncate points that don't meet the criteria
-#   truncate_condition <- profile_data$ascending == 1 & (
-#     profile_data$slope <= 0 | profile_data$slope < 0.5 * max_slope
-#   )
-#
-#   # Apply the condition to set ascending = 0 for points that should be truncated
-#   profile_data$ascending[truncate_condition] <- 0
-#
-#   # Explicitly set the last ascending point to 0, even if it meets the criteria
-#   profile_data$ascending[last_ascending_index] <- 0
-#
-#   # Return the modified profile tibble with the truncated ascending segment
-#   return(profile_data)
-# }
+#' Truncate Ascending Segment of Melatonin Profile
+#'
+#' This function truncates the ascending segment of a melatonin profile based on a set of
+#' rules to ensure valid slopes and segment consistency. It iteratively modifies the
+#' `ascending` column of the input data to satisfy the rules and uses the
+#' `parallelogram_fit` function as a diagnostic measure to validate the final segment. The
+#' `parallelogram_fit` function evaluates the geometric structure of the ascending
+#' segment and ensures the segment satisfies predefined geometric constraints, including
+#' slope ratios of lateral and diagonal shape segments. This ensures that only the steadily
+#' increasing part of the melatonin rise is taken into account when determining the DLMO point
+#' and that slower rises, or drops in melatonin levels are not.
+#'
+#'
+#' @param profile_data A tibble containing the melatonin profile with the following columns:
+#'   - `datetime`: A POSIXct column with timestamps.
+#'   - `melatonin`: Numeric column representing melatonin concentrations.
+#'   - `slope`: Numeric column with the slope between consecutive melatonin points.
+#'   - `ascending`: Binary column (1 for ascending segment, 0 otherwise).
+#' @return A list containing:
+#'   - `profile`: The updated profile_data tibble with truncated ascending segments.
+#'   - `plll`: The result of the parallelogram fit diagnostic (from `parallelogram_fit`).
+#'
+#'
+#' This function ensures the following rules are satisfied:
+#' 1. The rightmost slope in the ascending segment cannot be less than half the steepest slope in the segment.
+#' 2. The ascending segment must adhere to additional conditions validated by the `parallelogram_fit` function.
+#'
+#' @examples
+#' library(dplyr)
+#' library(lubridate)
+#'
+#' # Example data
+#' profile_data <- tibble(
+#'   datetime = seq(ymd_hms("2023-01-01 20:00:00"), by = "15 min", length.out = 12),
+#'   melatonin = c(1.2, 1.4, 1.5, 1.7, 2.0, 2.3, 2.8, 3.5, 4.2, 4.7, 5.0, 5.2),
+#'   slope = c(NA, diff(c(1.2, 1.4, 1.5, 1.7, 2.0, 2.3, 2.8, 3.5, 4.2, 4.7, 5.0, 5.2))),
+#'   ascending = c(0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1)
+#' )
+#'
+#' # Truncate the ascending segment
+#' result <- truncate_ascending_segment(profile_data)
+#' print(result$profile)
+#' print(result$plll)
+#' @export
 
-# last working version (ish)
-# truncate_ascending_segment <- function(profile_data) {
-#   # Identify rows that belong to the ascending segment
-#   ascending_data <- profile_data %>% dplyr::filter(.data$ascending == 1)
-#
-#   # If no ascending segment exists, issue a warning and return the data unchanged
-#   if (nrow(ascending_data) == 0) {
-#     warning("No ascending segments found in the profile data.")
-#     return(profile_data)  # Return the data unchanged if no ascending segment exists
-#   }
-#
-#   # Find the steepest slope in the ascending segment (ignoring NA values)
-#   max_slope <- max(ascending_data$slope, na.rm = TRUE)
-#
-#   # Find the index of the last ascending point in the profile data
-#   last_ascending_index <- max(which(profile_data$ascending == 1))
-#
-#   # Create a condition for truncating points from the ascending segment
-#   # Rule 1: Exclude points with a slope <= 0
-#   # Rule 2: Exclude points with a slope < 50% of the steepest slope (max_slope)
-#   truncate_condition <- profile_data$ascending == 1 & (
-#     profile_data$slope <= 0 |  # Rule 1: Non-positive slope
-#       profile_data$slope < 0.5 * max_slope  # Rule 2: Less than half of the max slope
-#   )
-#
-#   # Apply the truncation condition: Set ascending = 0 for points that don't meet the criteria
-#   profile_data$ascending[truncate_condition] <- 0
-#
-#   # Explicitly set the last ascending point to 0, regardless of whether it meets the criteria
-#   profile_data$ascending[last_ascending_index] <- 0
-#
-#   # Return the modified profile tibble with the truncated ascending segment
-#   return(profile_data)
-# }
 
-# truncate_ascending_segment <- function(profile_data) {
-#   # Identify rows that belong to the ascending segment
-#   ascending_data <- profile_data %>% dplyr::filter(.data$ascending == 1)
-#
-#   # If no ascending segment exists, issue a warning and return the data unchanged
-#   if (nrow(ascending_data) == 0) {
-#     warning("No ascending segments found in the profile data.")
-#     return(profile_data)  # Return the data unchanged if no ascending segment exists
-#   }
-#
-#   # Find the steepest slope in the ascending segment (ignoring NA values)
-#   max_slope <- max(ascending_data$slope, na.rm = TRUE)
-#
-#   # Identify the last ascending index
-#   last_ascending_index <- max(which(profile_data$ascending == 1))
-#
-#   # Create a condition to check the truncation rules for all ascending points
-#   # Rule 1: Slope must be > 0
-#   # Rule 2: Slope must be >= 50% of the max slope
-#   valid_ascending <- profile_data$slope > 0 & profile_data$slope >= 0.40 * max_slope
-#
-#   # Ensure only the rightmost ascending segments are evaluated for truncation
-#   # Create a mask for indices after the last valid ascending point
-#   valid_indices <- which(valid_ascending & profile_data$ascending == 1)
-#   if (length(valid_indices) > 0) {
-#     # Determine the last valid index based on truncation rules
-#     last_valid_index <- max(valid_indices)
-#
-#     # Set all points after the last valid point to not ascending
-#     profile_data$ascending[(last_valid_index + 1):last_ascending_index] <- 0
-#   }
-#
-#   # Explicitly set the last ascending point to 0
-#   profile_data$ascending[last_ascending_index] <- 0
-#
-#   # Return the modified profile tibble with the truncated ascending segment
-#   return(profile_data)
-# }
-
-# truncate_ascending_segment <- function(profile_data) {
-#   # Identify rows that belong to the ascending segment
-#   ascending_data <- profile_data %>% dplyr::filter(.data$ascending == 1)
-#
-#   # If no ascending segment exists, issue a warning and return the data unchanged
-#   if (nrow(ascending_data) == 0) {
-#     warning("No ascending segments found in the profile data.")
-#     return(profile_data)  # Return the data unchanged if no ascending segment exists
-#   }
-#
-#   # Find the steepest slope in the ascending segment (ignoring NA values)
-#   max_slope <- max(ascending_data$slope, na.rm = TRUE)
-#
-#   # Identify the last ascending index
-#   last_ascending_index <- max(which(profile_data$ascending == 1))
-#
-#   # Identify valid ascending points based on the truncation rules:
-#   # Rule 1: Slope must be > 0
-#   # Rule 2: Slope must be >= 50% of the max slope
-#   profile_data <- profile_data %>%
-#     dplyr::mutate(
-#       valid_ascending = .data$slope > 0 & .data$slope >= 0.5 * max_slope & .data$ascending == 1
-#     )
-#
-#   # Find the last valid ascending point that satisfies the conditions
-#   last_valid_index <- max(which(profile_data$valid_ascending), na.rm = TRUE)
-#
-#   # Set all points AFTER the last valid ascending point to 0
-#   profile_data <- profile_data %>%
-#     dplyr::mutate(
-#       ascending = dplyr::if_else(
-#         dplyr::row_number() > last_valid_index & dplyr::row_number() <= last_ascending_index,
-#         0,
-#         .data$ascending
-#       )
-#     )
-#
-#   # Explicitly set the last ascending point to 0
-#   profile_data <- profile_data %>%
-#     dplyr::mutate(
-#       ascending = dplyr::if_else(
-#         dplyr::row_number() == last_ascending_index,
-#         0,
-#         .data$ascending
-#       )
-#     )
-#
-#   # Drop the temporary valid_ascending column
-#   profile_data <- profile_data %>%
-#     dplyr::select(-valid_ascending)
-#
-#   # Return the modified profile tibble with the truncated ascending segment
-#   return(profile_data)
-# }
-#
-
-truncate_ascending_segment_orig <- function(profile_data) { #TODO THIS SCRIPT CURRENTLY DOES NOT TRUNCATE PARALLELOGRAMMMM; merge with wip script
- print("old")
-   # Identify rows that belong to the ascending segment
+truncate_ascending_segment <- function(profile_data) {
+  # Ensure there is an ascending segment to work with
   ascending_data <- profile_data %>% dplyr::filter(.data$ascending == 1)
 
   # If no ascending segment exists, issue a warning and return the data unchanged
   if (nrow(ascending_data) == 0) {
     warning("No ascending segments found in the profile data.")
-    return(profile_data)  # Return the data unchanged if no ascending segment exists
+    return(profile_data)
   }
 
-  # Find the steepest slope in the ascending segment (ignoring NA values)
-  max_slope <- max(ascending_data$slope, na.rm = TRUE)
+  # Find the steepest slope in the ascending segment
+  max_slope <- max(profile_data$slope[profile_data$ascending == 1], na.rm = TRUE)
 
-  # Identify the last ascending index
-  last_ascending_index <- max(which(profile_data$ascending == 1))
+  # Rule Validation Loop: Iteratively truncate until all rules are satisfied
+  while (!check_rules(profile_data, max_slope)) {
+    # Identify the last ascending index
+    last_ascending_index <- max(which(profile_data$ascending == 1))
 
-  # Check the validity of the current point based on rules and exclude from the NEXT point onward if invalid
-  profile_data <- profile_data %>%
-    dplyr::mutate(
-      # Rule 1: slope > 0
-      # Rule 2: slope >= 50% of max_slope
-      valid_ascending = .data$ascending == 1 &
-        (.data$slope > 0 & .data$slope >= 0.5 * max_slope)
-    )
-
-  # Identify invalid indices and exclude from the NEXT point onward
-  invalid_indices <- which(!profile_data$valid_ascending & profile_data$ascending == 1)
-  if (length(invalid_indices) > 0) {
-    # Find the first invalid point
-    first_invalid_index <- min(invalid_indices)
-
-    # Set all points AFTER the invalid point to not ascending
+    # Remove the last point in the ascending segment
     profile_data <- profile_data %>%
       dplyr::mutate(
         ascending = dplyr::if_else(
-          dplyr::row_number() > first_invalid_index,
+          dplyr::row_number() == last_ascending_index,
           0,
           .data$ascending
         )
       )
   }
 
-  # Drop the temporary valid_ascending column
-  profile_data <- profile_data %>% dplyr::select(-valid_ascending)
+  # Rule (3) Validation: Ensure the rightmost slope is valid
+  while (!check_last(profile_data)) {
+    # Identify the last ascending index
+    last_ascending_index <- max(which(profile_data$ascending == 1))
 
-  # Return the modified profile tibble with the truncated ascending segment
-  #print("post-truncation")
-  #print(profile_data, n = 28)
-  return(profile_data)
+    # Remove the last point in the ascending segment
+    profile_data <- profile_data %>%
+      dplyr::mutate(
+        ascending = dplyr::if_else(
+          dplyr::row_number() == last_ascending_index,
+          0,
+          .data$ascending
+        )
+      )
+  }
+
+  # Perform a parallelogram fit diagnostic on the truncated profile
+  plll <- parallelogram_fit(profile_data)
+
+  # Return the updated profile and parallelogram fit diagnostic
+  return(list(profile = profile_data, plll = plll))
+}
+
+# Helper Function: Check if the rightmost slope is valid
+check_last <- function(profile_data) {
+  # Find the steepest slope in the ascending segment
+  max_slope <- max(profile_data$slope[profile_data$ascending == 1], na.rm = TRUE)
+
+  # Identify the last ascending index
+  last_ascending_index <- max(which(profile_data$ascending == 1))
+
+  # Check if the rightmost slope satisfies the rule
+  return(profile_data$slope[last_ascending_index] >= 0.5 * max_slope)
+}
+
+# Helper Function: Check if all rules are satisfied
+check_rules <- function(profile_data, max_slope) {
+  # Extract the ascending segment
+  ascending_data <- profile_data %>% dplyr::filter(.data$ascending == 1)
+
+  # Rule: If fewer than two points, rules are satisfied
+  if (nrow(ascending_data) < 2) {
+    return(TRUE)
+  }
+
+  # Calculate the slope of the rightmost segment
+  rightmost_points <- ascending_data %>%
+    dplyr::arrange(desc(dplyr::row_number())) %>%
+    head(2)
+  rightmost_slope <- (rightmost_points$melatonin[2] - rightmost_points$melatonin[1]) /
+    (as.numeric(difftime(rightmost_points$datetime[2], rightmost_points$datetime[1], units = "secs")))
+
+  # Rule (1): Rightmost slope must be positive
+  if (rightmost_slope <= 0) {
+    return(FALSE)
+  }
+
+  # Rule (2): Parallelogram fit must be valid
+  plll <- parallelogram_fit(profile_data)
+  if (plll$flag) {
+    return(FALSE)
+  }
+
+  # If all rules are satisfied
+  return(TRUE)
 }
 

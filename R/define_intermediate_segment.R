@@ -1,101 +1,64 @@
-define_intermediate_segment <- function(profile_data, threshold = threshold) {
-  # Ensure the data is sorted by datetime
+#' Define Intermediate Segment of Melatonin Profile
+#'
+#' This function identifies and labels the intermediate segment of a melatonin profile.
+#' The intermediate segment lies between the base segment and the ascending segment,
+#' where melatonin concentrations begin to rise but have not crossed the threshold value.
+#'
+#' @param profile_data A tibble containing the melatonin profile with the following columns:
+#'   - `datetime`: A POSIXct column representing timestamps for each measurement.
+#'   - `melatonin`: Numeric column representing melatonin concentrations.
+#'   - `base`: Binary column (1 for base segment, 0 otherwise).
+#'   - `ascending`: Binary column (1 for ascending segment, 0 otherwise).
+#' @param threshold Numeric. The melatonin concentration threshold for defining profile segments (default = 2.3 pg/mL).
+#' @return A tibble with an additional `intermediate` column:
+#'   - `intermediate`: Binary column (1 for intermediate segment, 0 otherwise).
+#'
+#' If no intermediate segment is identified, the `intermediate` column will not be created.
+#'
+#' @examples
+#' library(dplyr)
+#' library(lubridate)
+#'
+#' # Example data
+#' profile_data <- tibble(
+#'   datetime = seq(ymd_hms("2023-01-01 20:00:00"), by = "15 min", length.out = 12),
+#'   melatonin = c(1.2, 1.4, 1.5, 2.0, 2.5, 2.3, 2.8, 3.5, 4.2, 4.7, 5.0, 5.2),
+#'   base = c(1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0),
+#'   ascending = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1)
+#' )
+#'
+#' # Define the intermediate segment
+#' updated_profile <- define_intermediate_segment(profile_data, threshold = 2.3)
+#' print(updated_profile)
+#' @export
+
+define_intermediate_segment <- function(profile_data, threshold = 2.3) {
+  # Ensure the data is sorted by datetime for consistent processing
   profile_data <- profile_data %>% dplyr::arrange(.data$datetime)
 
-  # Find the last row of the base part
+  # Find the last row of the base segment
   last_base_row <- max(which(profile_data$base == 1), na.rm = TRUE)
 
-  # Find the first row of the ascending part
+  # Find the first row of the ascending segment
   first_ascending_row <- min(which(profile_data$ascending == 1), na.rm = TRUE)
 
-  # Check if there are any intermediate rows
+  # Check if there are rows between the base and ascending segments
   if (last_base_row < first_ascending_row - 1) {
-    # Identify intermediate rows (between last base and first ascending)
+    # Identify rows that belong to the intermediate segment
     intermediate_rows <- (last_base_row + 1):(first_ascending_row - 1)
 
-    # Create a new column 'intermediate', defaulting to 0
+    # Add a new column 'intermediate', defaulting to 0
     profile_data <- profile_data %>%
       dplyr::mutate(intermediate = 0)
 
-    # Assign '1' to the intermediate rows
+    # Mark the intermediate rows with 1
     profile_data$intermediate[intermediate_rows] <- 1
+  } else {
+    # If no intermediate segment exists, add the column with all 0s
+    # profile_data <- profile_data %>%
+    #   dplyr::mutate(intermediate = 0)
   }
 
-  # Return the updated profile data
+  # Return the updated profile data with the new intermediate column
   return(profile_data)
 }
-
-
-#### THIS BELOW FAILS EXCEPT IN CASE OF NO BASE!!!!! FIX IT #############
-
-# define_intermediate_segment <- function(profile_data, threshold) {
-#   # Ensure the data is sorted by datetime
-#   profile_data <- profile_data %>% dplyr::arrange(.data$datetime)
-#
-#   # Check if there are any base or ascending points
-#   base_exists <- any(profile_data$base == 1, na.rm = TRUE)
-#   ascending_exists <- any(profile_data$ascending == 1, na.rm = TRUE)
-#
-#   if (ascending_exists) {
-#     first_ascending_row <- min(which(profile_data$ascending == 1), na.rm = TRUE)
-#
-#     if (base_exists) {
-#       # Scenario with base and ascending points
-#       last_base_row <- max(which(profile_data$base == 1), na.rm = TRUE)
-#
-#       if (last_base_row < first_ascending_row - 1) {
-#         # Mark intermediate points
-#         intermediate_rows <- (last_base_row + 1):(first_ascending_row - 1)
-#         profile_data$intermediate[intermediate_rows] <- 1
-#       }
-#     } else {
-#       # Scenario 1: No base points, unlabeled points exist before ascending
-#       preceding_points <- 1:(first_ascending_row - 1)
-#
-#       if (length(preceding_points) > 1) {
-#         melatonin_values <- profile_data$melatonin[preceding_points]
-#         first_ascending_value <- profile_data$melatonin[first_ascending_row]
-#
-#         # Check threshold condition
-#         if (all(melatonin_values < first_ascending_value & melatonin_values < threshold)) {
-#           profile_data$intermediate <- 0
-#           profile_data$intermediate[preceding_points[-1]] <- 1
-#           profile_data$base[preceding_points[1]] <- 1
-#         }
-#       }
-#       # Scenario 2: All ascending except the first point
-#       if (first_ascending_row == 2 && profile_data$base[1]==0) {
-#         print("here!")
-#         # Create a new column 'intermediate', defaulting to 0
-#         profile_data <- profile_data %>%
-#         dplyr::mutate(intermediate = 0)
-#         # Set first point to intermediate
-#         profile_data$intermediate[1] <- 1
-#         # profile_data$base[1] <- 0
-#         # profile_data$slope[1] <- 0
-#
-#         # Create a new base point 30 minutes earlier
-#         new_row <- tibble::tibble(
-#           datetime = as.POSIXct(profile_data$datetime[1] - lubridate::minutes(30)),
-#           melatonin = profile_data$melatonin[1] / 2,
-#           slope = NA,
-#           base = 1,
-#           ascending = 0,
-#           intermediate = 0
-#         )
-#
-#         print(new_row)
-#         # Insert the new row at the top
-#         profile_data <- dplyr::bind_rows(new_row, profile_data)
-#
-#         # Remove the 'time' column if it exists
-#         if ("time" %in% colnames(profile_data)) {
-#           profile_data <- profile_data %>% dplyr::select(-time)
-#         }
-#       }
-#     }
-#   }
-#
-#   # Return the updated profile data
-#   return(profile_data)
-# }

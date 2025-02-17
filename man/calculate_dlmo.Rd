@@ -4,22 +4,103 @@
 \alias{calculate_dlmo}
 \title{Calculate Dim-Light Melatonin Onset (DLMO)}
 \usage{
-calculate_dlmo(data = NULL, file_path = NULL, threshold = 2.3)
+calculate_dlmo(
+  data = NULL,
+  file_path = NULL,
+  threshold = 2.3,
+  interval_limit = lubridate::hours(2),
+  fine_flag = TRUE
+)
 }
 \arguments{
-\item{data}{A data frame with columns \code{time} and \code{melatonin}. If NULL, use
+\item{data}{A data frame with columns \code{datetime} (POSIXct) and \code{melatonin} (numeric). If NULL, use
 the \code{file_path} parameter to load data.}
 
 \item{file_path}{A string specifying the path to a CSV file containing the data.
-The file must have two columns: \code{time} (numeric or POSIXct) and \code{melatonin} (numeric).}
+The file must have two columns: \code{datetime} (POSIXct) and \code{melatonin} (numeric).}
 
-\item{threshold}{Numeric. The melatonin threshold for defining DLMO (default: 10).}
+\item{threshold}{The numeric melatonin threshold for defining DLMO (default: 2.3 pg/mL).}
+
+\item{interval_limit}{Numeric or lubridate duration. Indicates the time window within which,
+if two melatonin threshold crossings occur, the second crossing is taken to represent
+the melatonin rise. If provided as a numeric value, it represents the window in hours
+(e.g., \code{interval_limit = 2} for 2 hours, or \code{interval_limit = 0.5} for 30 minutes).
+Alternatively, users can specify a \code{lubridate} duration object
+(e.g., \code{lubridate::hours(2)} for 2 hours, \code{lubridate::minutes(30)} for 30 minutes).
+Default is 2 hours.}
+
+\item{fine_flag}{Logical. If \code{TRUE}, performs an additional fine-grid search to refine the DLMO point after the initial coarse search (default: \code{TRUE}).}
 }
 \value{
-A numeric or time value indicating the calculated DLMO time.
+A list containing the following elements:
+\itemize{
+\item \strong{\code{prof}}: A tibble containing the segmented melatonin profile.
+\itemize{
+\item \code{datetime} (POSIXct): Timestamps of melatonin measurements.
+\item \code{melatonin} (numeric): Melatonin concentration values.
+\item \code{time} (hms): Time of day.
+\item \code{slope} (numeric): Rate of change in melatonin concentration.
+\item \code{base} (binary, 0/1): Indicates baseline segment.
+\item \code{ascending} (binary, 0/1): Indicates ascending segment.
+\item \code{intermediate} (binary, 0/1): if present, indicates intermediate segment.
+}
+\item \strong{\code{prl}}: List containing parallelogram rule fit paramters.
+\itemize{
+\item \code{pll_datetime_0} (POSIXct): Estimated lower bound of melatonin rise.
+\item \code{pll_datetime_1} (POSIXct): Estimated upper bound of melatonin rise.
+\item \code{pll_slope} (numeric): Slope of melatonin rise.
+\item \code{corners} (list): Coordinates of parallelogram corners:
+\itemize{
+\item \code{ll}, \code{lr}, \code{ur}, \code{ul} (numeric vectors): (x, y) for each corner.
+}
+\item \code{flag} (logical): Whether parallelogram rule was violated or not.
+}
+\item \strong{\code{roi}}: List defining the Region of Interest (ROI).
+\itemize{
+\item \code{x_start} (POSIXct): Start time of the ROI window.
+\item \code{x_end} (POSIXct): End time of the ROI window.
+\item \code{y_min} (numeric): Minimum melatonin value in the ROI.
+\item \code{y_max} (numeric): Maximum melatonin value in the ROI.
+}
+\item \strong{\code{ip}}: List containing estimated DLMO inflection point.
+\itemize{
+\item \code{inflection_point} (tibble):
+\itemize{
+\item \code{x} (numeric): Estimated DLMO time index in units of decimal-hours.
+\item \code{y} (numeric): Melatonin concentration at DLMO.
+}
+\item \code{base_params} (numeric): Parameter for linear-fit of base segment of profile.
+\item \code{ascending_params} (list): Parameters for the linear or parabolic fit of melatonin rise:
+\itemize{
+\item \code{a}, \code{b}, \code{c} (numeric): Fitted parameters.
+}
+}
+\item \strong{\code{dlmo_time}}: Estimated DLMO time-stamp in units of hh:mm:ss
+\item \strong{\code{dlmoplotcoarse}}: \code{ggplot} object visualizing melatonin profile (coarse view).
+\item \strong{\code{dlmoplotfine}}: \code{ggplot} object visualizing melatonin profile (fine view).
+}
 }
 \description{
-This function calculates the DLMO based on input melatonin concentration data
+This function calculates the DLMO time point based on input melatonin concentration data
 with an associated time series. The user can provide data directly as a data frame
-or specify a file to load the data.
+or specify a .csv file to load the data.
+}
+\details{
+\strong{Understanding the Outputs:}
+\itemize{
+\item The \code{prof} tibble contains labeled data for different melatonin profile phases.
+\item The \code{prl} list provides the parallelogram rule fit used to trim the melatonin rise segment of the profile to ensure only strong rises are fit when determining DLMO.
+\item The \code{roi} specifies the bounds of the search window used for DLMO determination.
+\item The \code{ip} list contains the  DLMO inflection point, the fit parameters for the base and ascending regions, as well as the grid of residuals from fitting the melatonin profile at each point of the ROI.
+\item The \code{dlmo_time} variable contains the DLMO timestamp in units of hh:mm:ss (equivalent to \code{ip$inflection_point$x} in decimal-hours)
+\item The plots (\code{dlmoplotcoarse} and \code{dlmoplotfine}) visualize the results of the coarse and fine grid DLMO search, respectively.
+}
+}
+\examples{
+# Load the sample melatonin profile data included in the package
+filename <- system.file("extdata/sample_melatonin_profile.csv", package = "dlmoR")
+
+# Calculate the DLMO using the sample data and a threshold of 5
+sample_dlmo <- calculate_dlmo(file_path = filename, threshold = 5)
+
 }

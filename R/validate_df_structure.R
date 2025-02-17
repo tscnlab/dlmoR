@@ -1,58 +1,84 @@
-#' Function to Validate Data
+#' Validate and Standardize Dataframe Structure for Melatonin Analysis
 #'
-#' This function validates the structure of an input dataframe. It verifies that the dataframe
-#'     contains `melatonin` and `datetime` (or `time`) columns and checks that they contain numeric and POSIXct (or hms) data, respectively.
+#' This function checks whether the input dataframe contains the required `melatonin`
+#' column and at least one valid time reference (`datetime` or `time`). It ensures that:
+#' - `melatonin` is numeric.
+#' - `datetime` (if present) is in `POSIXct` format.
+#' - `time` (if present) is in `hms` format.
+#' - If only `time` is provided (as `POSIXct`), it is renamed to `datetime`, and a `time`
+#'   column is created from it.
+#' - If `datetime` exists but is of class `hms`, it is renamed to `time`, and an error is raised.
 #'
-#' @param data A data frame, ideally with columns `datetime` (or `time`) and `melatonin`.
-#' @return Returns a dataframe with columns `melatonin`, `datetime` and `time` if the input df contains
-#'    `melatonin` and `datetime` columns. Returns `melatonin` and `time` columns if the input df only contains these.
-#'    If criteria are not met, a corresponding error message is returned.
+#' @param data A dataframe (or tibble) expected to contain at least:
+#'   \itemize{
+#'     \item `melatonin` (numeric) – Melatonin concentration levels.
+#'     \item `datetime` (POSIXct) – Timestamps, or
+#'     \item `time` (hms or POSIXct) – Time of measurement.
+#'   }
 #'
+#' @return A modified dataframe with:
+#'   \itemize{
+#'     \item `melatonin` (numeric)
+#'     \item `datetime` (POSIXct) if available or converted
+#'     \item `time` (hms) if `datetime` was present and converted
+#'   }
+#'
+#' @details
+#' If `time` is in `POSIXct`, it is renamed to `datetime`, and `time` is extracted from it.
+#' If `datetime` is of class `hms`, it is renamed to `time`, and the function stops execution.
+#' If neither `datetime` nor `time` exist, an error is raised.
+#'
+#' @examples
+#' \dontrun{
+#' df <- tibble::tibble(
+#'   datetime = as.POSIXct(c("2024-04-16 12:00:00", "2024-04-16 12:30:00")),
+#'   melatonin = c(1.2, 1.5)
+#' )
+#' validate_df_structure(df)
+#' }
+#' @export
 validate_df_structure <- function(data) {
-  # Ensure the data is in tibble format
+  # Convert input data to tibble format for consistency
   data <- tidyr::as_tibble(data)
-  # Required columns
-  required_columns <- c("melatonin")
 
-  # Check for required columns
-  if (!all(required_columns %in% colnames(data))) {
+  # Required column: 'melatonin'
+  if (!"melatonin" %in% colnames(data)) {
     stop("The tibble must contain a 'melatonin' column.")
   }
 
-  # Handle 'time' column with POSIXct data
+  # Handle case where 'time' exists as POSIXct
   if ("time" %in% colnames(data) && inherits(data$time, "POSIXct")) {
-    message("'time' column contains POSIXct data; renaming to 'datetime' and extracting time component into a new 'time' column.")
+    message("'time' column detected as POSIXct. Renaming to 'datetime' and extracting time.")
     data <- data %>%
       dplyr::rename(datetime = .data$time) %>%
       dplyr::mutate(time = hms::as_hms(.data$datetime))
   }
 
-  # Handle 'datetime' column with hms data
+  # Handle case where 'datetime' exists as hms
   if ("datetime" %in% colnames(data) && inherits(data$datetime, "hms")) {
     colnames(data)[colnames(data) == "datetime"] <- "time"
-    stop("The 'datetime' column contains hms data. It has been renamed to 'time'.")
+    stop("The 'datetime' column is of class 'hms' and has been renamed to 'time'. Stopping execution.")
   }
 
-  # Check for 'datetime' column and validate POSIXct
+  # Ensure 'datetime' column is in POSIXct format
   if ("datetime" %in% colnames(data)) {
     if (!inherits(data$datetime, "POSIXct")) {
       stop("The 'datetime' column must be of class 'POSIXct'.")
     }
-    # Create 'time' column if not present
+    # If 'time' is missing, extract it from 'datetime'
     if (!"time" %in% colnames(data)) {
       message("Creating 'time' column from 'datetime'.")
       data <- data %>% dplyr::mutate(time = hms::as_hms(.data$datetime))
-      #print(data)
     }
   }
 
-  # Check for 'time' column and validate hms format
+  # Ensure 'time' column (if present) is in hms format
   if ("time" %in% colnames(data)) {
     if (!inherits(data$time, "hms")) {
-      stop("The 'time' column must be of class 'hms'. If using a character column, convert it to 'hms' or 'POSIXct' format first.")
+      stop("The 'time' column must be of class 'hms'. Convert it before running this function.")
     }
   } else if (!"datetime" %in% colnames(data)) {
-    stop("The tibble must contain either a 'time' column of class 'hms' or a 'datetime' column of class 'POSIXct'.")
+    stop("The tibble must contain either a 'time' column (hms) or a 'datetime' column (POSIXct).")
   }
 
   # Ensure 'melatonin' column is numeric

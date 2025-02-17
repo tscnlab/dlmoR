@@ -4,7 +4,7 @@
 \alias{.check_base_profile_consistency}
 \title{Check Consistency of Base Segment in Melatonin Profile}
 \usage{
-.check_base_profile_consistency(profile_data)
+.check_base_profile_consistency(profile_data, threshold = 2.3)
 }
 \arguments{
 \item{profile_data}{A tibble containing melatonin profile data with the following columns:

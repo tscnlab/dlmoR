@@ -2,19 +2,49 @@
 % Please edit documentation in R/validate_df_structure.R
 \name{validate_df_structure}
 \alias{validate_df_structure}
-\title{Function to Validate Data}
+\title{Validate and Standardize Dataframe Structure for Melatonin Analysis}
 \usage{
 validate_df_structure(data)
 }
 \arguments{
-\item{data}{A data frame, ideally with columns \code{datetime} (or \code{time}) and \code{melatonin}.}
+\item{data}{A dataframe (or tibble) expected to contain at least:
+\itemize{
+\item \code{melatonin} (numeric) – Melatonin concentration levels.
+\item \code{datetime} (POSIXct) – Timestamps, or
+\item \code{time} (hms or POSIXct) – Time of measurement.
+}}
 }
 \value{
-Returns a dataframe with columns \code{melatonin}, \code{datetime} and \code{time} if the input df contains
-\code{melatonin} and \code{datetime} columns. Returns \code{melatonin} and \code{time} columns if the input df only contains these.
-If criteria are not met, a corresponding error message is returned.
+A modified dataframe with:
+\itemize{
+\item \code{melatonin} (numeric)
+\item \code{datetime} (POSIXct) if available or converted
+\item \code{time} (hms) if \code{datetime} was present and converted
+}
 }
 \description{
-This function validates the structure of an input dataframe. It verifies that the dataframe
-contains \code{melatonin} and \code{datetime} (or \code{time}) columns and checks that they contain numeric and POSIXct (or hms) data, respectively.
+This function checks whether the input dataframe contains the required \code{melatonin}
+column and at least one valid time reference (\code{datetime} or \code{time}). It ensures that:
+\itemize{
+\item \code{melatonin} is numeric.
+\item \code{datetime} (if present) is in \code{POSIXct} format.
+\item \code{time} (if present) is in \code{hms} format.
+\item If only \code{time} is provided (as \code{POSIXct}), it is renamed to \code{datetime}, and a \code{time}
+column is created from it.
+\item If \code{datetime} exists but is of class \code{hms}, it is renamed to \code{time}, and an error is raised.
+}
+}
+\details{
+If \code{time} is in \code{POSIXct}, it is renamed to \code{datetime}, and \code{time} is extracted from it.
+If \code{datetime} is of class \code{hms}, it is renamed to \code{time}, and the function stops execution.
+If neither \code{datetime} nor \code{time} exist, an error is raised.
+}
+\examples{
+\dontrun{
+df <- tibble::tibble(
+  datetime = as.POSIXct(c("2024-04-16 12:00:00", "2024-04-16 12:30:00")),
+  melatonin = c(1.2, 1.5)
+)
+validate_df_structure(df)
+}
 }

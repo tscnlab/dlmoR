@@ -6,18 +6,28 @@
 \alias{dlmoR-package}
 \title{dlmoR: Determine Time of Dimlight Melatonin Onset}
 \description{
-Calculate the time of dimlight melatonin onset from a time series of melatonin concentrations, using the hockeystick method.
+Calculate the time of dimlight melatonin onset from a time series of melatonin concentrations, using the hockey-stick method.
 }
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/salmathalji/dlmoR}
-  \item Report bugs at \url{https://github.com/salmathalji/dlmoR/issues}
+  \item \url{https://github.com/tscnlab/dlmoR}
+  \item Report bugs at \url{https://github.com/tscnlab/dlmoR/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: Salma Thalji \email{salma.thalji@tuebingen.mpg.de} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
+\strong{Maintainer}: Salma Thalji \email{salma.thalji@tuebingen.mpg.de} (\href{https://orcid.org/0009-0002-7320-9289}{ORCID})
+
+Authors:
+\itemize{
+  \item Manuel Spitschan \email{manuel.spitschan@tum.de} (\href{https://orcid.org/0000-0002-8572-9268}{ORCID})
+}
+
+Other contributors:
+\itemize{
+  \item TSCN-Lab (www.tscnlab.org) [copyright holder]
+}
 
 }
 \keyword{internal}
