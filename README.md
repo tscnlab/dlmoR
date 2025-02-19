@@ -7,7 +7,7 @@ dlmoR: Dim-Light Melatonin Onset Estimation
 
 **`dlmoR`** is an R package that implements the hockey-stick method
 (Danilenko et al., 2014) for estimating dim light melatonin onset (DLMO)
-—a key circadian phase marker in chronobiology and sleep research.
+— a key circadian phase marker in chronobiology and sleep research.
 
 The hockey-stick algorithm models melatonin rise as a piecewise
 linear-parabolic curve, with the DLMO time point determined as the

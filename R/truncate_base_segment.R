@@ -27,12 +27,18 @@ truncate_base_segment <- function(profile_data, threshold = 2.3) {
     dplyr::mutate(
       base = dplyr::if_else(
         .data$base == 1 &
-          # Check if all previous base values are above the threshold (cumulative sum remains 0)
-          cumsum(.data$base == 1 & .data$melatonin <= threshold) == 0,
+          # Ensure `NA` values are handled properly before `cumsum()`
+          cumsum(dplyr::coalesce(.data$base == 1 & .data$melatonin <= threshold, FALSE)) == 0,
         0,  # Set base to 0 for these invalid points
         .data$base
       )
     )
+
+  # Ensure valid base points exist before checking `all(profile_data$base == 0)`
+  if (nrow(profile_data) == 0 || all(is.na(profile_data$base))) {
+    warning("No valid data found in profile_data.")
+    return(profile_data)
+  }
 
   # Check if all base points have been removed
   if (all(profile_data$base == 0)) {

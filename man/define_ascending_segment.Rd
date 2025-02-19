@@ -33,42 +33,10 @@ A tibble with the following columns:
 \item \code{slope}: The calculated slope of the profile.
 \item \code{ascending}: A binary indicator (1 for points in the ascending segment, 0 otherwise).
 }
-
-The function implements the following rules:
-\enumerate{
-\item Identifies segments where melatonin rises above the threshold.
-\item Filters valid threshold crossings based on a specified time interval (\code{interval_limit}).
-\item Refines ascending points by incorporating slope checks to ensure steep transitions.
-\item Includes segments between steepest points as part of the ascending segment.
-\item Ensures the segment immediately before the first ascending point is included if its slope meets the defined criteria.
-}
 }
 \description{
 This function identifies and labels the ascending segment of a melatonin profile,
 where melatonin concentrations rise above a specified threshold and satisfy specific
 time interval and slope conditions. It also incorporates additional rules to refine
 the identification of ascending points.
-}
-\examples{
-# Example data
-library(dplyr)
-library(lubridate)
-
-profile_data <- tibble(
-  datetime = seq(ymd_hms("2023-01-01 20:00:00"), by = "15 min", length.out = 12),
-  melatonin = c(1.2, 1.4, 1.5, 1.7, 2.0, 2.3, 2.8, 3.5, 4.2, 4.7, 5.0, 5.2),
-  slope = c(NA, diff(c(1.2, 1.4, 1.5, 1.7, 2.0, 2.3, 2.8, 3.5, 4.2, 4.7, 5.0, 5.2))),
-  base = c(1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0)
-)
-
-# Define the ascending segment using a threshold of 2.3
-ascending_segment <- define_ascending_segment(
-  profile_data = profile_data,
-  threshold = 2.3,
-  interval_limit = lubridate::hours(2)
-)
-
-# View the results
-print(ascending_segment)
-
 }

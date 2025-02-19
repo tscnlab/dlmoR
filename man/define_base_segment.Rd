@@ -11,7 +11,7 @@ define_base_segment(profile_tibble, threshold = 2.3)
 \itemize{
 \item \code{datetime}: A POSIXct column representing timestamps for each melatonin measurement.
 \item \code{melatonin}: A numeric column representing melatonin concentrations at each time point.
-\item \code{time}: A numeric column representing the time in hh:mm:ss format
+\item \code{time}: A numeric column representing the time in hh:mm:ss format.
 }}
 
 \item{threshold}{Numeric. The melatonin concentration threshold to define the base segment (default = 2.3 pg/mL).}
@@ -21,14 +21,10 @@ A tibble with the base segment labeled (1 for base, 0 for non-base), including:
 \itemize{
 \item \code{datetime}: The original timestamps.
 \item \code{melatonin}: The input melatonin concentrations.
-\item \code{time}: The hh:mm:ss time format
-\item \code{slope}: The rate of change in melatonin concentrations between consecutive time points, calculated as
-\deqn{(melatonin[i+1] - melatonin[i]) / (time[i+1] - time[i])}.
+\item \code{time}: The hh:mm:ss time format.
+\item \code{slope}: The rate of change in melatonin concentrations between consecutive time points.
 \item \code{base}: A binary indicator (1 for points in the base segment, 0 otherwise).
 }
-
-The slope helps determine periods when melatonin levels are stable or decreasing, which are key characteristics
-of the base segment.
 }
 \description{
 This function identifies and labels the base segment of a melatonin profile, where melatonin
