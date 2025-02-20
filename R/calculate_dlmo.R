@@ -112,6 +112,9 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
 
   # convert & save inflection point from decimal hours to hh:mm:ss units
   dlmo_time <- hms::as_hms(decimal_to_posixct(ipx$inflection_point$x, prf$profile$datetime))
+  dlmo <- list()
+  dlmo$time <- dlmo_time
+  dlmo$fit_melatonin <- ipx$inflection_point$y
 
   # create and save visualizations
   vis_coarse<-plot_profile(prf$profile, show_threshold = TRUE, threshold = threshold, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx, show_fit = TRUE, show_roi_heatmap = TRUE, show_roi_small = FALSE, show_roi_big = TRUE)
@@ -121,7 +124,7 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
   else{
     vis_fine <- NULL
   }
-  return(list(prof = prf$profile, prl = prf$plll, roi = roix, ip = ipx, dlmo_time = dlmo_time, dlmoplotcoarse = vis_coarse, dlmoplotfine = vis_fine))
+  return(list(prof = prf$profile, prl = prf$plll, roi = roix, ip = ipx, dlmo = dlmo, dlmoplotcoarse = vis_coarse, dlmoplotfine = vis_fine))
 }
 
 #' Helper Function to Read-in Melatonin Data from a CSV-File
