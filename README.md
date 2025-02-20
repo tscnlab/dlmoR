@@ -1,5 +1,3 @@
-<img src="https://github.com/tscnlab/Templates/blob/main/logo/logo_with_text-01.png" width="400"/>
-
 dlmoR: Dim-Light Melatonin Onset Estimation
 ================
 
@@ -8,8 +6,9 @@ dlmoR: Dim-Light Melatonin Onset Estimation
 ## **`dlmoR`**
 
 **`dlmoR`** is an R package that implements the hockey-stick method
-(Danilenko et al., 2014) for estimating dim light melatonin onset (DLMO)
-— a key circadian phase marker in chronobiology and sleep research.
+[(Danilenko et al., 2014)](https://doi.org/10.3109/07420528.2013.855226)
+for estimating dim light melatonin onset (DLMO) — a key circadian phase
+marker in chronobiology and sleep research.
 
 The hockey-stick algorithm models melatonin rise as a piecewise
 linear-parabolic curve, with the DLMO time point determined as the
@@ -17,15 +16,18 @@ inflection point of the piecewise curve that best fits the melatonin
 profile, in a least-squares sense. This approach provides a more
 objective and robust estimate of DLMO compared to traditional
 threshold-based methods, which can be limited by variability in baseline
-melatonin levels and subjectivity in visual estimation (Benloucif et
-al., 2008; Kennaway, 2023; Glacet et al., 2023).
+melatonin levels and subjectivity in visual estimation ([Benloucif et
+al., 2008](https://doi.org/10.5664/jcsm.27083); [Kennaway,
+2023](https://doi.org/10.1093/sleep/zsad033); [Glacet et al.,
+2023](https://doi.org/10.1080/07420528.2022.2150554)).
 
 A Windows-based executable of this algorithm was previously released
-(Danilenko & Verevkin, 2020), but its closed-source format limits
-flexibility. The original software does not allow modification or
-inspection of the underlying algorithm, lacks an API for integration
-into analytical workflows, and requires manual operation, making batch
-processing inefficient.
+([Danilenko & Verevkin,
+2020](https://www.researchgate.net/publication/349443463_Download_Hockey-stick_v25_software)),
+but its closed-source format limits flexibility. The original software
+does not allow modification or inspection of the underlying algorithm,
+lacks an API for integration into analytical workflows, and requires
+manual operation, making batch processing inefficient.
 
 By bringing this method into the R-programming environment, **`dlmoR`**
 provides an open-source, transparent, and scriptable alternative. It
@@ -97,3 +99,12 @@ The runtime of `calculate_dlmo()` depends on the selected search method:
 
 For **batch processing**, runtime scales approximately linearly with the
 number of profiles analyzed.
+
+## **Citing `dlmoR`**
+
+If you use `dlmoR` in your research, please cite the following preprint,
+which describes the package and its implementation:
+
+Thalji, S. M., & Spitschan, M. (2025). *dlmoR: An open-source R package
+for the dim-light melatonin onset (DLMO) hockey-stick method.* [bioRxiv,
+2025-01](https://doi.org/10.1101/2025.01.13.632603).
