@@ -115,6 +115,7 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
   dlmo <- list()
   dlmo$time <- dlmo_time
   dlmo$fit_melatonin <- ipx$inflection_point$y
+  dlmo <- process_fits(ipx, dlmo)
 
   # create and save visualizations
   vis_coarse<-plot_profile(prf$profile, show_threshold = TRUE, threshold = threshold, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx, show_fit = TRUE, show_roi_heatmap = TRUE, show_roi_small = FALSE, show_roi_big = TRUE)
@@ -159,3 +160,79 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
   }
   return(time[index])
 }
+
+process_fits <- function(ip, dlmo) {
+  # Initialize fit_lines list
+  dlmo$fit_lines <- list()
+
+  # Ensure inflection point exists and has x & y
+  if (!is.null(ip$inflection_point) &&
+      !is.null(ip$inflection_point$x) &&
+      !is.null(ip$inflection_point$y)) {
+
+    # Extract x and y from inflection point
+    inf_x <- ip$inflection_point$x
+    inf_y <- ip$inflection_point$y
+
+    # Compute baseline fit intercept
+    base_intercept <- inf_y - ip$base_params * inf_x
+
+    # Store base fit with computed intercept
+    dlmo$fit_lines$base <- list(
+      type = "linear",
+      m = ip$base_params,   # Slope
+      b = base_intercept    # Computed intercept
+    )
+
+    # Check if ascending fit is linear or parabolic
+    if (length(ip$ascending_params) == 1) {
+      # Compute ascending intercept
+      ascending_intercept <- inf_y - ip$ascending_params * inf_x
+
+      dlmo$fit_lines$ascending <- list(
+        type = "linear",
+        m = ip$ascending_params,  # Slope
+        b = ascending_intercept   # Computed intercept
+      )
+    } else if (length(ip$ascending_params) == 3) {
+      # Store parabolic fit (intercept already given as 'c')
+      dlmo$fit_lines$ascending <- list(
+        type = "parabolic",
+        a = ip$ascending_params$a,
+        b = ip$ascending_params$b,
+        c = ip$ascending_params$c
+      )
+    }
+
+  } else {
+    # Handle missing inflection point
+    warning("Missing or incomplete ip$inflection_point! Storing base fit without intercept.")
+
+    # Store base without computing intercept
+    dlmo$fit_lines$base <- list(
+      type = "linear",
+      m = ip$base_params,   # Store only slope if intercept can't be calculated
+      b = NA                # Set b as NA since we couldn't compute it
+    )
+
+    # Check if ascending fit is linear or parabolic
+    if (length(ip$ascending_params) == 1) {
+      dlmo$fit_lines$ascending <- list(
+        type = "linear",
+        m = ip$ascending_params,
+        b = NA  # Can't compute without inflection point
+      )
+    } else if (length(ip$ascending_params) == 3) {
+      dlmo$fit_lines$ascending <- list(
+        type = "parabolic",
+        a = ip$ascending_params$a,
+        b = ip$ascending_params$b,
+        c = ip$ascending_params$c
+      )
+    }
+  }
+
+  # Return the updated dlmo object
+  return(dlmo)
+}
+

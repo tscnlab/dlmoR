@@ -63,8 +63,36 @@ dlmo_result$ip$inflection_point
 36   20.26667 0.1
 
 # View estimated DLMO timestamp
-dlmo_result$dlmo_time
+dlmo$time
 20:16:00
+
+# View estimated melatonin concentration at DLMO time
+dlmo$fit_melatonin
+0.1
+
+# View parameters of fit lines 
+# Baseline fit type is always linear: slope m, y-intercept b
+$fit_lines$base$type
+[1] "linear"
+
+$fit_lines$base$m
+[1] -0.1599731
+
+$fit_lines$base$b
+[1] 3.342121
+
+# Ascending fit type is either linear or parabolic.
+$fit_lines$ascending$type
+[1] "parabolic"
+
+$fit_lines$ascending$a
+1.918017 
+
+$fit_lines$ascending$b
+-72.59794 
+
+$fit_lines$ascending$c
+683.6161 
 
 # Plot the melatonin profile with DLMO detection
 print(dlmo_result$dlmoplotcoarse)
