@@ -50,15 +50,6 @@ pak::pak("tscnlab/dlmoR")
 This is a simple example that illustrates how to use **`dlmoR`**:
 
 ``` r
-library(dlmoR)
-
-# Load the sample melatonin profile data included in the package
-filename <- system.file("extdata/sample_melatonin_profile.csv", package = "dlmoR")
-# Calculate the DLMO using the sample data and a threshold of 3 pg/mL (default = 2.3 pg/mL)
-sample_dlmo <- calculate_dlmo(file_path = filename, threshold = 3, fine_flag = TRUE)
-```
-
-``` r
 # Load the package
 library(dlmoR)
 

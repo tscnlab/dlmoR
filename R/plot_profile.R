@@ -216,18 +216,12 @@ plot_roi <- function(plot, roi, roi_line_only) {
 #'
 #' @param plot A ggplot object. The base plot to which the heatmap should be added.
 #' @param data A dataframe containing the melatonin profile with `datetime` and `melatonin` values.
-#' @param roi_grid_big A dataframe containing **coarse grid points** (large-scale ROI search).
-#' @param roi_grid_small A dataframe containing **fine grid points** (refined ROI search).
-#' @param residuals_big A numeric vector of residuals corresponding to `roi_grid_big`.
-#' @param residuals_small A numeric vector of residuals corresponding to `roi_grid_small`.
-#' @param show_roi_big Logical. If `TRUE`, overlays **coarse grid residuals** as a heatmap.
-#' @param show_roi_small Logical. If `TRUE`, overlays **fine grid residuals** as a heatmap.
+#' @param roi_grid A dataframe containing **roi grid points** (ROI search area).
+#' @param residuals A numeric vector of residuals corresponding to `roi_grid`.
 #'
 #' @return A ggplot object with the residual heatmap overlay.
 #'
 #' @details
-#' - **Coarse Grid (`roi_grid_big`)**: Provides an **initial broad search** for the inflection point.
-#' - **Fine Grid (`roi_grid_small`)**: Focuses on **refining** the best-fit region.
 #' - The **color gradient** represents residual values, with lower residuals indicating **better fit**.
 #' - Residuals are **log-transformed** for visualization.
 #'
@@ -235,69 +229,25 @@ plot_roi <- function(plot, roi, roi_line_only) {
 #' \dontrun{
 #'   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = datetime, y = melatonin)) +
 #'       ggplot2::geom_point()
-#'   plot <- plot_roi_heatmap(plot, data = profile_data,
-#'                            roi_grid_big = grid_big, residuals_big = res_big,
-#'                            show_roi_big = TRUE)
+#'   plot <- plot_roi_heatmap(plot, data = profile_data, roi_grid = grid, residuals = res)
 #' }
 #' @export
-plot_roi_heatmap <- function(plot, data = NULL, roi_grid_big = NULL, roi_grid_small = NULL,
-                             residuals_big = NULL, residuals_small = NULL,
-                             show_roi_big = FALSE, show_roi_small = FALSE) {
+plot_roi_heatmap <- function(plot, data = NULL, roi_grid = NULL, residuals = NULL) {
   # Ensure at least one grid is selected for visualization
-  if (show_roi_big & !is.null(roi_grid_big) & !show_roi_small) {
 
     # Convert x-coordinates from decimal hours to POSIXct timestamps
-    dt_roi_grid_big <- data.frame(
-      x = decimal_to_posixct(roi_grid_big$x, data$datetime),
-      y = roi_grid_big$y
+    dt_roi_grid <- data.frame(
+      x = decimal_to_posixct(roi_grid$x, data$datetime),
+      y = roi_grid$y
     )
 
     # Add coarse grid heatmap to plot
     plot <- plot + ggplot2::geom_point(
-      data = dt_roi_grid_big, ggplot2::aes(x = x, y = y, color = log(residuals_big)),
+      data = dt_roi_grid, ggplot2::aes(x = x, y = y, color = log(residuals)),
       size = 1.25
     ) +
       ggplot2::scale_color_gradient(low = "cyan", high = "deeppink")  # Color gradient from blue to pink
-  }
 
-  # If fine grid heatmap is selected
-  else if (show_roi_small & !is.null(roi_grid_small) & !show_roi_big) {
-    # Convert x-coordinates from decimal hours to POSIXct timestamps
-    dt_roi_grid_small <- data.frame(
-      x = decimal_to_posixct(roi_grid_small$x, data$datetime),
-      y = roi_grid_small$y
-    )
-
-    # Add fine grid heatmap to plot
-    plot <- plot + ggplot2::geom_point(
-      data = dt_roi_grid_small, ggplot2::aes(x = x, y = y, color = log(residuals_small)),
-      size = 0.5
-    ) +
-      ggplot2::scale_color_gradient(low = "cyan", high = "deeppink", guide = "colorbar")
-  }
-
-  # If both coarse and fine grids are selected
-  else if (show_roi_big & show_roi_small) {
-    print("Displaying both coarse and fine grid heatmaps")
-
-    # Convert x-coordinates from decimal hours to POSIXct timestamps
-    dt_roi_grid_big <- data.frame(
-      x = decimal_to_posixct(roi_grid_big$x, data$datetime),
-      y = roi_grid_big$y
-    )
-
-    dt_roi_grid_small <- data.frame(
-      x = decimal_to_posixct(roi_grid_small$x, data$datetime),
-      y = roi_grid_small$y
-    )
-
-    # Add both heatmaps to plot
-    plot <- plot +
-      ggplot2::geom_point(data = dt_roi_grid_big, ggplot2::aes(x = x, y = y, color = log(residuals_big))) +
-      ggplot2::scale_color_gradient(low = "cyan", high = "deeppink") +
-      ggplot2::geom_point(data = dt_roi_grid_small, ggplot2::aes(x = x, y = y, color = log(residuals_small)), size = 0.5) +
-      ggplot2::scale_color_gradient(low = "cyan", high = "deeppink", guide = "colorbar")
-  }
 
   return(plot)
 }
@@ -410,15 +360,11 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
 #'     \item `inflection_point`: A list with `x` (decimal hours) and `y` (melatonin level).
 #'     \item `base_params`: Parameters of the **base segment fit**.
 #'     \item `ascending_params`: Parameters of the **ascending segment fit**.
-#'     \item `grid_big`: Coarse search grid for inflection point.
-#'     \item `grid_small`: Fine search grid for inflection point.
-#'     \item `res_big`: Residuals from coarse grid search.
-#'     \item `res_small`: Residuals from fine grid search.
+#'     \item `grid`: search grid for inflection point.
+#'     \item `res`: Residuals from grid search.
 #'   }
 #' @param show_fit Logical. If `TRUE`, overlays **DLMO fit lines**.
 #' @param show_roi_heatmap Logical. If `TRUE`, adds a **heatmap** for **ROI residuals**.
-#' @param show_roi_small Logical. If `TRUE`, plots the **fine-resolution** ROI grid.
-#' @param show_roi_big Logical. If `TRUE`, plots the **coarse-resolution** ROI grid.
 #' @return A `ggplot2` object with the melatonin profile and optional overlays.
 #'
 #' @details
@@ -438,7 +384,7 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
                          show_segments = TRUE, show_parallelogram = FALSE, pll_result = NULL,
                          show_roi = FALSE, roi_line_only = TRUE, roi = NULL,
                          show_dlmoIP = TRUE, dlmoFit = NULL, show_fit = FALSE,
-                         show_roi_heatmap = FALSE, show_roi_small = FALSE, show_roi_big = FALSE) {
+                         show_roi_heatmap = FALSE) {
 
   # Define the title conditionally based on DLMO Fit presence
   plot_title <- if (!is.null(dlmoFit)) {
@@ -470,10 +416,7 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
 
   # Add ROI heatmap if enabled
   if (show_roi_heatmap) {
-    plot <- plot_roi_heatmap(plot, data = profile_data, roi_grid_big = dlmoFit$grid_big,
-                             roi_grid_small = dlmoFit$grid_small, residuals_big = dlmoFit$res_big,
-                             residuals_small = dlmoFit$res_small, show_roi_small = show_roi_small,
-                             show_roi_big = show_roi_big)
+    plot <- plot_roi_heatmap(plot, data = profile_data, roi_grid = dlmoFit$grid,residuals = dlmoFit$res)
   }
 
   # Re-add full profile line to ensure clarity

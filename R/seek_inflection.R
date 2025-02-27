@@ -645,10 +645,15 @@ seek_inflection <- function(data, threshold = threshold, roi, step_x = 0.1, step
   grid_points <- make_grid(roi, step_x, step_y)
 
   # Initialize variables to track the best fit
-  best_residual <- Inf
-  best_point <- NULL
-  best_params_base <- NULL
-  best_params_ascending <- NULL
+  best_residual_coarse <- Inf
+  best_point_coarse <- NULL
+  best_params_base_coarse <- NULL
+  best_params_ascending_coarse <- NULL
+
+  best_residual_fine <- Inf
+  best_point_fine <- NULL
+  best_params_base_fine <- NULL
+  best_params_ascending_fine <- NULL
 
   # Store coarse grid results
   res_big <- numeric(nrow(grid_points))
@@ -661,11 +666,11 @@ seek_inflection <- function(data, threshold = threshold, roi, step_x = 0.1, step
     res_big[i] <- result$residual
 
     # If the new residual is smaller, update the best fit
-    if (result$residual < best_residual) {
-      best_residual <- result$residual
-      best_point <- poi
-      best_params_base <- result$base_params
-      best_params_ascending <- result$ascending_params
+    if (result$residual < best_residual_coarse) {
+      best_residual_coarse <- result$residual
+      best_point_coarse <- poi
+      best_params_base_coarse <- result$base_params
+      best_params_ascending_coarse <- result$ascending_params
     }
   }
 
@@ -700,20 +705,23 @@ seek_inflection <- function(data, threshold = threshold, roi, step_x = 0.1, step
       res_small[i] <- result$residual
 
       # If the new residual is smaller, update the best fit
-      if (result$residual < best_residual) {
-        best_residual <- result$residual
-        best_point <- poi
-        best_params_base <- result$base_params
-        best_params_ascending <- result$ascending_params
+      if (result$residual < best_residual_fine) {
+        best_residual_fine <- result$residual
+        best_point_fine <- poi
+        best_params_base_fine <- result$base_params
+        best_params_ascending_fine <- result$ascending_params
       }
     }
   }
 
   ### Step 4: Return Best Fit Results
   return(list(
-    inflection_point = best_point,
-    base_params = best_params_base,
-    ascending_params = best_params_ascending,
+    inflection_point_coarse = best_point_coarse,
+    inflection_point_fine = best_point_fine,
+    base_params_coarse = best_params_base_coarse,
+    ascending_params_coarse = best_params_ascending_coarse,
+    base_params_fine = best_params_base_fine,
+    ascending_params_fine = best_params_ascending_fine,
     grid_big = grid_big,
     res_big = res_big,
     grid_small = grid_small,

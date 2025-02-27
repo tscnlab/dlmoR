@@ -108,19 +108,69 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
 
   # define roi & search for dlmo inflection point
   roix<-define_roi(profile_data = prf$profile, threshold = threshold)
-  ipx<-get_inflection(prf$profile, threshold = threshold, roix, fine_flag = fine_flag)
+  ipx <- get_inflection(prf$profile, threshold = threshold, roix, fine_flag = fine_flag)
 
-  # convert & save inflection point from decimal hours to hh:mm:ss units
-  dlmo_time <- hms::as_hms(decimal_to_posixct(ipx$inflection_point$x, prf$profile$datetime))
-  dlmo <- list()
-  dlmo$time <- dlmo_time
-  dlmo$fit_melatonin <- ipx$inflection_point$y
-  dlmo <- process_fits(ipx, dlmo)
+  # Initialize as NULL
+  ipx_coarse <- NULL
+  ipx_fine <- NULL
+
+  # Assign only the relevant one based on fine_flag
+  if (fine_flag) {
+    ipx_fine <- list(
+      inflection_point = ipx$inflection_point_fine,
+      base_params = ipx$base_params_fine,
+      ascending_params = ipx$ascending_params_fine,
+      grid = ipx$grid_small,
+      res = ipx$res_small
+    )
+
+    ipx_coarse <- list(
+      inflection_point = ipx$inflection_point_coarse,
+      base_params = ipx$base_params_coarse,
+      ascending_params = ipx$ascending_params_coarse,
+      grid = ipx$grid_big,
+      res = ipx$res_big
+    )
+  } else {
+    ipx_coarse <- list(
+      inflection_point = ipx$inflection_point_coarse,
+      base_params = ipx$base_params_coarse,
+      ascending_params = ipx$ascending_params_coarse,
+      grid = ipx$grid_big,
+      res = ipx$res_big
+    )
+  }
+
+
+
+  # Initialize dlmo list
+  dlmo <- list(coarse = NULL, fine = NULL)
+
+  # Process coarse if available
+  if (!is.null(ipx_coarse)) {
+    dlmo_coarse_time <- hms::as_hms(decimal_to_posixct(ipx_coarse$inflection_point$x, prf$profile$datetime))
+    dlmo$coarse <- list(
+      time = dlmo_coarse_time,
+      fit_melatonin = ipx_coarse$inflection_point$y
+    )
+    dlmo$coarse <- process_fits(ipx_coarse, dlmo$coarse)
+  }
+
+  # Process fine if available
+  if (!is.null(ipx_fine)) {
+    dlmo_fine_time <- hms::as_hms(decimal_to_posixct(ipx_fine$inflection_point$x, prf$profile$datetime))
+    dlmo$fine <- list(
+      time = dlmo_fine_time,
+      fit_melatonin = ipx_fine$inflection_point$y
+    )
+    dlmo$fine <- process_fits(ipx_fine, dlmo$fine)
+  }
+
 
   # create and save visualizations
-  vis_coarse<-plot_profile(prf$profile, show_threshold = TRUE, threshold = threshold, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx, show_fit = TRUE, show_roi_heatmap = TRUE, show_roi_small = FALSE, show_roi_big = TRUE)
+  vis_coarse<-plot_profile(prf$profile, show_threshold = TRUE, threshold = threshold, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx_coarse, show_fit = TRUE, show_roi_heatmap = TRUE)
   if(fine_flag){
-  vis_fine<-plot_profile(prf$profile, show_threshold = TRUE, threshold = threshold, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx, show_fit = TRUE, show_roi_heatmap = TRUE, show_roi_small = TRUE, show_roi_big = FALSE)
+  vis_fine<-plot_profile(prf$profile, show_threshold = TRUE, threshold = threshold, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx_fine, show_fit = TRUE, show_roi_heatmap = TRUE)
   }
   else{
     vis_fine <- NULL
