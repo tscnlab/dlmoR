@@ -49,40 +49,47 @@ filename <- system.file("extdata/sample_melatonin_profile.csv", package = "dlmoR
 dlmo_result <- calculate_dlmo(file_path = filename, threshold = 3, fine_flag = TRUE)
 
 # View estimated DLMO inflection point (decimal-hours) and melatonin concentration (pg/mL) at this time
-dlmo_result$ip$inflection_point
+
+# Coarse grid search result
+dlmo_result$ip$inflection_point_coarse
+#        x     y
+10  20.81667 0.1
+
+# Fine grid search result
+dlmo_result$ip$inflection_point_fine
 #        x     y
 36   20.26667 0.1
 
-# View estimated DLMO timestamp
-dlmo$time
+# View estimated DLMO timestamp for fine search
+dlmo_result$dlmo$fine$time
 20:16:00
 
 # View estimated melatonin concentration at DLMO time
-dlmo$fit_melatonin
+dlmo_result$dlmo$fine$fit_melatonin
 0.1
 
 # View parameters of fit lines 
 # Baseline fit type is always linear: slope m, y-intercept b
-$fit_lines$base$type
+dlmo_result$dlmo$fine$fit_lines$base
 [1] "linear"
 
-$fit_lines$base$m
+dlmo_result$dlmo$fine$fit_lines$base$m
 [1] -0.1599731
 
-$fit_lines$base$b
+dlmo_result$dlmo$fine$fit_lines$base$b
 [1] 3.342121
 
 # Ascending fit type is either linear or parabolic.
-$fit_lines$ascending$type
+dlmo_result$dlmo$fine$fit_lines$ascending$type
 [1] "parabolic"
 
-$fit_lines$ascending$a
+dlmo_result$dlmo$fine$fit_lines$ascending$a
 1.918017 
 
-$fit_lines$ascending$b
+dlmo_result$dlmo$fine$fit_lines$ascending$b
 -72.59794 
 
-$fit_lines$ascending$c
+dlmo_result$dlmo$fine$fit_lines$ascending$c
 683.6161 
 
 # Plot the melatonin profile with DLMO detection
@@ -98,10 +105,10 @@ print(dlmo_result$dlmoplotfine)
 
 ## **Expected Runtime**  
 
-The runtime of `calculate_dlmo()` depends on the selected search method:  
+The runtime of `calculate_dlmo()` depends on the selected search method and on the computing power of your machine:  
 
-- **Coarse- and fine-grid DLMO search (`fine_flag = TRUE`, default)**: ~10 minutes per melatonin profile.  
-- **Coarse-grid DLMO search only (`fine_flag = FALSE`)**: ~1 minute per melatonin profile.  
+- **Coarse- and fine-grid DLMO search (`fine_flag = TRUE`, default)**: ~10 minutes (Windows)/~2 minutes (Mac) per melatonin profile.
+- **Coarse-grid DLMO search only (`fine_flag = FALSE`)**: ~1 minute (Windows)/< 1 minute (Mac) per melatonin profile.  
 
 For **batch processing**, runtime scales approximately linearly with the number of profiles analyzed.  
 
