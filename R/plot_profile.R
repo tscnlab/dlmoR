@@ -383,26 +383,103 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
 plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
                          show_segments = TRUE, show_parallelogram = FALSE, pll_result = NULL,
                          show_roi = FALSE, roi_line_only = TRUE, roi = NULL,
-                         show_dlmoIP = TRUE, dlmoFit = NULL, show_fit = FALSE,
-                         show_roi_heatmap = FALSE) {
+                         show_dlmoIP = TRUE, dlmo = NULL, dlmoFit = NULL, show_fit = FALSE,
+                         show_roi_heatmap = FALSE, plot_coarse = FALSE) {
 
-  # Define the title conditionally based on DLMO Fit presence
-  plot_title <- if (!is.null(dlmoFit)) {
-    dlmo_time <- hms::as_hms(decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime))
-    paste("Melatonin profile\nDLMO time:", as.character(dlmo_time))
-  } else {
-    "Melatonin profile"
+  # Function to safely replace NULL values
+  ensure_non_null <- function(value, fallback = "NA") {
+    if (is.null(value)) fallback else value
   }
+
+  # Define title and coefficients conditionally
+  dlmo_values <- if (!is.null(dlmoFit)) {
+    if (is.null(dlmo$fine) || plot_coarse){
+      # If no fine fit exists, use COARSE fit
+      dlmo_time <- dlmo$coarse$time
+      plot_title <- paste("Coarse Fit - DLMO time:", as.character(dlmo_time))
+      a1 <- dlmo$coarse$fit_lines$base$m
+      b1 <- dlmo$coarse$fit_lines$base$b
+      a2 <- dlmo$coarse$fit_lines$ascending$m
+      b2 <- dlmo$coarse$fit_lines$ascending$b
+      c2 <- NULL  # Coarse fit is always linear
+    } else {       # If fine fit exists
+      if(!plot_coarse){ #if plot type is fine
+        dlmo_time <- dlmo$fine$time
+        plot_title <- paste("Fine Fit - DLMO time:", as.character(dlmo_time))
+        a1 <- dlmo$fine$fit_lines$base$m
+        b1 <- dlmo$fine$fit_lines$base$m
+        if (length(dlmo$fine$fit_lines$ascending$params) == 1) {
+          # Linear fine fit
+          a2 <- dlmo$fine$fit_lines$ascending$m
+          b2 <- dlmo$fine$fit_lines$ascending$b
+          c2 <- NULL  # No quadratic term
+        } else {
+          # Parabolic fine fit
+          a2 <- dlmo$fine$fit_lines$ascending$a
+          b2 <- dlmo$fine$fit_lines$ascending$b
+          c2 <- dlmo$fine$fit_lines$ascending$c
+        }
+      }
+    }
+
+    list(plot_title = plot_title, a1 = a1, b1 = b1, a2 = a2, b2 = b2, c2 = c2)
+  } else {
+    list(plot_title = "Melatonin profile", a1 = NULL, b1 = NULL, a2 = NULL, b2 = NULL, c2 = NULL)
+  }
+
+  # Unpack the returned values
+  plot_title <- dlmo_values$plot_title
+  a1 <- dlmo_values$a1
+  b1 <- dlmo_values$b1
+  a2 <- dlmo_values$a2
+  b2 <- dlmo_values$b2
+  c2 <- dlmo_values$c2
+
+
+
+  # Define subtitle conditionally
+  if (!is.null(a2) && !is.null(b2)) {
+    if (is.null(c2)) {  # If c2 is NULL, it's a linear fit
+      subtitle_text <- bquote(
+        bold(f[e]) == .(ensure_non_null(a1)) * x[t] + .(ensure_non_null(b1)) * "," ~ "\n" ~
+          bold(f[l]) == .(ensure_non_null(a2)) * x[t] + .(ensure_non_null(b2))
+      )
+    } else {  # If c2 exists, it's a parabolic fit
+      subtitle_text <- bquote(
+        bold(f[e]) == .(ensure_non_null(a1)) * x[t] + .(ensure_non_null(b1)) * "," ~ "\n" ~
+          bold(f[l]) == .(ensure_non_null(a2)) * x[t]^2 + .(ensure_non_null(b2)) * x[t] + .(ensure_non_null(c2))
+      )
+    }
+  } else {
+    subtitle_text <- "No valid fit available"
+  }
+
 
   # Initialize base plot
   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = .data$datetime, y = .data$melatonin)) +
-    ggplot2::geom_point(color = 'grey', size = 2) +  # Scatter plot of raw data
-    ggplot2::geom_line(color = 'grey', linetype = "dotted", size = 1) +  # Connect points with dotted line
-    ggplot2::scale_x_datetime(labels = scales::date_format("%H:%M"), date_breaks = "2 hours") +  # Format x-axis
-    ggplot2::labs(title = plot_title, x = "Local time [hh:mm]", y = "Melatonin concentration [pg/mL]") +
+    ggplot2::geom_point(color = 'grey', size = 2) +
+    ggplot2::geom_line(color = 'grey', linetype = "dotted", size = 1) +
+    ggplot2::scale_x_datetime(labels = scales::date_format("%H:%M"), date_breaks = "2 hours") +
+
+    ggplot2::labs(
+      title = plot_title,
+      subtitle = subtitle_text,
+      x = "Local time [hh:mm]",
+      y = "Melatonin concentration [pg/mL]"
+    ) +
+
     ggplot2::theme_minimal() +
-    ggplot2::theme(legend.position = "ascending") +
+
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(face = "bold", size = 14, hjust = 0),
+      plot.subtitle = ggplot2::element_text(size = 12, hjust = 0)
+    ) +
+
+    # Corrected legend position
+    ggplot2::theme(legend.position = "none") +
+
     ggplot2::scale_linetype_manual(values = c("Full Profile" = "dotted"))
+
 
   # Overlay Parallelogram if enabled
   if (show_parallelogram) {

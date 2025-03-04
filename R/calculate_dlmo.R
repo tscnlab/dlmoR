@@ -168,9 +168,9 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
 
 
   # create and save visualizations
-  vis_coarse<-plot_profile(prf$profile, show_threshold = TRUE, threshold = threshold, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx_coarse, show_fit = TRUE, show_roi_heatmap = TRUE)
+  vis_coarse<-plot_profile(prf$profile, show_threshold = TRUE, threshold = threshold, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx_coarse, dlmo = dlmo, show_fit = TRUE, show_roi_heatmap = TRUE, plot_coarse = TRUE)
   if(fine_flag){
-  vis_fine<-plot_profile(prf$profile, show_threshold = TRUE, threshold = threshold, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx_fine, show_fit = TRUE, show_roi_heatmap = TRUE)
+  vis_fine<-plot_profile(prf$profile, show_threshold = TRUE, threshold = threshold, show_segments = TRUE, show_parallelogram = TRUE, pll_result = prf$plll, show_roi = TRUE, roi = roix, show_dlmoIP = TRUE, dlmoFit = ipx_fine, dlmo = dlmo, show_fit = TRUE, show_roi_heatmap = TRUE, plot_coarse = FALSE)
   }
   else{
     vis_fine <- NULL
