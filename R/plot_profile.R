@@ -235,18 +235,18 @@ plot_roi <- function(plot, roi, roi_line_only) {
 plot_roi_heatmap <- function(plot, data = NULL, roi_grid = NULL, residuals = NULL) {
   # Ensure at least one grid is selected for visualization
 
-    # Convert x-coordinates from decimal hours to POSIXct timestamps
-    dt_roi_grid <- data.frame(
-      x = decimal_to_posixct(roi_grid$x, data$datetime),
-      y = roi_grid$y
-    )
+  # Convert x-coordinates from decimal hours to POSIXct timestamps
+  dt_roi_grid <- data.frame(
+    x = decimal_to_posixct(roi_grid$x, data$datetime),
+    y = roi_grid$y
+  )
 
-    # Add coarse grid heatmap to plot
-    plot <- plot + ggplot2::geom_point(
-      data = dt_roi_grid, ggplot2::aes(x = x, y = y, color = log(residuals)),
-      size = 1.25
-    ) +
-      ggplot2::scale_color_gradient(low = "cyan", high = "deeppink")  # Color gradient from blue to pink
+  # Add coarse grid heatmap to plot
+  plot <- plot + ggplot2::geom_point(
+    data = dt_roi_grid, ggplot2::aes(x = x, y = y, color = log(residuals)),
+    size = 1.25
+  ) +
+    ggplot2::scale_color_gradient(low = "cyan", high = "deeppink")  # Color gradient from blue to pink
 
 
   return(plot)
