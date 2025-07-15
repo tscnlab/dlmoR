@@ -53,7 +53,7 @@ decimal_to_posixct <- function(decimal_hour, reference_times) {
 }
 
 # -----------------------------
-# Scenario 1 analysis only (parallelized internally)
+# Single deletion analysis (parallelized internally)
 # -----------------------------
 run_single_deletion <- function(profile_id, df) {
   full_dlmo_result <- tryCatch({

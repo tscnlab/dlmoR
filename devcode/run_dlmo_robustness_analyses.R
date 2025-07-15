@@ -5,6 +5,7 @@
 # sequentially runs two analysis scripts:
 #   1. deletion_analysis_multiple_pll.R
 #   2. resampling_analysis_pll.R
+#   3. multiple_threshold_analysis_crosspll.R
 #
 # -------------------------------------------------------------------------
 
@@ -26,5 +27,10 @@ message("Starting resampling analysis...")
 source("resampling_analysis_pll.R")
 message("Resampling analysis complete.")
 
-# ---- 5. Done ----
+# ---- Run threshold sensitivity analysis script ----
+message("Starting threshold sensitivity analysis...")
+source("multiple_threshold_analysis_crosspll.R")
+message("Threshold sensitivity analysis complete.")
+
+# ---- Done ----
 message("All DLMO analyses completed successfully.")

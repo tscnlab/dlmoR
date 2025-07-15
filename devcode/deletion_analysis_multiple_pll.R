@@ -16,8 +16,8 @@
 #     2. DLMO shifts by % deletion (half-violin plot)
 #
 # Outputs:
-# - Individual .rds files per processed profile in `multiple_deletion_results_blume/`
-# - Error log CSV: `multiple_deletion_errors_blume.csv`
+# - Individual .rds files per processed profile in `multiple_deletion_results/`
+# - Error log CSV: `multiple_deletion_errors.csv`
 # - Aggregated results loaded into `all_results`
 # - Visual summary plots (raster + violin)
 # ------------------------------------------------------------------------------
@@ -44,8 +44,8 @@ handlers(global = TRUE)
 
 profile_folder <- "inst/extdata"
 
-# Limit to first 2 CSV files (optional)
-profile_files <- list.files(profile_folder, pattern = "\\.csv$", full.names = TRUE)[1:2]
+
+profile_files <- list.files(profile_folder, pattern = "\\.csv$", full.names = TRUE)
 
 profiles <- profile_files %>%
   set_names(tools::file_path_sans_ext(basename(.))) %>%
@@ -76,14 +76,14 @@ run_multiple_deletion <- function(profile_id, df) {
   full_dlmo <- extract_dlmo_value(full_dlmo_result)
   full_dlmo_time <- dlmoR::decimal_to_posixct(full_dlmo, df$datetime)
 
- #percentages <- c(10, 20, 30, 40, 50)
-percentages <- c(10, 20)
+percentages <- c(10, 20, 30, 40, 50)
+#percentages <- c(10, 20)
 
   scenario2 <- map_dfr(percentages, function(pct) {
     n_del <- floor(pct / 100 * nrow(df))
     if (n_del < 1) return(NULL)
 
-    future_map_dfr(1:2, function(rep) {
+    future_map_dfr(1:50, function(rep) { # discuss reps with Manuel TODO
       idx <- sample(seq_len(nrow(df)), n_del, replace = FALSE)
       df_deleted <- df[-idx, ]
       dlmo_deleted <- tryCatch({
@@ -112,7 +112,7 @@ percentages <- c(10, 20)
 # 4. RUN ANALYSIS ONLY FOR NEW PROFILES
 # ────────────────────────────────────────────────────────────────
 
-results_dir <- "multiple_deletion_results_blume"
+results_dir <- "outputs/multiple_deletion_results"
 dir.create(results_dir, showWarnings = FALSE)
 
 # Skip already-processed profiles
@@ -162,7 +162,7 @@ error_log <- imap_dfr(profiles_to_run, function(df, id) {
 })
 
 # Save error log
-write_csv(error_log, file.path(results_dir, "multiple_deletion_errors_blume.csv"))
+write_csv(error_log, file.path(results_dir, "multiple_deletion_errors.csv"))
 
 # ────────────────────────────────────────────────────────────────
 # 6. LOAD ALL COMPLETED RESULTS FROM .RDS FILES

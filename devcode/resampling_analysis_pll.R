@@ -36,13 +36,19 @@ library(future)    # for parallelization
 library(progressr) # for progress bar
 
 # -----------------------------
-# 1. Load all melatonin profiles from CSVs
+# 1a. Load all melatonin profiles from CSVs
 # -----------------------------
 profile_folder <- system.file("extdata/", package = "dlmoR")
 csv_files <- list.files(profile_folder, pattern = "\\.csv$", full.names = TRUE)
 
 profiles <- set_names(csv_files, file_path_sans_ext(basename(csv_files))) %>%
   map(read_csv, show_col_types = FALSE)
+
+# -----------------------------
+# 1b. Set output directory
+# -----------------------------
+results_dir <- "outputs/dlmo_resampling_outputs"
+dir.create(results_dir, showWarnings = FALSE)
 
 # -----------------------------
 # 2. Function to resample using PCHIP interpolation
@@ -192,12 +198,12 @@ if (nrow(interval_errors) == 0) {
 
 # Merge and save
 combined_errors <- bind_rows(profile_errors, interval_errors)
-write_csv(combined_errors, "dlmo_resamplinganalysis_all_errors.csv")
-
 
 # Save outputs
-write_csv(combined_errors, "dlmo_resamplinganalysis_all_errors.csv")
-saveRDS(all_results, "dlmo_resamplinganalysis_results_full.rds")
+write_csv(combined_errors, file.path(results_dir, "dlmo_resampling_all_errors.csv"))
+write_csv(all_results %>% select(-original_dlmo_full, -resampled_dlmo_full),
+          file.path(results_dir, "dlmo_resampling_results_summary.csv"))
+saveRDS(all_results, file.path(results_dir, "dlmo_resampling_results_full.rds"))
 
 # -----------------------------
 # 8. Plot the results
