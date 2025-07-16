@@ -76,14 +76,15 @@ run_multiple_deletion <- function(profile_id, df) {
   full_dlmo <- extract_dlmo_value(full_dlmo_result)
   full_dlmo_time <- dlmoR::decimal_to_posixct(full_dlmo, df$datetime)
 
-#percentages <- c(10, 20, 30, 40, 50)
-percentages <- c(10, 20)
+percentages <- c(10, 20, 30, 40, 50)
+#percentages <- c(10, 20)
+
 
   scenario2 <- map_dfr(percentages, function(pct) {
     n_del <- floor(pct / 100 * nrow(df))
     if (n_del < 1) return(NULL)
 
-    future_map_dfr(1:2, function(rep) { # discuss reps with Manuel TODO
+    future_map_dfr(1:20, function(rep) { # discuss reps with Manuel TODO
       idx <- sample(seq_len(nrow(df)), n_del, replace = FALSE)
       df_deleted <- df[-idx, ]
       dlmo_deleted <- tryCatch({
@@ -97,7 +98,10 @@ percentages <- c(10, 20)
         replicate = rep,
         deleted_timepoints = list(df$datetime[idx]),
         delta_dlmo = dlmo_deleted - full_dlmo,
+        full_dlmo_dh = full_dlmo,
+        deleted_dlmo_dh = dlmo_deleted,
         full_dlmo_time = full_dlmo_time,
+        deleted_dlmo_time = dlmoR::decimal_to_posixct(dlmo_deleted, df$datetime),
         deleted_minutes_from_dlmo = list(
           relative_minutes_to_dlmo(df$datetime[idx], full_dlmo_time)
         )
@@ -119,7 +123,7 @@ dir.create(results_dir, showWarnings = FALSE, recursive = TRUE)
 completed_ids <- list.files(results_dir, pattern = "\\.rds$") %>%
   tools::file_path_sans_ext()
 profiles_to_run <- profiles[!names(profiles) %in% completed_ids]
-profiles_to_run <- head(profiles_to_run,2)
+#profiles_to_run <- head(profiles_to_run,2)
 
 # Run and save results
 safe_run <- safely(run_multiple_deletion)
