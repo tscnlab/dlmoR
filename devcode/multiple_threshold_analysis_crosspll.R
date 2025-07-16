@@ -119,7 +119,9 @@ run_dlmo_across_thresholds <- function(profiles,
 }
 
 # Load profiles
-profile_folder <- system.file("extdata", package = "dlmoR")
+#profile_folder <- system.file("extdata", package = "dlmoR")
+profile_folder <- "/home/docker/inst/extdata"
+
 profile_files <- list.files(profile_folder, pattern = "\\.csv$", full.names = TRUE)
 profiles <- profile_files %>%
   set_names(tools::file_path_sans_ext(basename(.))) %>%

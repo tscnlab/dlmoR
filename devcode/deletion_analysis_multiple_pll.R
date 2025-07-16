@@ -41,8 +41,8 @@ handlers(global = TRUE)
 # ──────────────────────────────────
 # 2. LOAD AND FILTER PROFILE FILES
 # ──────────────────────────────────
-
-profile_folder <- system.file("extdata", package = "dlmoR")
+profile_folder <- "/home/docker/inst/extdata"
+#profile_folder <- system.file("extdata", package = "dlmoR")
 
 profile_files <- list.files(profile_folder, pattern = "\\.csv$", full.names = TRUE)
 
