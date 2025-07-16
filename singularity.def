@@ -1,1 +1,34 @@
-\[ji@nyx-login0 dlmoR\]\$ cat
+Bootstrap: docker
+From: r-base:latest
+
+%post
+    # Update and install system dependencies for R packages (optional, but recommended)
+    apt-get update && apt-get install -y --no-install-recommends \
+        libcurl4-openssl-dev \
+        libssl-dev \
+        libxml2-dev \
+        git \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Install pak globally
+    Rscript -e "install.packages('pak', repos = 'https://cran.rstudio.com')"
+
+    # Install dlmoR from GitHub globally using pak
+    Rscript -e "pak::pak('tscnlab/dlmoR')"
+    Rscript -e "pak::pkg_install(c(
+		  'readr',
+		  'dplyr',
+		  'purrr',
+		  'tibble',
+		  'tidyr',
+		  'ggplot2',
+		  'gghalves',
+		  'pracma',
+		  'tools',
+		  'furrr',
+		  'future',
+		  'progressr',
+		  'forcats'))"
+
+%environment
+    export R_LIBS_USER=/usr/local/lib/R/site-library
