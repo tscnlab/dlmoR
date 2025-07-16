@@ -119,7 +119,7 @@ dir.create(results_dir, showWarnings = FALSE, recursive = TRUE)
 completed_ids <- list.files(results_dir, pattern = "\\.rds$") %>%
   tools::file_path_sans_ext()
 profiles_to_run <- profiles[!names(profiles) %in% completed_ids]
-profiles_to_run <- head(profiles_to_run,3)
+profiles_to_run <- head(profiles_to_run,2)
 
 # Run and save results
 safe_run <- safely(run_multiple_deletion)
@@ -250,5 +250,15 @@ q
 # 8. GENERATE PLOTS
 # ────────────────────────────────────────────────────────────────
 
-plot_deletion_raster_by_replicate(all_results)
-plot_dlmo_deletion_violin(all_results)
+tryCatch({
+  plot_deletion_raster_by_replicate(all_results)
+}, error = function(e) {
+  message("Skipping raster plot: ", e$message)
+})
+
+tryCatch({
+  plot_dlmo_deletion_violin(all_results)
+}, error = function(e) {
+  message("Skipping violin plot: ", e$message)
+})
+
