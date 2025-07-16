@@ -131,7 +131,7 @@ results_dir <- "outputs/dlmo_threshold_sensitivity"
 
 # Run analysis
 results <- run_dlmo_across_thresholds(
-  profiles = profiles[1:5],
+  profiles = profiles,
   thresholds = thresholds_to_test,
   results_dir = results_dir
 )

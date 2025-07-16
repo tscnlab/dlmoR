@@ -38,9 +38,9 @@ library(ggplot2)
 plan(list(multisession, sequential))
 handlers(global = TRUE)
 
-# ────────────────────────────────────────────────────────────────
-# 2. LOAD AND FILTER PROFILE FILES (LIMITED TO FIRST 2 FOR TESTING)
-# ────────────────────────────────────────────────────────────────
+# ──────────────────────────────────
+# 2. LOAD AND FILTER PROFILE FILES
+# ──────────────────────────────────
 
 profile_folder <- "inst/extdata"
 
