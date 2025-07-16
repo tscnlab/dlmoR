@@ -39,7 +39,8 @@ library(progressr) # for progress bar
 # 1a. Load all melatonin profiles from CSVs
 # -----------------------------
 #profile_folder <- system.file("extdata/", package = "dlmoR")
-profile_folder <- "/home/docker/inst/extdata"
+args <- commandArgs(trailingOnly = TRUE)
+profile_folder <- if (length(args) > 0) args[[1]] else "inst/extdata"
 
 csv_files <- list.files(profile_folder, pattern = "\\.csv$", full.names = TRUE)
 

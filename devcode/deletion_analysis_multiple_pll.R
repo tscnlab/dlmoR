@@ -41,7 +41,8 @@ handlers(global = TRUE)
 # ──────────────────────────────────
 # 2. LOAD AND FILTER PROFILE FILES
 # ──────────────────────────────────
-profile_folder <- "/home/docker/inst/extdata"
+args <- commandArgs(trailingOnly = TRUE)
+profile_folder <- if (length(args) > 0) args[[1]] else "inst/extdata"
 #profile_folder <- system.file("extdata", package = "dlmoR")
 
 profile_files <- list.files(profile_folder, pattern = "\\.csv$", full.names = TRUE)
