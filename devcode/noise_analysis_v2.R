@@ -389,7 +389,7 @@ ggplot(
   plot_data %>% filter(type == "noisy", !is.na(dlmo_decimal)),
   aes(x = dlmo_decimal, fill = profile)
 ) +
-  geom_histogram(bins = 1, color = "white", alpha = 0.6) +
+  geom_histogram(bins = 50, color = "white", alpha = 0.6) +
   facet_wrap(~ time_sd_minutes, scales = "free_y") +
   labs(
     title = "Distribution of DLMO Estimates by Time Jitter Level",

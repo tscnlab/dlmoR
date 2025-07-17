@@ -109,7 +109,8 @@ percentages <- c(10, 20, 30, 40, 50)
           relative_minutes_to_dlmo(df$datetime[idx], full_dlmo_time)
         )
       )
-    }, .options = furrr_options(seed = TRUE))
+    #}, .options = furrr_options(seed = TRUE)) TODO removed 20250717
+    })
   })
 
   return(scenario2)
