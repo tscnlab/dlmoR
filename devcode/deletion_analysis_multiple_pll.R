@@ -35,7 +35,8 @@ library(progressr)
 library(ggplot2)
 
 # Set up nested parallelism (outer = multisession, inner = sequential)
-plan(list(multisession, sequential))
+# plan(list(multisession, sequential)) #TODO took out 20250717
+plan(list(multicore, sequential), workers = 16)  # Or whatever limit you want (< 64)
 handlers(global = TRUE)
 
 # ──────────────────────────────────
