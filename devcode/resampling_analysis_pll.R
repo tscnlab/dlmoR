@@ -120,18 +120,18 @@ process_profile <- function(profile_id, df, resample_intervals_mins) {
 # -----------------------------
 # 5. Setup for parallel run
 # -----------------------------
-plan(multisession, workers = parallel::detectCores() - 1)
+plan(multisession, workers = 16)
 handlers(global = TRUE)
 
-#resample_intervals <- c(2, 5, 10, 15, 20, 30, 45, 60, 75, 90)  # in minutes
-resample_intervals <- c(2, 5, 10)  # in minutes
+resample_intervals <- c(2, 5, 10, 15, 20, 30, 45, 60, 75, 90)  # in minutes
+#resample_intervals <- c(2, 5, 10)  # in minutes
 
 safe_process_profile <- safely(process_profile)
 
 # -----------------------------
 # 6. Run DLMO estimation
 # -----------------------------
-profiles <- head(profiles, 2)
+#profiles <- head(profiles, 2)
 with_progress({
   p <- progressor(along = profiles)
   results_list <- future_imap(profiles, function(df, id) {
