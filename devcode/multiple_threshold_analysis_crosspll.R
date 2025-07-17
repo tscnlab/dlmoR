@@ -130,6 +130,8 @@ profiles <- profile_files %>%
 
 # Parameters
 thresholds_to_test <- c(2, 3, 4, 5, 10)
+#thresholds_to_test <- c(2, 3)
+
 results_dir <- "outputs/dlmo_threshold_sensitivity"
 
 # Run analysis

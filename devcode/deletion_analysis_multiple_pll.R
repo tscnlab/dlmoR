@@ -37,7 +37,7 @@ library(ggplot2)
 # Set up nested parallelism (outer = multisession, inner = sequential)
 # plan(list(multisession, sequential)) #TODO took out 20250717
 #plan(list(multicore, sequential), workers = 16)  # Or whatever limit you want (< 64)
-plan(multicore, workers = 16)  # safer than multicore on clusters
+plan(multicore, workers = 64)  # safer than multicore on clusters
 handlers(global = TRUE)
 
 # ──────────────────────────────────
