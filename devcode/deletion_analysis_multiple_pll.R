@@ -252,7 +252,7 @@ plot_dlmo_deletion_violin <- function(results_df) {
     theme_minimal(base_size = 13) +
     theme(legend.position = "none")
 }
-q
+
 # ────────────────────────────────────────────────────────────────
 # 8. GENERATE PLOTS
 # ────────────────────────────────────────────────────────────────
