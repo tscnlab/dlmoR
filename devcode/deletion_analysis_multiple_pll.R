@@ -36,7 +36,8 @@ library(ggplot2)
 
 # Set up nested parallelism (outer = multisession, inner = sequential)
 # plan(list(multisession, sequential)) #TODO took out 20250717
-plan(list(multicore, sequential), workers = 16)  # Or whatever limit you want (< 64)
+#plan(list(multicore, sequential), workers = 16)  # Or whatever limit you want (< 64)
+plan(multisession, workers = 16)  # safer than multicore on clusters
 handlers(global = TRUE)
 
 # ──────────────────────────────────
@@ -85,7 +86,8 @@ percentages <- c(10, 20, 30, 40, 50)
     n_del <- floor(pct / 100 * nrow(df))
     if (n_del < 1) return(NULL)
 
-    future_map_dfr(1:20, function(rep) { # discuss reps with Manuel TODO
+    #future_map_dfr(1:20, function(rep) { # discuss reps with Manuel TODO removed 20250717 for cluster
+    map_dfr(1:20, function(rep) {
       idx <- sample(seq_len(nrow(df)), n_del, replace = FALSE)
       df_deleted <- df[-idx, ]
       dlmo_deleted <- tryCatch({
