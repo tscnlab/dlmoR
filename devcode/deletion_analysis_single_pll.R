@@ -57,7 +57,7 @@ decimal_to_posixct <- function(decimal_hour, reference_times) {
 # -----------------------------
 run_single_deletion <- function(profile_id, df) {
   full_dlmo_result <- tryCatch({
-    calculate_dlmo(df, threshold = 5)
+    calculate_dlmo(df, threshold = 2.3)
   }, error = function(e) {
     message("Full DLMO failed for ", profile_id, ": ", e$message)
     return(NULL)
@@ -71,7 +71,7 @@ run_single_deletion <- function(profile_id, df) {
   results <- future_map_dfr(seq_len(nrow(df)), function(i) {
     df_deleted <- df[-i, ]
     dlmo_deleted <- tryCatch({
-      extract_dlmo_value(calculate_dlmo(df_deleted, threshold = 5))
+      extract_dlmo_value(calculate_dlmo(df_deleted, threshold = 2.3))
     }, error = function(e) NA_real_)
 
     tibble(
@@ -98,10 +98,14 @@ processed_ids <- file_path_sans_ext(basename(result_files))
 # Load only unprocessed profiles
 profiles <- set_names(csv_files, file_path_sans_ext(basename(csv_files)))
 profiles <- profiles[!names(profiles) %in% processed_ids]
+
+# Keep only the first 2 unprocessed profiles
+profiles <- head(profiles, 2)
+
 profiles <- map(profiles, read_csv, show_col_types = FALSE)
 
 # Parallel plan: nested parallelization
-plan(nesting(multisession, multisession))
+plan(nesting(multisession, multisession)) # TODO 20250719 this conflicts with tidyverse
 handlers(global = TRUE)
 
 safe_run <- safely(run_single_deletion)
