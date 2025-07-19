@@ -67,7 +67,7 @@ relative_minutes_to_dlmo <- function(timestamps, dlmo_time) {
 
 run_multiple_deletion <- function(profile_id, df) {
   full_dlmo_result <- tryCatch({
-    calculate_dlmo(df, threshold = 5)
+    calculate_dlmo(df, threshold = 2.3)
   }, error = function(e) {
     message("Full DLMO failed for ", profile_id, ": ", e$message)
     return(NULL)
@@ -91,7 +91,7 @@ percentages <- c(10, 20, 30, 40, 50)
       idx <- sample(seq_len(nrow(df)), n_del, replace = FALSE)
       df_deleted <- df[-idx, ]
       dlmo_deleted <- tryCatch({
-        extract_dlmo_value(calculate_dlmo(df_deleted, threshold = 5))
+        extract_dlmo_value(calculate_dlmo(df_deleted, threshold = 2.3))
       }, error = function(e) NA_real_)
 
       tibble(
@@ -191,82 +191,4 @@ all_results <- load_all_deletion_results(results_dir)
 
 # Save aggregated results for later reuse
 saveRDS(all_results, file.path(results_dir, "dlmo_deletion_all_results.rds"))
-
-
-# ────────────────────────────────────────────────────────────────
-# 7. DEFINE PLOTTING FUNCTIONS
-# ────────────────────────────────────────────────────────────────
-
-plot_deletion_raster_by_replicate <- function(results_df) {
-  deletions_long <- results_df %>%
-    select(profile, percentage_deleted, replicate, deleted_minutes_from_dlmo) %>%
-    unnest(deleted_minutes_from_dlmo) %>%
-    rename(relative_minute = deleted_minutes_from_dlmo) %>%
-    mutate(
-      profile = as.factor(profile),
-      replicate_id = forcats::fct_inorder(interaction(profile, replicate, sep = ":"))
-    )
-
-  ggplot(deletions_long, aes(x = relative_minute, y = replicate_id, fill = profile)) +
-    geom_tile(height = 0.8) +
-    facet_wrap(~percentage_deleted, scales = "free_y", ncol = 1) +
-    geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") +
-    scale_x_continuous(breaks = seq(-800, 800, by = 60)) +
-    labs(
-      title = "Deleted Timepoints by Replicate (Relative to DLMO)",
-      x = "Time relative to DLMO (minutes)",
-      y = "Replicate",
-      fill = "Profile"
-    ) +
-    theme_minimal(base_size = 13) +
-    theme(panel.grid = element_blank(), strip.text = element_text(face = "bold"))
-}
-
-plot_dlmo_deletion_violin <- function(results_df) {
-  library(gghalves)
-
-  results_df %>%
-    filter(scenario == "random_multi") %>%
-    ggplot(aes(x = factor(percentage_deleted), y = delta_dlmo)) +
-    geom_half_violin(
-      aes(fill = factor(percentage_deleted)), side = "l",
-      alpha = 0.6, width = 0.9, scale = "width", trim = TRUE,
-      bw = 0.2, adjust = 0.5, color = NA
-    ) +
-    geom_half_point(
-      side = "r", shape = 21, size = 1.5, stroke = 0.2,
-      color = "black", alpha = 0.6, width = 0.2
-    ) +
-    geom_half_boxplot(
-      side = "r", outlier.shape = NA, width = 0.2,
-      color = "black", fill = NA
-    ) +
-    stat_summary(
-      fun = mean, geom = "point", shape = 21,
-      size = 2.5, fill = "white", color = "black"
-    ) +
-    labs(
-      title = "DLMO robustness to random deletions",
-      subtitle = "Δ DLMO by % of deleted timepoints",
-      x = "% Deleted", y = "Δ DLMO (hours)"
-    ) +
-    theme_minimal(base_size = 13) +
-    theme(legend.position = "none")
-}
-
-# ────────────────────────────────────────────────────────────────
-# 8. GENERATE PLOTS
-# ────────────────────────────────────────────────────────────────
-
-tryCatch({
-  plot_deletion_raster_by_replicate(all_results)
-}, error = function(e) {
-  message("Skipping raster plot: ", e$message)
-})
-
-tryCatch({
-  plot_dlmo_deletion_violin(all_results)
-}, error = function(e) {
-  message("Skipping violin plot: ", e$message)
-})
 
