@@ -101,7 +101,7 @@ profiles <- set_names(csv_files, file_path_sans_ext(basename(csv_files)))
 profiles <- profiles[!names(profiles) %in% processed_ids]
 
 # Optional: only process a subset (e.g. first 2)
-profiles <- head(profiles, 3)
+# profiles <- head(profiles, 3)
 
 # Read profile data
 profiles <- map(profiles, read_csv, show_col_types = FALSE)

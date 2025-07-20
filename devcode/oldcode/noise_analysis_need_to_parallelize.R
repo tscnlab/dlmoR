@@ -110,132 +110,132 @@ process_profiles <- function(profiles,
 # process_profiles(profiles, out_dir = out_dir)
 #
 # Run on only the first two profiles with 2 replicates each:
- process_profiles(profiles[1:2], out_dir = out_dir, n_rep = 2)
+ process_profiles(profiles[1:4], out_dir = out_dir, n_rep = 10)
 #
 # Run on a named subset, e.g. only profiles "subjA" and "subjB":
 # selected <- profiles[c("subjA", "subjB")]
 # process_profiles(selected, out_dir = out_dir, n_rep = 10, mel_sd = 0.5)
 
 # --- Plotting Results ------------------------------------------------------- -------------------------------------------------------
-library(ggplot2)
-library(dplyr)
-
-all_rds <- list.files(out_dir, pattern = "_dlmo_simple\\.rds$", full.names = TRUE)
-all_res <- purrr::map_df(all_rds, readRDS)
-
-baseline_df <- all_res %>%
-  filter(condition == 'clean') %>%
-  select(profile, baseline = dlmo_est)
-
-plot_df <- all_res %>%
-  filter(condition != 'clean') %>%
-  left_join(baseline_df, by = 'profile') %>%
-  mutate(
-    delta = dlmo_est - baseline,
-    noise_group = case_when(
-      condition == 'mel_only'  ~ 'Melatonin Only',
-      condition == 'both_axes' ~ 'Melatonin + Time',
-      grepl('time', condition) ~ 'Time Only',
-      TRUE                     ~ 'Other'
-    )
-  )
-
-ggplot(plot_df, aes(x = condition, y = delta)) +
-  geom_boxplot() +
-  facet_wrap(~ noise_group, scales = 'free_x') +
-  labs(title = 'Delta DLMO by Noise Condition', x = 'Condition', y = 'Delta (hours)') +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-# --- Raincloud Plot (using gghalves) --------------------------------------
-# Requires gghalves + ggplot2
-# install.packages('gghalves') if needed
-library(gghalves)
-
-# Create raincloud plot: half violin + jittered points + boxplot
-ggplot(plot_df, aes(x = condition, y = delta, fill = noise_group)) +
-  gghalves::geom_half_violin(
-    side = "l",     # left side violin
-    alpha = 0.6,
-    width = 0.6,
-    trim = FALSE
-  ) +
-  geom_boxplot(
-    width = 0.12,
-    outlier.shape = NA,
-    position = position_nudge(x = 0.15)
-  ) +
-  geom_half_point(
-    side = "r",    # points on right side
-    range_scale = 0.4,
-    position = position_nudge(x = 0.15),
-    alpha = 0.4,
-    size = 1
-  ) +
-  coord_flip() +
-  facet_wrap(~ noise_group, scales = 'free_y') +
-  labs(
-    title = 'Raincloud Plot of Delta DLMO by Noise Condition',
-    x = 'Condition',
-    y = 'Delta DLMO (hours)'
-  ) +
-  theme_minimal()
+# library(ggplot2)
+# library(dplyr)
+#
+# all_rds <- list.files(out_dir, pattern = "_dlmo_simple\\.rds$", full.names = TRUE)
+# all_res <- purrr::map_df(all_rds, readRDS)
+#
+# baseline_df <- all_res %>%
+#   filter(condition == 'clean') %>%
+#   select(profile, baseline = dlmo_est)
+#
+# plot_df <- all_res %>%
+#   filter(condition != 'clean') %>%
+#   left_join(baseline_df, by = 'profile') %>%
+#   mutate(
+#     delta = dlmo_est - baseline,
+#     noise_group = case_when(
+#       condition == 'mel_only'  ~ 'Melatonin Only',
+#       condition == 'both_axes' ~ 'Melatonin + Time',
+#       grepl('time', condition) ~ 'Time Only',
+#       TRUE                     ~ 'Other'
+#     )
+#   )
+#
+# ggplot(plot_df, aes(x = condition, y = delta)) +
+#   geom_boxplot() +
+#   facet_wrap(~ noise_group, scales = 'free_x') +
+#   labs(title = 'Delta DLMO by Noise Condition', x = 'Condition', y = 'Delta (hours)') +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+#
 
 # --- Raincloud Plot (using gghalves) --------------------------------------
 # Requires gghalves + ggplot2
 # install.packages('gghalves') if needed
-library(gghalves)
+# library(gghalves)
+#
+# # Create raincloud plot: half violin + jittered points + boxplot
+# ggplot(plot_df, aes(x = condition, y = delta, fill = noise_group)) +
+#   gghalves::geom_half_violin(
+#     side = "l",     # left side violin
+#     alpha = 0.6,
+#     width = 0.6,
+#     trim = FALSE
+#   ) +
+#   geom_boxplot(
+#     width = 0.12,
+#     outlier.shape = NA,
+#     position = position_nudge(x = 0.15)
+#   ) +
+#   geom_half_point(
+#     side = "r",    # points on right side
+#     range_scale = 0.4,
+#     position = position_nudge(x = 0.15),
+#     alpha = 0.4,
+#     size = 1
+#   ) +
+#   coord_flip() +
+#   facet_wrap(~ noise_group, scales = 'free_y') +
+#   labs(
+#     title = 'Raincloud Plot of Delta DLMO by Noise Condition',
+#     x = 'Condition',
+#     y = 'Delta DLMO (hours)'
+#   ) +
+#   theme_minimal()
 
-plot_df <- all_res %>%
-  filter(condition != "clean") %>%
-  left_join(baseline_df, by = "profile") %>%
-  mutate(
-    delta       = dlmo_est - baseline,
-    noise_group = case_when(
-      condition == "mel_only"  ~ "Melatonin Only",
-      condition == "both_axes" ~ "Melatonin + Time",
-      grepl("time", condition) ~ "Time Only",
-      TRUE                     ~ "Other"
-    ),
-    noise_label = paste0(
-      noise_group,
-      "\n(time SD=", round(time_sd, 2),
-      ", mel SD=",  round(mel_sd, 2), ")"
-    )
-  )
-
-# Vertical raincloud faceted by noise level
-# We facet by noise_label (which includes the SDs)
-ggplot(plot_df, aes(x = condition, y = delta, fill = noise_group)) +
-  gghalves::geom_half_violin(
-    side = 'l',     # left-side violin
-    alpha = 0.6,
-    width = 0.6,
-    trim = FALSE
-  ) +
-  geom_boxplot(
-    width = 0.12,
-    outlier.shape = NA,
-    position = position_nudge(x = 0.15)
-  ) +
-  geom_half_point(
-    side = 'r',    # jittered points on right side
-    range_scale = 0.4,
-    position = position_nudge(x = 0.15),
-    alpha = 0.4,
-    size = 1
-  ) +
-  facet_wrap(~ noise_label, scales = 'free_x') +
-  labs(
-    title = 'Raincloud Plot of Delta DLMO by Noise Condition',
-    x     = 'Condition',
-    y     = 'Delta DLMO (hours)'
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = 'none'
-  )
+# --- Raincloud Plot (using gghalves) --------------------------------------
+# Requires gghalves + ggplot2
+# install.packages('gghalves') if needed
+# library(gghalves)
+#
+# plot_df <- all_res %>%
+#   filter(condition != "clean") %>%
+#   left_join(baseline_df, by = "profile") %>%
+#   mutate(
+#     delta       = dlmo_est - baseline,
+#     noise_group = case_when(
+#       condition == "mel_only"  ~ "Melatonin Only",
+#       condition == "both_axes" ~ "Melatonin + Time",
+#       grepl("time", condition) ~ "Time Only",
+#       TRUE                     ~ "Other"
+#     ),
+#     noise_label = paste0(
+#       noise_group,
+#       "\n(time SD=", round(time_sd, 2),
+#       ", mel SD=",  round(mel_sd, 2), ")"
+#     )
+#   )
+#
+# # Vertical raincloud faceted by noise level
+# # We facet by noise_label (which includes the SDs)
+# ggplot(plot_df, aes(x = condition, y = delta, fill = noise_group)) +
+#   gghalves::geom_half_violin(
+#     side = 'l',     # left-side violin
+#     alpha = 0.6,
+#     width = 0.6,
+#     trim = FALSE
+#   ) +
+#   geom_boxplot(
+#     width = 0.12,
+#     outlier.shape = NA,
+#     position = position_nudge(x = 0.15)
+#   ) +
+#   geom_half_point(
+#     side = 'r',    # jittered points on right side
+#     range_scale = 0.4,
+#     position = position_nudge(x = 0.15),
+#     alpha = 0.4,
+#     size = 1
+#   ) +
+#   facet_wrap(~ noise_label, scales = 'free_x') +
+#   labs(
+#     title = 'Raincloud Plot of Delta DLMO by Noise Condition',
+#     x     = 'Condition',
+#     y     = 'Delta DLMO (hours)'
+#   ) +
+#   theme_minimal() +
+#   theme(
+#     axis.text.x = element_text(angle = 45, hjust = 1),
+#     legend.position = 'none'
+#   )
 
 ##
 # --- Plotting Results: Raincloud Only ---------------------------------------
