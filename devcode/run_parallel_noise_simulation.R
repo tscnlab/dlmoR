@@ -83,6 +83,7 @@ process_single_profile <- function(profile_id, path, n_rep = n_rep_default, cv =
 
     tibble(
       profile = profile_id,
+      sim_df = list(sim_df),
       time_sd = time_sd,
       mean_mel_sd = mean_mel_sd,
       min_mel_sd = min_mel_sd,
