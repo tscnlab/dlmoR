@@ -149,10 +149,16 @@ library(ggplot2)
 library(gghalves)
 
 # 1. Read in your per‐profile stats files
-all_rds <- list.files(out_dir,
-                      pattern = "_dlmo_time_mel_stats\\.rds$",
-                      full.names = TRUE)
-all_res <- map_df(all_rds, readRDS)
+# all_rds <- list.files(out_dir,
+#                       pattern = "_dlmo_time_mel_stats\\.rds$",
+#                       full.names = TRUE)
+# all_res <- map_df(all_rds, readRDS)
+# 1) Read in all files that start with "civibe_melatonin_"
+out_dir = "~/Documents/Projects/DLMO/clusterRuns/Civibe/noisy_dlmo_results"
+all_res <- list.files(out_dir,
+                      pattern = "^civibe_melatonin_",
+                      full.names = TRUE) %>%
+  map_df(readRDS)
 
 # Quick check
 print(names(all_res))

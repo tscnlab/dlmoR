@@ -224,6 +224,8 @@ saveRDS(all_results, file.path(results_dir, "dlmo_deletion_all_results.rds"))
 #     theme(legend.position = "none")
 # }
 
+all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Civibe/multiple_deletion/multiple_deletion_results/dlmo_deletion_all_results.rds")
+
 plot_dlmo_deletion_violin <- function(results_df) {
   library(gghalves)
 
@@ -525,7 +527,7 @@ plot_deletion_raster_by_replicate <- function(results_df, profiles_to_plot = NUL
                labeller = labeller(percentage_deleted = function(x) paste0(x, "%"))) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") +
     scale_y_continuous(name = "Replicate #") +
-    scale_x_continuous(breaks = seq(-800, 800, by = 60)) +
+    scale_x_continuous(breaks = seq(-1000, 1000, by = 60)) +
     labs(
       title = paste("Deleted Timepoints by Replicate (", paste(unique(deletions_long$profile), collapse = ", "), ")"),
       subtitle = "Each tile = one deleted timepoint. Color encodes % deleted.",

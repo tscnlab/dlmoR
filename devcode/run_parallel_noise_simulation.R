@@ -50,7 +50,7 @@ process_single_profile <- function(profile_id, path, n_rep = n_rep_default, cv =
   df <- read_csv(path, show_col_types = FALSE) %>%
     mutate(datetime = as.POSIXct(datetime, tz = "UTC"))
 
-  clean_res <- calculate_dlmo(df)
+  clean_res <- calculate_dlmo(df, threshold = 5)
   clean_time <- clean_res$ip$inflection_point_fine$x
   dec_t <- posixct_to_decimal(df$datetime, df$datetime)
   interp_fun <- splinefun(dec_t, df$melatonin, method = "monoH.FC")
@@ -79,7 +79,7 @@ process_single_profile <- function(profile_id, path, n_rep = n_rep_default, cv =
       melatonin = mel_pert
     )
 
-    result <- tryCatch(calculate_dlmo(sim_df), error = function(e) NULL)
+    result <- tryCatch(calculate_dlmo(sim_df, threshold = 5), error = function(e) NULL)
 
     tibble(
       profile = profile_id,
@@ -145,7 +145,7 @@ write_csv(error_log, file.path(out_dir, "noise_simulation_errors.csv"))
 # ────────────────────────────────────────────────────
 # COMBINED RESULTS
 # ────────────────────────────────────────────────────
-all_result_files <- list.files(out_dir, pattern = "\\.rds$", full.names = TRUE)
-all_results <- map_dfr(all_result_files, readRDS)
+# all_result_files <- list.files(out_dir, pattern = "\\.rds$", full.names = TRUE)
+# all_results <- map_dfr(all_result_files, readRDS)
 
-saveRDS(all_results, file.path(out_dir, "dlmo_noise_all_results.rds"))
+# saveRDS(all_results, file.path(out_dir, "dlmo_noise_all_results.rds"))

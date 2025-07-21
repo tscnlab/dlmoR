@@ -213,7 +213,7 @@ saveRDS(all_results, file.path(results_dir, "dlmo_resampling_results_full.rds"))
 # -----------------------------
 # 8. Plot the results
 # -----------------------------
-# all_results <- readRDS("~/Documents/Projects/DLMO/savedData/dlmo_resamplinganalysis_results_full.rds") # toggle on if loading saved results from directory
+all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Civibe/resampling/dlmo_resampling_results_full.rds") # toggle on if loading saved results from directory
 if (nrow(all_results) == 0) {
   warning("No successful results to plot.")
 } else {
@@ -450,7 +450,7 @@ ggplot() +
 
   labs(
     title = "Change in DLMO vs. Sampling Interval",
-    subtitle = "Blume et al. dataset, original sampling interval = 30 min",
+    subtitle = "Heinrichs et al. dataset, original sampling interval = ca. 45 min",
     x = "Sampling Interval (minutes)",
     y = "Change in DLMO (decimal hours relative to original)",
     fill = "Shading"
