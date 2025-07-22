@@ -455,6 +455,7 @@ fit_linear <- function(x, y, poi, base_id = NULL, slope_bounds = NULL, edge_boun
   x_diff <- x - poi$x
   y_diff <- y - poi$y
 
+
   # Apply **weighting**: prioritize ascending points (lower weight for base points)
   if (weight_base) {
     w <- (1 - base_id) + 0.5 * base_id
@@ -548,9 +549,10 @@ fit_linear <- function(x, y, poi, base_id = NULL, slope_bounds = NULL, edge_boun
 fit <- function(data, poi, fit_type = "linear", threshold = threshold) {
 
   # Convert datetime to decimal time (reference to dataset)
-  x <- posixct_to_decimal(data$datetime, data$datetime)
+  x <- posixct_to_decimal(data$datetime, data$datetime[3])
   y <- data$melatonin
   base_id <- data$base  # Indicator for base segment
+
 
   # Extract POI coordinates
   poi_x <- poi$x
@@ -773,7 +775,7 @@ get_inflection <- function(profile_data, threshold = 2.3, posix_roi, fit_type = 
 
   # Convert POSIXct ROI coordinates to decimal time for numerical fitting
   roi <- list(
-    x = posixct_to_decimal(c(posix_roi$x_start, posix_roi$x_end), profile_data$datetime),
+    x = posixct_to_decimal(c(posix_roi$x_start, posix_roi$x_end), profile_data$datetime[3]),
     y = c(posix_roi$y_min, posix_roi$y_max)
   )
 

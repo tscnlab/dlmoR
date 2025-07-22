@@ -154,9 +154,32 @@ library(gghalves)
 #                       full.names = TRUE)
 # all_res <- map_df(all_rds, readRDS)
 # 1) Read in all files that start with "civibe_melatonin_"
-out_dir = "~/Documents/Projects/DLMO/clusterRuns/Civibe/noisy_dlmo_results"
+out_dir = "~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/noise_results_skinny"
+
+# 1) List all .rds files that start with "civibe_melatonin_"
+all_files <- list.files(out_dir,
+                        # pattern = "^civibe_melatonin_.*\\.rds$",
+                        pattern = "\\.rds$",
+                        full.names = TRUE)
+
+# 2) Sort and take the first half
+# half_n <- floor(length(all_files) / 2)
+# files_to_read <- sort(all_files)[seq_len(half_n)]
+
+# 3) Read in the selected files
+library(dplyr)
+library(purrr)  # for map_df()
+
+# all_res <- files_to_read %>%
+#   map_df(readRDS)
+
+# all_res <- list.files(out_dir,
+#                       pattern = "^civibe_melatonin_",
+#                       full.names = TRUE) %>%
+#   map_df(readRDS)
+
 all_res <- list.files(out_dir,
-                      pattern = "^civibe_melatonin_",
+                      pattern = "\\.rds",
                       full.names = TRUE) %>%
   map_df(readRDS)
 
@@ -174,7 +197,7 @@ baseline_df <- all_res %>%
 full_df <- all_res %>%
   left_join(baseline_df, by = "profile") %>%
   mutate(delta = dlmo_est - baseline)
-
+View(full_df)
 # 4. Summary table (includes the clean run as one of the reps)
 summary_df <- full_df %>%
   group_by(profile, condition) %>%
@@ -202,23 +225,23 @@ library(purrr)
 library(ggplot2)
 library(gghalves)
 
-# 1) Read in all of your *_dlmo_time_mel_stats.rds files
-all_res <- list.files(out_dir,
-                      pattern = "_dlmo_time_mel_stats\\.rds$",
-                      full.names = TRUE) %>%
-  map_df(readRDS)
-
-# 2) Pull out the clean (baseline) DLMO per profile
-baseline <- all_res %>%
-  filter(condition == "clean") %>%
-  select(profile, clean_dlmo = dlmo_est)
+# # 1) Read in all of your *_dlmo_time_mel_stats.rds files
+# all_res <- list.files(out_dir,
+#                       pattern = "_dlmo_time_mel_stats\\.rds$",
+#                       full.names = TRUE) %>%
+#   map_df(readRDS)
+#
+# # 2) Pull out the clean (baseline) DLMO per profile
+# baseline <- all_res %>%
+#   filter(condition == "clean") %>%
+#   select(profile, clean_dlmo = dlmo_est)
 
 # 3) Join & compute delta for *every* row (including clean)
-full_df <- all_res %>%
-  left_join(baseline, by = "profile") %>%
-  mutate(
-    delta = dlmo_est - clean_dlmo
-  )
+# full_df <- all_res %>%
+#   left_join(baseline, by = "profile") %>%
+#   mutate(
+#     delta = dlmo_est - clean_dlmo
+#   )
 
 # 4) Select exactly the six conditions you care about
 wanted <- c("clean","mel_only","time_5min","time_10min","time_20min","both_axes_10")
