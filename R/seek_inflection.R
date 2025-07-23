@@ -455,7 +455,6 @@ fit_linear <- function(x, y, poi, base_id = NULL, slope_bounds = NULL, edge_boun
   x_diff <- x - poi$x
   y_diff <- y - poi$y
 
-
   # Apply **weighting**: prioritize ascending points (lower weight for base points)
   if (weight_base) {
     w <- (1 - base_id) + 0.5 * base_id
@@ -552,7 +551,6 @@ fit <- function(data, poi, fit_type = "linear", threshold = threshold) {
   x <- posixct_to_decimal(data$datetime, data$datetime[3])
   y <- data$melatonin
   base_id <- data$base  # Indicator for base segment
-
 
   # Extract POI coordinates
   poi_x <- poi$x
