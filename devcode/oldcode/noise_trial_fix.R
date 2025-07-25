@@ -9,30 +9,28 @@ library(progressr)
 # ────────────────────────────────────────────────────
 # SETUP PARALLEL BACKEND
 # ────────────────────────────────────────────────────
-plan(multicore, workers = 64)
-handlers(global = TRUE)
+plan(multisession, workers = 5)
+handlers("progress")
 
 # ────────────────────────────────────────────────────
-# LOAD PROFILES
+# LOAD FIRST TWO PROFILES FOR TESTING
 # ────────────────────────────────────────────────────
-args <- commandArgs(trailingOnly = TRUE)
-profile_folder <- if (length(args) > 0) args[[1]] else "inst/extdata"
+profile_folder <- "inst/extdata"
 csv_files <- list.files(profile_folder, pattern = "\\.csv$", full.names = TRUE)
 
-out_dir <- "outputs/noisy_dlmo_results"
+#trial_profiles <- head(csv_files, 5)
+trial_profiles <- file.path(profile_folder, "second_Visit_3_PB_7.csv")
+profile_ids <- tools::file_path_sans_ext(basename(trial_profiles))
+profiles_to_run <- set_names(trial_profiles, profile_ids)
+
+out_dir <- "outputs/trial_dlmo_results"
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-result_files  <- list.files(out_dir, pattern = "\\.rds$", full.names = TRUE)
-processed_ids <- tools::file_path_sans_ext(basename(result_files))
-
-profiles <- set_names(csv_files, tools::file_path_sans_ext(basename(csv_files)))
-profiles_to_run <- profiles[!names(profiles) %in% processed_ids]
-
 # ────────────────────────────────────────────────────
-# NOISE PARAMETERS
+# NOISE PARAMETERS (reduced reps)
 # ────────────────────────────────────────────────────
 cv_intra      <- 7.9
-n_rep_default <- 20
+n_rep_default <- 10
 
 enforce_min_gap <- function(times_dec, min_gap = 1/60) {
   for (i in seq(2, length(times_dec))) {
@@ -55,7 +53,7 @@ init_clipping_log <- function() {
 }
 
 # ────────────────────────────────────────────────────
-# CORE FUNCTION (SINGLE PROFILE PROCESSING)
+# PROCESS A SINGLE PROFILE
 # ────────────────────────────────────────────────────
 process_single_profile <- function(profile_id, path, n_rep = n_rep_default, cv = cv_intra) {
   df <- read_csv(path, show_col_types = FALSE) %>%
@@ -199,7 +197,7 @@ process_single_profile <- function(profile_id, path, n_rep = n_rep_default, cv =
 }
 
 # ────────────────────────────────────────────────────
-# RUN PROCESSING
+# RUN IN PARALLEL
 # ────────────────────────────────────────────────────
 safe_process <- safely(process_single_profile)
 
@@ -225,7 +223,7 @@ with_progress({
 })
 
 # ────────────────────────────────────────────────────
-# AGGREGATE ERROR AND CLIPPING LOGS
+# SUMMARY LOGGING
 # ────────────────────────────────────────────────────
 error_log <- keep(results, ~ !is.null(.x$error)) %>%
   map_dfr(~ tibble(profile = .x$profile, error_message = .x$error$message))
