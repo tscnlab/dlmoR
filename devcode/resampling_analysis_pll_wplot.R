@@ -213,206 +213,224 @@ saveRDS(all_results, file.path(results_dir, "dlmo_resampling_results_full.rds"))
 # -----------------------------
 # 8. Plot the results
 # -----------------------------
-all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Civibe/resampling/dlmo_resampling_results_full.rds") # toggle on if loading saved results from directory
-if (nrow(all_results) == 0) {
-  warning("No successful results to plot.")
-} else {
-  ggplot(all_results, aes(x = resample_interval, y = resampled_dlmo, color = profile)) +
-    geom_line() +
-    geom_point() +
-    labs(
-      title = "DLMO vs. Sampling Interval",
-      x = "Sampling Interval (minutes)",
-      y = "Estimated DLMO (decimal hours)",
-      color = "Profile"
-    )+
-    theme_minimal()+
-    theme(legend.position = "none")
-}
+#all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Civibe/resampling/dlmo_resampling_results_full.rds") # toggle on if loading saved results from directory
+all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/dlmo_resampling_outputs/dlmo_resampling_results_full.rds")
+# if (nrow(all_results) == 0) {
+#   warning("No successful results to plot.")
+# } else {
+#   ggplot(all_results, aes(x = resample_interval, y = resampled_dlmo, color = profile)) +
+#     geom_line() +
+#     geom_point() +
+#     labs(
+#       title = "DLMO vs. Sampling Interval",
+#       x = "Sampling Interval (minutes)",
+#       y = "Estimated DLMO (decimal hours)",
+#       color = "Profile"
+#     )+
+#     theme_minimal()+
+#     theme(legend.position = "none")
+# }
+#
+# #plot difference
+# all_results <- all_results %>%
+#   mutate(dlmo_difference = resampled_dlmo - original_dlmo)
+#
+# ggplot(all_results, aes(x = resample_interval, y = dlmo_difference, color = profile)) +
+#   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+#   geom_line() +
+#   geom_point() +
+#   labs(
+#     title = "Change in DLMO Estimate vs. Sampling Interval",
+#     x = "Sampling Interval (minutes)",
+#     y = "Change in DLMO (hours, relative to original)",
+#     color = "Profile"
+#   ) +
+#   theme_minimal()+
+#   theme(legend.position = "none")
+#
+#
+# all_results %>%
+#   filter(resample_interval == 30) %>%
+#   summarise(
+#     n = n(),
+#     all_zero = all(dlmo_difference == 0),
+#     min_val = min(dlmo_difference),
+#     max_val = max(dlmo_difference)
+#   )
+#
+# library(ggridges)
+#
+# ggplot(all_results, aes(x = dlmo_difference, y = factor(resample_interval))) +
+#   geom_density_ridges(
+#     stat = "binline",
+#     binwidth = 0.05,
+#     scale = 1.2,
+#     draw_baseline = TRUE,
+#     fill = "skyblue",
+#     color = "black"
+#   ) +
+#   geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+#   labs(
+#     title = "DLMO Change Distributions by Sampling Interval (Histogram Ridges)",
+#     x = "Change in DLMO (hours)",
+#     y = "Sampling Interval (minutes)"
+#   ) +
+#   theme_minimal()
+#
+#
+#
+# library(ggridges)
+#
+# ggplot(all_results, aes(x = dlmo_difference, y = factor(resample_interval), fill = ..x..)) +
+#   geom_density_ridges_gradient(scale = 1.2, rel_min_height = 0.01) +
+#   geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+#   labs(
+#     title = "DLMO Change Distributions by Sampling Interval",
+#     x = "Change in DLMO (hours)",
+#     y = "Sampling Interval (minutes)"
+#   ) +
+#   theme_minimal()
+#
+# # mean and SD line plot
+# all_results %>%
+#   group_by(resample_interval) %>%
+#   summarise(
+#     mean_diff = mean(dlmo_difference),
+#     sd_diff = sd(dlmo_difference)
+#   ) %>%
+#   ggplot(aes(x = resample_interval, y = mean_diff)) +
+#   geom_line() +
+#   geom_ribbon(aes(ymin = mean_diff - sd_diff, ymax = mean_diff + sd_diff), alpha = 0.2) +
+#   geom_hline(yintercept = 0, linetype = "dashed") +
+#   labs(title = "Mean Change in DLMO vs. Sampling Interval",
+#        x = "Sampling Interval (minutes)", y = "Change in DLMO (hours)")
+#
+#
+# # prettier
+# library(ggplot2)
+# library(dplyr)
+#
+# # Summarize if not done yet
+# summary_df <- all_results %>%
+#   group_by(resample_interval) %>%
+#   summarise(
+#     mean_diff = mean(dlmo_difference),
+#     sd_diff = sd(dlmo_difference),
+#     n = n(),
+#     se = sd_diff / sqrt(n),
+#     .groups = "drop"
+#   )
+#
+# # Pretty plot
+# ggplot(summary_df, aes(x = resample_interval, y = mean_diff)) +
+#   geom_line(color = "#1f77b4", size = 1) +
+#   geom_point(size = 2, color = "#1f77b4") +
+#   geom_ribbon(aes(ymin = mean_diff - se, ymax = mean_diff + se),
+#               alpha = 0.2, fill = "#1f77b4") +
+#   geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
+#   scale_x_continuous(breaks = summary_df$resample_interval) +
+#   labs(
+#     title = "Mean Change in DLMO vs. Sampling Interval",
+#     x = "Sampling Interval (minutes)",
+#     y = "Change in DLMO (hours relative to 30-min)"
+#   ) +
+#   theme_minimal(base_size = 14) +
+#   theme(
+#     panel.grid.minor = element_blank(),
+#     plot.title = element_text(face = "bold"),
+#     axis.text.x = element_text(angle = 45, hjust = 1)
+#   )
+#
+# # both SD and SE
+# library(dplyr)
+#
+# summary_df <- all_results %>%
+#   group_by(resample_interval) %>%
+#   summarise(
+#     mean_diff = mean(dlmo_difference),
+#     sd_diff = sd(dlmo_difference),
+#     n = n(),
+#     se_diff = sd_diff / sqrt(n),
+#     .groups = "drop"
+#   )
+# library(ggplot2)
+#
+# ggplot() +
+#   # SD ribbon (wide, light blue)
+#   geom_ribbon(data = summary_df,
+#               aes(x = resample_interval,
+#                   ymin = mean_diff - sd_diff,
+#                   ymax = mean_diff + sd_diff),
+#               fill = "#aec7e8", alpha = 0.3) +
+#
+#   # SE ribbon (narrow, darker blue)
+#   geom_ribbon(data = summary_df,
+#               aes(x = resample_interval,
+#                   ymin = mean_diff - se_diff,
+#                   ymax = mean_diff + se_diff),
+#               fill = "#1f77b4", alpha = 0.3) +
+#
+#   # Mean line
+#   geom_line(data = summary_df,
+#             aes(x = resample_interval, y = mean_diff),
+#             color = "#1f77b4", size = 1) +
+#
+#   # Mean points
+#   geom_point(data = summary_df,
+#              aes(x = resample_interval, y = mean_diff),
+#              color = "#1f77b4", size = 2) +
+#
+#   # Individual data points
+#   geom_jitter(data = all_results,
+#               aes(x = resample_interval, y = dlmo_difference),
+#               width = 1, height = 0, alpha = 0.2, size = 1, color = "black") +
+#
+#   # Zero reference line
+#   geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
+#
+#   # Axis & labels
+#   scale_x_continuous(breaks = summary_df$resample_interval) +
+#   labs(
+#     title = "Change in DLMO vs. Sampling Interval",
+#     subtitle = "Blume et al. results ; Original sampling interval: 30-min",
+#     x = "Sampling Interval (minutes)",
+#     y = "Change in DLMO (hours relative to original)"
+#   ) +
+#
+#   # Legend-style annotations
+#   # Horizontal legend annotation at top-right
+#   annotate("rect", xmin = 65, xmax = 70, ymin = 0.4, ymax = 0.43, fill = "#1f77b4", alpha = 0.3) +  # SE
+#   annotate("text", x = 71, y = 0.415, label = "Mean ± SE", hjust = 0, size = 4, color = "#1f77b4") +
+#
+#   annotate("rect", xmin = 65, xmax = 70, ymin = 0.36, ymax = 0.39, fill = "#aec7e8", alpha = 0.3) +  # SD
+#   annotate("text", x = 71, y = 0.375, label = "± SD", hjust = 0, size = 4, color = "#1f77b4") +
+#
+#
+#   theme_minimal(base_size = 14) +
+#   theme(
+#     panel.grid.minor = element_blank(),
+#     plot.title = element_text(face = "bold")
+#   )
 
-#plot difference
+#all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Civibe/resampling/dlmo_resampling_results_full.rds") # toggle on if loading saved results from directory
+all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/dlmo_resampling_outputs/dlmo_resampling_results_full.rds")
+library(dplyr)
+library(ggplot2)
 all_results <- all_results %>%
   mutate(dlmo_difference = resampled_dlmo - original_dlmo)
 
-ggplot(all_results, aes(x = resample_interval, y = dlmo_difference, color = profile)) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
-  geom_line() +
-  geom_point() +
-  labs(
-    title = "Change in DLMO Estimate vs. Sampling Interval",
-    x = "Sampling Interval (minutes)",
-    y = "Change in DLMO (hours, relative to original)",
-    color = "Profile"
-  ) +
-  theme_minimal()+
-  theme(legend.position = "none")
-
-
-all_results %>%
-  filter(resample_interval == 30) %>%
-  summarise(
-    n = n(),
-    all_zero = all(dlmo_difference == 0),
-    min_val = min(dlmo_difference),
-    max_val = max(dlmo_difference)
-  )
-
-library(ggridges)
-
-ggplot(all_results, aes(x = dlmo_difference, y = factor(resample_interval))) +
-  geom_density_ridges(
-    stat = "binline",
-    binwidth = 0.05,
-    scale = 1.2,
-    draw_baseline = TRUE,
-    fill = "skyblue",
-    color = "black"
-  ) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
-  labs(
-    title = "DLMO Change Distributions by Sampling Interval (Histogram Ridges)",
-    x = "Change in DLMO (hours)",
-    y = "Sampling Interval (minutes)"
-  ) +
-  theme_minimal()
-
-
-
-library(ggridges)
-
-ggplot(all_results, aes(x = dlmo_difference, y = factor(resample_interval), fill = ..x..)) +
-  geom_density_ridges_gradient(scale = 1.2, rel_min_height = 0.01) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
-  labs(
-    title = "DLMO Change Distributions by Sampling Interval",
-    x = "Change in DLMO (hours)",
-    y = "Sampling Interval (minutes)"
-  ) +
-  theme_minimal()
-
-# mean and SD line plot
-all_results %>%
-  group_by(resample_interval) %>%
-  summarise(
-    mean_diff = mean(dlmo_difference),
-    sd_diff = sd(dlmo_difference)
-  ) %>%
-  ggplot(aes(x = resample_interval, y = mean_diff)) +
-  geom_line() +
-  geom_ribbon(aes(ymin = mean_diff - sd_diff, ymax = mean_diff + sd_diff), alpha = 0.2) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  labs(title = "Mean Change in DLMO vs. Sampling Interval",
-       x = "Sampling Interval (minutes)", y = "Change in DLMO (hours)")
-
-
-# prettier
-library(ggplot2)
-library(dplyr)
-
-# Summarize if not done yet
 summary_df <- all_results %>%
-  group_by(resample_interval) %>%
-  summarise(
-    mean_diff = mean(dlmo_difference),
-    sd_diff = sd(dlmo_difference),
-    n = n(),
-    se = sd_diff / sqrt(n),
-    .groups = "drop"
-  )
+    group_by(resample_interval) %>%
+    summarise(
+      mean_diff = mean(dlmo_difference),
+      sd_diff = sd(dlmo_difference),
+      n = n(),
+      se_diff = sd_diff / sqrt(n),
+      .groups = "drop"
+    )
 
-# Pretty plot
-ggplot(summary_df, aes(x = resample_interval, y = mean_diff)) +
-  geom_line(color = "#1f77b4", size = 1) +
-  geom_point(size = 2, color = "#1f77b4") +
-  geom_ribbon(aes(ymin = mean_diff - se, ymax = mean_diff + se),
-              alpha = 0.2, fill = "#1f77b4") +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
-  scale_x_continuous(breaks = summary_df$resample_interval) +
-  labs(
-    title = "Mean Change in DLMO vs. Sampling Interval",
-    x = "Sampling Interval (minutes)",
-    y = "Change in DLMO (hours relative to 30-min)"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(
-    panel.grid.minor = element_blank(),
-    plot.title = element_text(face = "bold"),
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
-
-# both SD and SE
-library(dplyr)
-
-summary_df <- all_results %>%
-  group_by(resample_interval) %>%
-  summarise(
-    mean_diff = mean(dlmo_difference),
-    sd_diff = sd(dlmo_difference),
-    n = n(),
-    se_diff = sd_diff / sqrt(n),
-    .groups = "drop"
-  )
-library(ggplot2)
-
-ggplot() +
-  # SD ribbon (wide, light blue)
-  geom_ribbon(data = summary_df,
-              aes(x = resample_interval,
-                  ymin = mean_diff - sd_diff,
-                  ymax = mean_diff + sd_diff),
-              fill = "#aec7e8", alpha = 0.3) +
-
-  # SE ribbon (narrow, darker blue)
-  geom_ribbon(data = summary_df,
-              aes(x = resample_interval,
-                  ymin = mean_diff - se_diff,
-                  ymax = mean_diff + se_diff),
-              fill = "#1f77b4", alpha = 0.3) +
-
-  # Mean line
-  geom_line(data = summary_df,
-            aes(x = resample_interval, y = mean_diff),
-            color = "#1f77b4", size = 1) +
-
-  # Mean points
-  geom_point(data = summary_df,
-             aes(x = resample_interval, y = mean_diff),
-             color = "#1f77b4", size = 2) +
-
-  # Individual data points
-  geom_jitter(data = all_results,
-              aes(x = resample_interval, y = dlmo_difference),
-              width = 1, height = 0, alpha = 0.2, size = 1, color = "black") +
-
-  # Zero reference line
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
-
-  # Axis & labels
-  scale_x_continuous(breaks = summary_df$resample_interval) +
-  labs(
-    title = "Change in DLMO vs. Sampling Interval",
-    subtitle = "Blume et al. results ; Original sampling interval: 30-min",
-    x = "Sampling Interval (minutes)",
-    y = "Change in DLMO (hours relative to original)"
-  ) +
-
-  # Legend-style annotations
-  # Horizontal legend annotation at top-right
-  annotate("rect", xmin = 65, xmax = 70, ymin = 0.4, ymax = 0.43, fill = "#1f77b4", alpha = 0.3) +  # SE
-  annotate("text", x = 71, y = 0.415, label = "Mean ± SE", hjust = 0, size = 4, color = "#1f77b4") +
-
-  annotate("rect", xmin = 65, xmax = 70, ymin = 0.36, ymax = 0.39, fill = "#aec7e8", alpha = 0.3) +  # SD
-  annotate("text", x = 71, y = 0.375, label = "± SD", hjust = 0, size = 4, color = "#1f77b4") +
-
-
-  theme_minimal(base_size = 14) +
-  theme(
-    panel.grid.minor = element_blank(),
-    plot.title = element_text(face = "bold")
-  )
-
-library(dplyr)
-
+print(summary_df)
+write.csv(summary_df, "blume_dlmo_sampling_summary.csv", row.names = FALSE)
 ribbons_df <- summary_df %>%
   select(resample_interval, mean_diff, sd_diff, se_diff) %>%
   tidyr::pivot_longer(cols = c(sd_diff, se_diff),
@@ -450,7 +468,7 @@ ggplot() +
 
   labs(
     title = "Change in DLMO vs. Sampling Interval",
-    subtitle = "Heinrichs et al. dataset, original sampling interval = ca. 45 min",
+    subtitle = "Blume et al. dataset, original sampling interval = 30 min",
     x = "Sampling Interval (minutes)",
     y = "Change in DLMO (decimal hours relative to original)",
     fill = "Shading"

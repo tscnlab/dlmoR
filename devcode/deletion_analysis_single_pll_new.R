@@ -147,7 +147,9 @@ with_progress({
 # Combine and plot results
 # -----------------------------
 # Read individual result files
-saved_files <- list.files("single_deletion_results", pattern = "\\.rds$", full.names = TRUE)
+#saved_files <- list.files("single_deletion_results", pattern = "\\.rds$", full.names = TRUE)
+saved_files <- list.files("/Users/salmathalji/Documents/Projects/DLMO/dlmoRpaperresults/Blume/single_deletion_results", pattern = "\\.rds$", full.names = TRUE)
+
 all_results <- map_dfr(saved_files, readRDS)
 
 # Prepare data for plotting
@@ -289,7 +291,7 @@ filtered_results <- all_results %>%
   filter(!is.na(delta_dlmo)) %>%
   mutate(
     profile = forcats::fct_rev(factor(profile)),
-    binned_minutes = floor(delta_minutes_from_dlmo / 10) * 10  # consistent binning
+    binned_minutes = floor(delta_minutes_from_dlmo / 5) * 5  # consistent binning
   )
 
 # Top: mean + SD ribbon summary
@@ -305,11 +307,20 @@ summary_data <- filtered_results %>%
   mutate(group = "Bias (Mean ± SD)")
 
 # Shared x-axis scale
-x_breaks <- seq(min(filtered_results$binned_minutes), max(filtered_results$binned_minutes), by = 60)
+# x_breaks <- seq(min(filtered_results$binned_minutes), max(filtered_results$binned_minutes), by = 60)
+x_breaks <- seq(-800, 400, by = 60)
+
 shared_x <- scale_x_continuous(
   breaks = x_breaks,
+  limits = c(-400, 400),
   expand = expansion(mult = c(0, 0))
 )
+
+# shared_x <- scale_x_continuous(
+#   breaks = x_breaks,
+#   limits = c(-300, 300),
+#   expand = expansion(mult = c(0, 0))
+# )
 
 # Top plot: Ribbon and smoothed line
 plot_top <- ggplot(summary_data, aes(x = binned_minutes)) +
@@ -343,7 +354,7 @@ dlmo_range <- range(filtered_results$delta_dlmo, na.rm = TRUE)
 dlmo_range <- c(-max(abs(dlmo_range)), max(abs(dlmo_range)))  # symmetric
 
 plot_bottom <- ggplot(filtered_results, aes(x = binned_minutes, y = profile, fill = delta_dlmo)) +
-  geom_tile(color = NA, height = 0.9, width = 10) +
+  geom_tile(color = NA, height = 0.9, width = 5) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray40", linewidth = 0.5) +
   shared_x +
   scale_fill_scico(

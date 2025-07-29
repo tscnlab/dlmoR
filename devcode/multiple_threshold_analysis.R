@@ -183,3 +183,4 @@ success_plot <- ggplot(success_counts %>% filter(success), aes(x = factor(thresh
   ) +
   theme_minimal(base_size = 14)
 print(success_plot)
+

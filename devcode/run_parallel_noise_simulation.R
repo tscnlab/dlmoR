@@ -118,7 +118,7 @@ process_single_profile <- function(profile_id, path, n_rep = n_rep_default, cv =
       melatonin = mel_pert
     )
 
-    result <- tryCatch(calculate_dlmo(sim_df, threshold = 5), error = function(e) e)
+    result <- tryCatch(calculate_dlmo(sim_df, threshold = 2.3), error = function(e) e)
 
     if (inherits(result, "error")) {
       error_rows <<- append(error_rows, list(tibble(
@@ -236,6 +236,19 @@ error_rds_files <- list.files(out_dir, pattern = "_iteration_errors\\.rds$", ful
 all_iteration_errors <- map_dfr(error_rds_files, readRDS)
 write_csv(all_iteration_errors, file.path(out_dir, "all_iteration_errors.csv"))
 
+# clipping_csvs <- list.files(out_dir, pattern = "_clipping_log\\.csv$", full.names = TRUE)
+# all_clipping_logs <- map_dfr(clipping_csvs, read_csv)
+# write_csv(all_clipping_logs, file.path(out_dir, "all_clipping_events.csv"))
 clipping_csvs <- list.files(out_dir, pattern = "_clipping_log\\.csv$", full.names = TRUE)
-all_clipping_logs <- map_dfr(clipping_csvs, read_csv)
+
+all_clipping_logs <- map_dfr(clipping_csvs, ~ read_csv(.x, col_types = cols(
+  profile    = col_character(),
+  condition  = col_character(),
+  replicate  = col_double(),
+  type       = col_character(),
+  n_replaced = col_double(),
+  values     = col_character()  # ← forces 'values' to always be character
+), show_col_types = FALSE))
+
 write_csv(all_clipping_logs, file.path(out_dir, "all_clipping_events.csv"))
+
