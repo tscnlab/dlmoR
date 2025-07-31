@@ -3,11 +3,12 @@ library(purrr)
 library(readr)
 
 # Set input and output directories
-input_dir  <- "~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/noise_results/"
-input_dir  <- "~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/noisy_dlmo_results/"
+#input_dir  <- "~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/noise_results/"
+#input_dir  <- "~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/noisy_dlmo_results/"
+input_dir  <- "~/Documents/Projects/DLMO/dlmoRpaperresults/Civibe/noisy_dlmo_results/"
 
-
-output_dir <- "~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/noise_results_skinny/"
+output_dir <- "~/Documents/Projects/DLMO/dlmoRpaperresults/Civibe/noise_results_skinny/"
+#output_dir <- "~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/noise_results_skinny/"
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
 # List all large .rds files

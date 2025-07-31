@@ -305,7 +305,7 @@ delta_summary <- results_delta %>%
   )
 
 print(delta_summary)
-write.csv(delta_summary, "civibe_delta_dlmo_summary_threshold.csv", row.names = FALSE)
+#write.csv(delta_summary, "civibe_delta_dlmo_summary_threshold.csv", row.names = FALSE)
 
 # Your % success plot (e.g., p_success)
 success_summary <- results %>%
@@ -315,7 +315,8 @@ success_summary <- results %>%
             pct_success = 100 * n_success / total,
             .groups = "drop")
 
-write.csv(success_summary, "civibe_success_summary_threshold.csv", row.names = FALSE)
+print(success_summary)
+#write.csv(success_summary, "civibe_success_summary_threshold.csv", row.names = FALSE)
 
 p_success <- ggplot(success_summary, aes(x = threshold, y = pct_success)) +
   geom_line(color = "steelblue", size = 1) +
@@ -334,3 +335,27 @@ combined_plot <- p_delta_dlmo + p_success + plot_layout(widths = c(3, 1))
 
 # Display
 print(combined_plot)
+
+combined_summary <- results %>%
+  group_by(threshold) %>%
+  summarise(
+    total_profiles = n_distinct(profile),
+    raw_success = sum(!is.na(dlmo)),
+    .groups = "drop"
+  ) %>%
+  left_join(
+    results %>%
+      filter(!is.na(dlmo)) %>%
+      group_by(profile) %>%
+      filter(any(threshold == 2 & !is.na(dlmo))) %>%  # only profiles with a ref
+      mutate(dlmo_ref = dlmo[threshold == 2][1]) %>%
+      ungroup() %>%
+      mutate(delta_dlmo = dlmo - dlmo_ref) %>%
+      filter(abs(delta_dlmo) <= 4) %>%               # keep only within tolerance
+      group_by(threshold) %>%
+      summarise(within_tolerance = n(), .groups = "drop"),
+    by = "threshold"
+  )
+
+print(combined_summary)
+

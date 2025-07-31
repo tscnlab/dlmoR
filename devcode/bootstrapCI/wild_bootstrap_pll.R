@@ -81,11 +81,11 @@ run_dlmo_wild_bootstrap <- function(sample_dlmo, n_iter = 300, wild_type = c("ra
   )
 }
 
-filename <- system.file("extdata/sample_melatonin_profile.csv", package = "dlmoR")
+filename <- system.file("extdata/civibe_melatonin_FD207_day2.csv", package = "dlmoR")
 sample_dlmo <- calculate_dlmo(file_path = filename, threshold = 2.3)
 
-boot_rademacher <- run_dlmo_wild_bootstrap(sample_dlmo, n_iter = 1000, wild_type = "rademacher")
-boot_normal     <- run_dlmo_wild_bootstrap(sample_dlmo, n_iter = 1000, wild_type = "normal")
+boot_rademacher <- run_dlmo_wild_bootstrap(sample_dlmo, n_iter = 300, wild_type = "rademacher")
+#boot_normal     <- run_dlmo_wild_bootstrap(sample_dlmo, n_iter = 300, wild_type = "normal")
 
 
 plot_dlmo_bootstrap <- function(boot_result, method_label = "Bootstrap") {

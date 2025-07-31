@@ -1040,8 +1040,7 @@ plot_bottom <- ggplot(filtered_results, aes(x = binned_minutes, y = profile, fil
 
 # --- Combine both plots ---
 plot_stacked <- plot_top / plot_bottom + plot_layout(heights = c(1, 2))
-plot_stacked <- (plot_top / plot_bottom + plot_layout(heights = c(1, 2))) &
-  theme(legend.position = "none")
+plot_stacked <- (plot_top / plot_bottom + plot_layout(heights = c(1, 2)))
 
 print(plot_stacked)
 

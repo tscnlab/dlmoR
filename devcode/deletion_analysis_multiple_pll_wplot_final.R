@@ -364,8 +364,8 @@ library(RColorBrewer)
 library(patchwork)
 
 # Load data
-#all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Civibe/multiple_deletion/multiple_deletion_results/dlmo_deletion_all_results.rds")
-all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/multiple_deletion_results/dlmo_deletion_all_results.rds")
+all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Civibe/multiple_deletion/multiple_deletion_results/dlmo_deletion_all_results.rds")
+#all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/multiple_deletion_results/dlmo_deletion_all_results.rds")
 
 
 # Define color palette
@@ -522,3 +522,17 @@ plot_deletion_raster_by_replicate <- function(results_df, profiles_to_plot = NUL
 
 # Call the plot
 plot_deletion_raster_by_replicate(all_results, profiles_to_plot = profile_to_plot, deletion_colors = deleted_colors)
+
+dlmo_summary <- violin_df %>%
+  group_by(perc_deleted_num) %>%
+  summarise(
+    n_total = n(),
+    n_success = sum(!is.na(delta_dlmo)),
+    n_failed = sum(is.na(delta_dlmo)),
+    success_rate = n_success / n_total,
+    mean_dlmo = mean(delta_dlmo, na.rm = TRUE),
+    sd_dlmo = sd(delta_dlmo, na.rm = TRUE),
+    .groups = "drop"
+  )
+print(dlmo_summary)
+write.csv(dlmo_summary, "civibe_full_dlmo_deletion_summary.csv", row.names = FALSE)

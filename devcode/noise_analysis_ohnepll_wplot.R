@@ -155,7 +155,7 @@ library(gghalves)
 # all_res <- map_df(all_rds, readRDS)
 # 1) Read in all files that start with "civibe_melatonin_"
 out_dir = "~/Documents/Projects/DLMO/dlmoRpaperresults/Civibe/noise_results_skinny"
-# out_dir = "~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/noise_results_skinny"
+out_dir = "~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/noise_results_skinny"
 
 # 1) List all .rds files that start with "civibe_melatonin_"
 all_files <- list.files(out_dir,
@@ -182,7 +182,7 @@ baseline_df <- all_res %>%
 full_df <- all_res %>%
   left_join(baseline_df, by = "profile") %>%
   mutate(delta = dlmo_est - baseline)
-View(full_df)
+# View(full_df)
 # 4. Summary table (includes the clean run as one of the reps)
 summary_df <- full_df %>%
   group_by(profile, condition) %>%
@@ -338,4 +338,246 @@ ggplot(plot_df, aes(x = xpos, y = delta, fill = subgroup)) +
   ) +
   annotate("text", x = 2,   y = 2, label = "Time Only", fontface = "bold") +
   annotate("text", x = 5.5, y = 2, label = "Mel Group", fontface = "bold")
+
+
+#######
+
+library(dplyr)
+library(ggplot2)
+library(gghalves)
+
+plot_df <- full_df %>%
+  filter(condition %in% c("mel_only","time_5min","time_10min","time_20min","both_axes_10")) %>%
+  mutate(
+    subgroup = recode(condition,
+                      "time_5min"    = "5 min",
+                      "time_10min"   = "10 min",
+                      "time_20min"   = "20 min",
+                      "mel_only"     = "Mel Only",
+                      "both_axes_10" = "Mel + Time"
+    )
+  )
+
+# define order with a dummy "gap"
+subgroup_levels <- c("5 min","10 min","20 min","", "Mel Only","Mel + Time")
+plot_df <- plot_df %>% mutate(subgroup = factor(subgroup, levels = subgroup_levels))
+
+# color palette
+cols <- c(
+  "5 min"      = "#1b9e77",
+  "10 min"     = "#d95f02",
+  "20 min"     = "#7570b3",
+  "Mel Only"   = "#e7298a",
+  "Mel + Time" = "#66a61e"
+)
+
+# nudge amount for boxplots/means
+point_nudge <- 0.15
+
+ggplot(plot_df, aes(x = subgroup, y = delta, fill = subgroup)) +
+  # half violin on left
+  geom_half_violin(side="l", alpha=0.6, width=0.9, scale="width", trim=FALSE) +
+  # half boxplot on right
+  geom_half_boxplot(side="r", outlier.shape=NA, width=0.2, color="black", fill=NA) +
+  # individual points
+  geom_point(
+    aes(x = as.numeric(subgroup) + point_nudge, y = delta),
+    shape = 21, size = 1.5, stroke = 0.2, color = "black", alpha = 0.6,
+    position = position_jitter(width = 0.05, height = 0)
+  ) +
+  # mean marker
+  stat_summary(
+    fun = mean, geom = "point",
+    shape = 21, size = 2.5, fill = "white", color = "black",
+    position = position_nudge(x = point_nudge)
+  ) +
+  scale_fill_manual(values = cols, na.value = NA) +
+  scale_x_discrete(
+    labels = function(x) ifelse(x == "", "", x)  # hide dummy gap label
+  ) +
+  labs(
+    title = "DLMO estimate sensitivty to noise",
+    x = NULL,
+    y = "Δ DLMO (hours)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position    = "none",
+    panel.grid.major.x = element_blank()
+  ) +
+  annotate("text", x = 2,   y = 2, label = "Time Only", fontface = "bold") +
+  annotate("text", x = 5.5, y = 2, label = "Mel Group", fontface = "bold")
+
+######
+library(dplyr)
+library(ggplot2)
+library(gghalves)
+
+plot_df <- full_df %>%
+  filter(condition %in% c("mel_only","time_5min","time_10min","time_20min","both_axes_10")) %>%
+  mutate(
+    subgroup = recode(condition,
+                      "time_5min"    = "5 min",
+                      "time_10min"   = "10 min",
+                      "time_20min"   = "20 min",
+                      "mel_only"     = "Mel Only",
+                      "both_axes_10" = "Mel + 10 min"
+    )
+  )
+
+# define order with dummy "gap"
+subgroup_levels <- c("5 min","10 min","20 min","", "Mel Only","Mel + 10 min")
+plot_df <- plot_df %>% mutate(subgroup = factor(subgroup, levels = subgroup_levels))
+
+# color palette
+cols <- c(
+  "5 min"      = "#1b9e77",
+  "10 min"     = "#d95f02",
+  "20 min"     = "#7570b3",
+  "Mel Only"   = "#e7298a",
+  "Mel + 10 min" = "#66a61e"
+)
+
+# nudge amount
+nudge_amt <- 0.2
+
+ggplot(plot_df, aes(x = subgroup, y = delta, fill = subgroup)) +
+  # half violin, shifted right
+  geom_half_violin(side="l", alpha=0.6, width=0.9, scale="width", trim=FALSE,
+                   position = position_nudge(x = -0.05)) +
+  # half boxplot, also shifted right
+  geom_half_boxplot(side="r", outlier.shape=NA, width=0.2, color="black", fill=NA,
+                    position = position_nudge(x = 0.1)) +
+  # dots stay centered (no nudge!)
+  geom_point(
+    shape = 21, size = 1.5, stroke = 0.2, color = "black", alpha = 0.6,
+    position = position_jitter(width = 0.05, height = 0)
+  ) +
+  # mean marker, shifted right
+  stat_summary(
+    fun = mean, geom = "point",
+    shape = 21, size = 2.5, fill = "white", color = "black",
+    position = position_nudge(x = 0.1)
+  ) +
+  scale_fill_manual(values = cols, na.value = NA) +
+  scale_x_discrete(labels = function(x) ifelse(x == "", "", x)) +
+  labs(
+    title = "DLMO estimate sensitivity to noise",
+    x = NULL,
+    y = "Δ DLMO (hours)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position    = "none",
+    panel.grid.major.x = element_blank()
+  ) +
+  annotate("text", x = 2,   y = 2, label = "Time Only", fontface = "bold") +
+  annotate("text", x = 4.5, y = 2, label = "Melatonin", fontface = "bold")
+
+library(dplyr)
+
+summary_stats <- plot_df %>%
+  filter(subgroup != "") %>%  # drop the dummy gap
+  group_by(subgroup) %>%
+  summarise(
+    mean_delta = mean(delta, na.rm = TRUE),
+    sd_delta   = sd(delta, na.rm = TRUE),
+    n          = n()
+  )
+
+print(summary_stats)
+write.csv(summary_stats, "blume_dlmo_noise_summary_stats.csv", row.names = FALSE)
+
+
+#####
+# mean and SD plot
+#####
+# Line plot of mean ± SD
+p_summary <- ggplot(summary_stats, aes(x = subgroup, y = mean_delta, group = 1)) +
+  # Ribbon for ± SD
+  geom_ribbon(
+    aes(ymin = mean_delta - sd_delta, ymax = mean_delta + sd_delta),
+    fill = "skyblue", alpha = 0.4
+  ) +
+  # Mean line
+  geom_line(color = "black", size = 1) +
+  # Mean points
+  geom_point(shape = 21, size = 3, fill = "white", color = "black") +
+  # X-axis categories (discrete here, so no scale_x_continuous)
+  labs(
+    title = "Mean Δ DLMO ± SD by Condition",
+    x = "Condition",
+    y = "Δ DLMO (hours)"
+  ) +
+  theme_minimal(base_size = 13)
+
+p_summary
+
+
+library(dplyr)
+library(ggplot2)
+
+# Subset: time-only conditions
+time_summary <- summary_stats %>%
+  filter(subgroup %in% c("5 min", "10 min", "20 min"))
+
+# Subset: melatonin conditions
+mel_summary <- summary_stats %>%
+  filter(subgroup %in% c("Mel Only", "Mel + 10 min"))
+
+# Plot time-only group
+p_time <- ggplot(time_summary, aes(x = subgroup, y = mean_delta, group = 1)) +
+  geom_ribbon(aes(ymin = mean_delta - sd_delta, ymax = mean_delta + sd_delta),
+              fill = "skyblue", alpha = 0.4) +
+  geom_line(color = "black", size = 1) +
+  geom_point(shape = 21, size = 3, fill = "white", color = "black") +
+  labs(
+    title = "Time Only Conditions",
+    x = "Condition",
+    y = "Δ DLMO (hours)"
+  ) +
+  theme_minimal(base_size = 13)
+
+# Plot melatonin group
+p_mel <- ggplot(mel_summary, aes(x = subgroup, y = mean_delta, group = 1)) +
+  geom_ribbon(aes(ymin = mean_delta - sd_delta, ymax = mean_delta + sd_delta),
+              fill = "lightgreen", alpha = 0.4) +
+  geom_line(color = "black", size = 1) +
+  geom_point(shape = 21, size = 3, fill = "white", color = "black") +
+  labs(
+    title = "Melatonin Conditions",
+    x = "Condition",
+    y = "Δ DLMO (hours)"
+  ) +
+  theme_minimal(base_size = 13)
+
+p_time
+p_mel
+
+library(patchwork)
+
+(p_time | p_mel) +
+  plot_annotation(
+    title = "Mean Δ DLMO ± SD by Condition Groups",
+    theme = theme(plot.title = element_text(size = 16, face = "bold"))
+  )
+
+y_limits <- c(-1, 1)  # adjust as needed
+
+p_time <- p_time + coord_cartesian(ylim = y_limits)
+p_mel  <- p_mel  + coord_cartesian(ylim = y_limits)
+
+
+p_mel <- p_mel +
+  theme(
+    axis.text.y  = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+(p_time | p_mel) +
+  plot_annotation(
+    title = "Mean Δ DLMO ± SD by Condition Groups",
+    theme = theme(plot.title = element_text(size = 16, face = "bold"))
+  )
 

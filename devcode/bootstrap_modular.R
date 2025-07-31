@@ -10,14 +10,6 @@ library(future.apply)
 library(progressr)
 library(ggplot2)
 
-# --- Helper: Convert time to decimal ---
-posixct_to_decimal <- function(time_vec, ref_time) {
-  as.numeric(difftime(time_vec, ref_time[1], units = "hours"))
-}
-
-decimal_to_posixct <- function(decimal_vec, ref_time) {
-  ref_time[1] + lubridate::dhours(decimal_vec)
-}
 
 # --- Helper: Enforce minimum gap for sorted times ---
 enforce_min_time_gap <- function(time_vec, min_gap = 1 / 60) {
@@ -174,18 +166,19 @@ dlmo_bootstrap <- function(sample_dlmo, method = c("monte_carlo", "residual", "w
 }
 
 # --- Plotting Function ---
-plot_dlmo_bootstrap <- function(boot_result, method_label = "Bootstrap") {
+plot_dlmo_bootstrap <- function(boot_result, method_label = "Bootstrap", bw = 300) {
   dlmo_resid_boot <- boot_result$bootstrap_values
   dlmo_mean <- boot_result$mean
   dlmo_ci <- boot_result$ci
   actual_dlmo <- decimal_to_posixct(boot_result$actual, boot_result$ref_time)
   dlmo_mean_posix <- decimal_to_posixct(dlmo_mean, boot_result$ref_time)
   dlmo_ci_posix <- decimal_to_posixct(dlmo_ci, boot_result$ref_time)
+  format(dlmo_ci_posix, "%H:%M:%S")
 
   plot_df <- data.frame(dlmo = decimal_to_posixct(dlmo_resid_boot, boot_result$ref_time))
-  density_vals <- density(as.numeric(plot_df$dlmo), bw = 60)
+  density_vals <- density(as.numeric(plot_df$dlmo), bw = bw)
   max_hist_count <- max(ggplot_build(ggplot(plot_df, aes(x = dlmo)) +
-                                       geom_histogram(binwidth = 60))$data[[1]]$count)
+                                       geom_histogram(binwidth = bw))$data[[1]]$count)
 
   scaled_density <- data.frame(
     x = as.POSIXct(density_vals$x, origin = "1970-01-01", tz = "UTC"),
@@ -209,29 +202,53 @@ plot_dlmo_bootstrap <- function(boot_result, method_label = "Bootstrap") {
   y_text <- max_hist_count - 0.3
 
   ggplot(plot_df, aes(x = dlmo)) +
-    geom_histogram(binwidth = 60, fill = "lightblue", color = "black", boundary = 0) +
     geom_rect(data = ci_df, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, fill = group),
-              alpha = 0.15, inherit.aes = FALSE) +
-    geom_line(data = scaled_density, aes(x = x, y = y), color = "darkblue", linewidth = 1) +
+              alpha = 0.2, inherit.aes = FALSE) +
+    geom_histogram(binwidth = bw, fill = "darkgrey", color = "black", boundary = 0) +
+    geom_line(data = scaled_density, aes(x = x, y = y), color = "darkslategrey", linewidth = 1) +
     geom_vline(data = line_df, aes(xintercept = x, color = label, linetype = label), linewidth = 1) +
-    scale_color_manual(values = c("DLMO estimate" = "deeppink", "Bootstrap mean" = "blue")) +
-    scale_linetype_manual(values = c("DLMO estimate" = "dotdash", "Bootstrap mean" = "solid")) +
-    scale_fill_manual(name = "Reference", values = c("95% CI" = "azure4")) +
+    scale_color_manual(values = c("DLMO estimate" = "deeppink3", "Bootstrap mean" = "darkgoldenrod")) +
+    scale_linetype_manual(values = c("DLMO estimate" = "solid", "Bootstrap mean" = "solid")) +
+    scale_fill_manual(name = "Reference", values = c("95% CI" = "cadetblue3")) +
     scale_x_datetime(date_labels = "%H:%M", date_breaks = "15 min", timezone = "UTC", expand = c(0.01,0.01)) +
     scale_y_continuous(
-      name = "Count",
-      sec.axis = sec_axis(~ . * max(density_vals$y) / max_hist_count, name = "Density")
+      name = "Count"
+      #sec.axis = sec_axis(~ . * max(density_vals$y) / max_hist_count, name = "Density")
     ) +
     labs(
-      title = paste0(method_label, ": DLMO Estimate Histogram + Scaled Density"),
-      x = "DLMO Estimate [hh:mm]"
+      title = paste0("DLMO estimate: ", method_label),
+      x = "Time [hh:mm]"
     ) +
-    annotate("text", x = actual_dlmo, y = y_text,
-             label = paste0("DLMO: ", boot_result$dlmo_label),
-             color = "deeppink", hjust = -0.1, vjust = 1, size = 3) +
-    annotate("text", x = dlmo_mean_posix, y = y_text,
-             label = paste0("Mean: ", format(dlmo_mean_posix, "%H:%M:%S")),
-             color = "blue", hjust = -0.1, vjust = 2.5, size = 3) +
+    # annotate("text", x = actual_dlmo, y = y_text,
+    #          label = paste0("DLMO: ", boot_result$dlmo_label),
+    #          color = "deeppink", hjust = -0.1, vjust = 1, size = 3) +
+    # annotate("text", x = dlmo_mean_posix, y = y_text,
+    #          label = paste0("Mean: ", format(dlmo_mean_posix, "%H:%M:%S")),
+    #          color = "blue", hjust = -0.1, vjust = 2.5, size = 3) +
+    annotation_custom(
+      grid::textGrob(
+        label = paste0("DLMO: ", boot_result$dlmo_label),
+        x = unit(0.02, "npc"), y = unit(0.98, "npc"),
+        just = c("left", "top"),
+        gp = gpar(col = "deeppink3", fontsize = 10, fontface = "bold")
+      )
+    ) +
+    annotation_custom(
+      grid::textGrob(
+        label = paste0("Mean: ", format(dlmo_mean_posix, "%H:%M:%S")),
+        x = unit(0.02, "npc"), y = unit(0.93, "npc"),
+        just = c("left", "top"),
+        gp = gpar(col = "darkgoldenrod", fontsize = 10, fontface = "bold")
+      )
+    ) +
+    annotation_custom(
+      grid::textGrob(
+        label = paste0("95% CI: ", paste(format(dlmo_ci_posix, "%H:%M:%S"), collapse = " – ")),
+        x = unit(0.02, "npc"), y = unit(0.88, "npc"),
+        just = c("left", "top"),
+        gp = gpar(col = "cadetblue4", fontsize = 10, fontface = "bold")
+      )
+    )+
     theme_minimal() +
     guides(color = guide_legend(order = 1),
            linetype = guide_legend(order = 1),
@@ -241,6 +258,7 @@ plot_dlmo_bootstrap <- function(boot_result, method_label = "Bootstrap") {
       legend.direction = "horizontal",
       legend.title = element_blank(),
       legend.box = "horizontal",
-      legend.margin = margin(t = 0)
+      legend.margin = margin(t = 0),
+      axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
     )
 }

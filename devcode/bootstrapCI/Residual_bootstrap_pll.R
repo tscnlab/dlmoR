@@ -92,11 +92,11 @@ run_dlmo_bootstrap <- function(sample_dlmo, n_iter = 300, seed = 42, n_workers =
 }
 
 # --- LOAD PROFILE ---
-filename <- system.file("extdata/sample_melatonin_profile.csv", package = "dlmoR")
+filename <- system.file("extdata/civibe_melatonin_FD207_day2.csv", package = "dlmoR")
 sample_dlmo <- calculate_dlmo(file_path = filename, threshold = 2.3)
 
 # --- RUN BOOTSTRAP ---
-boot_result <- run_dlmo_bootstrap(sample_dlmo, n_iter = 1000)
+boot_result <- run_dlmo_bootstrap(sample_dlmo, n_iter = 300)
 
 # --- EXTRACT RESULTS ---
 dlmo_resid_boot <- boot_result$bootstrap_values
