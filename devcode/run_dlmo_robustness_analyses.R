@@ -19,7 +19,7 @@ library(dlmoR)
 
 # ---- Run deletion analysis script ----
 message("Starting deletion analysis...")
-source("deletion_analysis_multiple_pll.R")
+source("deletion_analysis_multiple_pll_forcluster.R")
 message("Deletion analysis complete.")
 
 # ---- Run resampling analysis script ----

@@ -78,15 +78,12 @@ run_multiple_deletion <- function(profile_id, df) {
   full_dlmo <- extract_dlmo_value(full_dlmo_result)
   full_dlmo_time <- dlmoR::decimal_to_posixct(full_dlmo, df$datetime)
 
-percentages <- c(10, 20, 30, 40, 50)
-#percentages <- c(10, 20)
-
+  percentages <- c(10, 20, 30, 40, 50)
 
   scenario2 <- map_dfr(percentages, function(pct) {
     n_del <- floor(pct / 100 * nrow(df))
     if (n_del < 1) return(NULL)
 
-    #future_map_dfr(1:20, function(rep) { # discuss reps with Manuel TODO removed 20250717 for cluster
     map_dfr(1:20, function(rep) {
       idx <- sample(seq_len(nrow(df)), n_del, replace = FALSE)
       df_deleted <- df[-idx, ]
@@ -104,17 +101,20 @@ percentages <- c(10, 20, 30, 40, 50)
         full_dlmo_dh = full_dlmo,
         deleted_dlmo_dh = dlmo_deleted,
         full_dlmo_time = full_dlmo_time,
-        deleted_dlmo_time = dlmoR::decimal_to_posixct(dlmo_deleted, df$datetime),
+        deleted_dlmo_time = if (!is.na(dlmo_deleted))
+          dlmoR::decimal_to_posixct(dlmo_deleted, df$datetime)
+        else NA,
         deleted_minutes_from_dlmo = list(
           relative_minutes_to_dlmo(df$datetime[idx], full_dlmo_time)
-        )
+        ),
+        replicate_failed = is.na(dlmo_deleted)
       )
-    #}, .options = furrr_options(seed = TRUE)) TODO removed 20250717
     })
   })
 
   return(scenario2)
 }
+
 
 # ────────────────────────────────────────────────────────────────
 # 4. RUN ANALYSIS ONLY FOR NEW PROFILES
@@ -162,21 +162,16 @@ message("  - Successful: ", num_success)
 message("  - Failed: ", num_failed)
 message("Results saved to '", results_dir, "'")
 
-# Build error log from profiles without .rds files
-error_log <- imap_dfr(profiles_to_run, function(df, id) {
-  rds_path <- file.path(results_dir, paste0(id, ".rds"))
-  if (!file.exists(rds_path)) {
-    tibble(profile = id, error_message = "No .rds file generated (likely failed)")
-  }
-})
+# ---- 1. Profile-level total failures ----
+error_log <- tibble(
+  profile = names(profiles_to_run)[!map_lgl(names(profiles_to_run), function(id) {
+    file.exists(file.path(results_dir, paste0(id, ".rds")))
+  })],
+  failure_type = "total",
+  details = "No results file created"
+)
 
-# Save error log
-write_csv(error_log, file.path(results_dir, "multiple_deletion_errors.csv"))
-
-# ────────────────────────────────────────────────────────────────
-# 6. LOAD ALL COMPLETED RESULTS FROM .RDS FILES
-# ────────────────────────────────────────────────────────────────
-
+# ---- 2. Load all completed results ----
 load_all_deletion_results <- function(results_dir) {
   files <- list.files(results_dir, pattern = "\\.rds$", full.names = TRUE)
   valid_files <- files[file.exists(files)]
@@ -186,12 +181,32 @@ load_all_deletion_results <- function(results_dir) {
     purrr::compact() %>%
     dplyr::bind_rows()
 }
-
 all_results <- load_all_deletion_results(results_dir)
 
-# Save aggregated results for later reuse
+# Save aggregated results
 saveRDS(all_results, file.path(results_dir, "dlmo_deletion_all_results.rds"))
 
+# ---- 3. Replicate-level partial failures ----
+replicate_failures <- all_results %>%
+  group_by(profile, percentage_deleted) %>%
+  summarise(
+    n_reps = n(),
+    n_failed = sum(replicate_failed, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  filter(n_failed > 0) %>%
+  mutate(
+    failure_type = "partial",
+    details = paste0(n_failed, " of ", n_reps,
+                     " replicates failed at ", percentage_deleted, "% deleted")
+  ) %>%
+  select(profile, failure_type, details)
+
+# ---- 4. Combine and save ----
+combined_errors <- bind_rows(error_log, replicate_failures) %>%
+  arrange(profile, failure_type)
+
+write_csv(combined_errors, file.path(results_dir, "multiple_deletion_error_report.csv"))
 
 
 ###
