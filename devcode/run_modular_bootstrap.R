@@ -35,7 +35,7 @@ for (m in names(methods)) {
   cat(sprintf("\n🚀 Running %s bootstrap...\n", m))
 
   tryCatch({
-    boot_result <- do.call(dlmo_bootstrap, c(list(sample_dlmo, n_iter = 10), methods[[m]]))
+    boot_result <- do.call(dlmo_bootstrap, c(list(sample_dlmo, n_iter = 1000), methods[[m]]))
     results_list[[m]] <- boot_result
 
     saveRDS(boot_result, file = rds_file)

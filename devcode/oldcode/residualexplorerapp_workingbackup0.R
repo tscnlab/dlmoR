@@ -122,11 +122,21 @@ shinyApp(
       df$resid <- as.vector(fc$mat)
       df$cluster <- as.vector(fc$labels)
 
+      # convert decimal hours in df$y to POSIXct times
+      df$y <- decimal_to_posixct(df$y, dlmo_result$prof$datetime[3])
       ggplot(df, aes(x = y, y = x, fill = resid)) +
         geom_raster() +
         geom_point(data = df %>% filter(!is.na(cluster)), aes(color = factor(cluster)), size = 1) +
+        geom_point(
+        x = decimal_to_posixct(dlmo_result$ip$inflection_point_fine$x, dlmo_result$prof$datetime[3]),
+        y = dlmo_result$ip$inflection_point_fine$y,
+        color = "black", fill = "white",size = 4, shape = 23, stroke = 0.5
+        ) +
         scale_fill_viridis(option = "magma") +
-        labs(fill = "Residual", color = "Cluster") +
+        labs(
+          x = "Time [hh:mm]",
+          y = "Melatonin concentration [pg/mL]",
+          fill = "Residual", color = "Cluster") +
         theme_minimal()
     })
 
