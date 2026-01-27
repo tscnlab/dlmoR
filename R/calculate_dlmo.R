@@ -192,7 +192,6 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
   }
   # data <- read.csv(file_path, sep = ";", header = TRUE)
   data <- readr::read_delim(file_path, delim = NULL)
-
   # # check if file is a dataframe
   # if (!is.data.frame(data)) {
   #   stop("`data` must be a data frame containing `datetime` (or `time`) and `melatonin` columns.")

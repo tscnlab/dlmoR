@@ -52,7 +52,6 @@ define_roi <- function(profile_data, threshold = 2.3) {
       0.1 * (intermediate_points$datetime[1] - tail(base_points$datetime, n = 1))
     x_end <- tail(intermediate_points$datetime, n = 1) +
       0.95 * (ascending_points$datetime[1] - tail(intermediate_points$datetime, n = 1))
-
   } else if (nrow(base_points) < 2) {
     # Case 2: Single-point base segment
     x_start <- base_points$datetime[1] +

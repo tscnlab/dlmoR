@@ -41,11 +41,11 @@
 #' @export
 plot_fit <- function(plot, profile_data, dlmoFit) {
   # Convert base and ascending timepoints to decimal hours
-  xstart_num <- posixct_to_decimal(dplyr::filter(profile_data, base == 1)$datetime[1], profile_data$datetime)
-  xend_num <- posixct_to_decimal(tail(dplyr::filter(profile_data, ascending == 1)$datetime, n = 1), profile_data$datetime)
+  xstart_num <- posixct_to_decimal(dplyr::filter(profile_data, base == 1)$datetime[1], profile_data$datetime[4])
+  xend_num <- posixct_to_decimal(tail(dplyr::filter(profile_data, ascending == 1)$datetime, n = 1), profile_data$datetime[4])
 
   # Convert the inflection point x back to POSIXct for plotting
-  ipx_posix <- decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime)
+  ipx_posix <- decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime[4])
 
   # --- BASE SEGMENT FIT ---
   # Always linear: y = m * (x - poi_x) + poi_y
@@ -75,7 +75,7 @@ plot_fit <- function(plot, profile_data, dlmoFit) {
       ggplot2::geom_function(
         fun = function(x) {
           # Convert x (POSIXct) to decimal hours
-          x_numeric <- posixct_to_decimal(x, profile_data$datetime)
+          x_numeric <- posixct_to_decimal(x, profile_data$datetime[4])
 
           # Evaluate the parabolic function y = ax^2 + bx + c
           y <- dlmoFit$ascending_params$a * x_numeric^2 +
@@ -87,16 +87,16 @@ plot_fit <- function(plot, profile_data, dlmoFit) {
         size = 1,
         n = 1000,
         xlim = c(
-          decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime),  # Inflection point
-          decimal_to_posixct(xend_num, profile_data$datetime)  # Last ascending point
+          decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime[4]),  # Inflection point
+          decimal_to_posixct(xend_num, profile_data$datetime[4])  # Last ascending point
         )
       )
   }
 
   # Format x-axis with time labels
   ggplot2::scale_x_datetime(
-    limits = c(decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime),
-               decimal_to_posixct(xend_num, profile_data$datetime)),
+    limits = c(decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime[4]),
+               decimal_to_posixct(xend_num, profile_data$datetime[4])),
     date_labels = "%H:%M",  # Display hour and minute
     date_breaks = "1 hour"   # Set breaks at every hour
   )
@@ -140,7 +140,7 @@ plot_fit <- function(plot, profile_data, dlmoFit) {
 plot_ip <- function(plot, profile_data, dlmoip) {
   plot <- plot +
     ggplot2::geom_point(
-      x = decimal_to_posixct(dlmoip$x, profile_data$datetime),  # Convert decimal hours to POSIXct for x-axis
+      x = decimal_to_posixct(dlmoip$x, profile_data$datetime[4]),  # Convert decimal hours to POSIXct for x-axis
       y = dlmoip$y,  # Inflection point melatonin concentration
       color = "deeppink4",  # Outline color
       fill = "deeppink4",  # Fill color
@@ -235,18 +235,18 @@ plot_roi <- function(plot, roi, roi_line_only) {
 plot_roi_heatmap <- function(plot, data = NULL, roi_grid = NULL, residuals = NULL) {
   # Ensure at least one grid is selected for visualization
 
-    # Convert x-coordinates from decimal hours to POSIXct timestamps
-    dt_roi_grid <- data.frame(
-      x = decimal_to_posixct(roi_grid$x, data$datetime),
-      y = roi_grid$y
-    )
+  # Convert x-coordinates from decimal hours to POSIXct timestamps
+  dt_roi_grid <- data.frame(
+    x = decimal_to_posixct(roi_grid$x, data$datetime[4]),
+    y = roi_grid$y
+  )
 
-    # Add coarse grid heatmap to plot
-    plot <- plot + ggplot2::geom_point(
-      data = dt_roi_grid, ggplot2::aes(x = x, y = y, color = log(residuals)),
-      size = 1.25
-    ) +
-      ggplot2::scale_color_gradient(low = "cyan", high = "deeppink")  # Color gradient from blue to pink
+  # Add coarse grid heatmap to plot
+  plot <- plot + ggplot2::geom_point(
+    data = dt_roi_grid, ggplot2::aes(x = x, y = y, color = log(residuals)),
+    size = 1.25
+  ) +
+    ggplot2::scale_color_gradient(low = "cyan", high = "deeppink")  # Color gradient from blue to pink
 
 
   return(plot)
@@ -300,7 +300,7 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
 
   # Convert corner x-values from numeric (decimal hours) to POSIXct timestamps
   corners_datetime <- lapply(corners, function(corner) {
-    list(datetime = decimal_to_posixct(corner[1], profile_data$datetime),
+    list(datetime = decimal_to_posixct(corner[1], profile_data$datetime[4]),
          melatonin = corner[2])  # Preserve melatonin concentration
   })
 
@@ -478,7 +478,9 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
     # Corrected legend position
     ggplot2::theme(legend.position = "none") +
 
-    ggplot2::scale_linetype_manual(values = c("Full Profile" = "dotted"))
+    ggplot2::scale_linetype_manual(values = c("Full Profile" = "dotted")) +
+    ggplot2::expand_limits(y = -0.21) +
+    scale_y_continuous(limits = c(-0.21, NA), expand = c(0, 0.05))
 
 
   # Overlay Parallelogram if enabled

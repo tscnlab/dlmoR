@@ -21,7 +21,7 @@ parallelogram_fit <- function(profile_data) {
   profile_data_ascending <- profile_data %>% dplyr::filter(ascending == 1)
 
   # Convert datetime to numeric (decimal time) for optimization
-  x_values <- posixct_to_decimal(profile_data_ascending$datetime, profile_data$datetime)
+  x_values <- posixct_to_decimal(profile_data_ascending$datetime, profile_data$datetime[3])
   y_values <- profile_data_ascending$melatonin
 
   # Identify the first ascending index in the profile data
@@ -29,7 +29,7 @@ parallelogram_fit <- function(profile_data) {
   # Identify the last point before the ascending segment
   last_point_before_ascending_index <- first_ascending_index - 1
   lpba <- profile_data[last_point_before_ascending_index, ]  # Extract last point before ascending
-  lpba_dec <- posixct_to_decimal(lpba$datetime, profile_data$datetime)
+  lpba_dec <- posixct_to_decimal(lpba$datetime, profile_data$datetime[3])
 
   # Append the last point before ascending to the data used for optimization
   x_pll <- c(lpba_dec, x_values)
@@ -78,8 +78,8 @@ parallelogram_fit <- function(profile_data) {
   }
 
   # Convert numeric x0 and x1 back to datetime format
-  pll_datetime_0 <- decimal_to_posixct(x0_numeric, profile_data$datetime)
-  pll_datetime_1 <- decimal_to_posixct(x1_numeric, profile_data$datetime)
+  pll_datetime_0 <- decimal_to_posixct(x0_numeric, profile_data$datetime[3])
+  pll_datetime_1 <- decimal_to_posixct(x1_numeric, profile_data$datetime[3])
 
   # Return results as a list
   return(list(

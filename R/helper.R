@@ -45,7 +45,6 @@ calculate_slopes <- function(profile, decimal_time) {
 #' @return A numeric vector representing decimal hours since the origin.
 #' @export
 posixct_to_decimal <- function(posix_times, profile_datetime) {
-
   # Ensure input is in POSIXct format
   posix_times <- as.POSIXct(posix_times, tz = "UTC")
 
@@ -56,18 +55,20 @@ posixct_to_decimal <- function(posix_times, profile_datetime) {
   # Compute elapsed days from the origin
   days_elapsed <- as.numeric(as.Date(posix_times) - origin_date)
 
-  # Extract hours and minutes from the timestamps
-  hours <- as.numeric(format(posix_times, "%H"))  # Extract hours
-  minutes <- as.numeric(format(posix_times, "%M"))  # Extract minutes
+  # Extract hours, minutes, and seconds from the timestamps
+  hours <- as.numeric(format(posix_times, "%H"))
+  minutes <- as.numeric(format(posix_times, "%M"))
+  seconds <- as.numeric(format(posix_times, "%S"))
 
-  # Convert current day time to decimal hours
-  decimal_time_today <- hours + (minutes / 60)
+  # Convert time of day to decimal hours
+  decimal_time_today <- hours + (minutes / 60) + (seconds / 3600)
 
   # Compute total decimal hours, including days elapsed
   decimal_hours <- (days_elapsed * 24) + decimal_time_today
 
   return(decimal_hours)
 }
+
 
 #' Convert Decimal Hours to POSIXct Timestamps
 #'
@@ -80,26 +81,29 @@ posixct_to_decimal <- function(posix_times, profile_datetime) {
 #' @return A vector of POSIXct timestamps.
 #' @export
 decimal_to_posixct <- function(decimal_hours, profile_datetime, tz = "UTC") {
-
   # Compute the number of full days elapsed
   days_elapsed <- floor(decimal_hours / 24)
 
   # Compute the remaining hours within the last day
   remaining_hours <- decimal_hours %% 24
 
-  # Extract the integer hours and fractional minutes
+  # Extract hours, minutes, and seconds from the decimal hours
   hour <- floor(remaining_hours)
-  minute <- (remaining_hours - hour) * 60
+  minute_fraction <- (remaining_hours - hour) * 60
+  minute <- floor(minute_fraction)
+  second <- round((minute_fraction - minute) * 60)  # Round to nearest second
 
-  # Extract the reference origin date from the first timestamp
+  # Extract the origin date from the profile_datetime
   posix_origin <- profile_datetime[1]
-  origin_date <- as.Date(posix_origin)  # Convert to Date format
+  origin_date <- as.Date(posix_origin)  # Ensure it's just the date
 
-  # Compute the POSIXct timestamp by adding elapsed days and time of day
+  # Compute full POSIXct timestamp
   posix_time <- as.POSIXct(origin_date, tz = tz) +
-    days_elapsed * 86400 +  # Convert days to seconds
-    hour * 3600 +           # Convert hours to seconds
-    minute * 60             # Convert minutes to seconds
+    days_elapsed * 86400 +  # seconds in a day
+    hour * 3600 +
+    minute * 60 +
+    second
 
   return(posix_time)
 }
+
