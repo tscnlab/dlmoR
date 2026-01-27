@@ -114,24 +114,43 @@ print(dlmo_result$dlmoplotfine)
 **Dim-Light Melatonin Onset (reduced fine grid search view)**  
 ![DLMO Fine Plot](man/figures/dlmo_example_fine_plot.png)
 
-## **Expected Runtime**
+## Expected runtime
 
-The runtime of `calculate_dlmo()` depends on the selected search method
-and on the computing power of your machine:
+Runtime depends on the selected search and your machine:
 
-- **Coarse- and fine-grid DLMO search (`fine_flag = TRUE`, default)**:
-  ~10 minutes (Windows)/~2 minutes (Mac) per melatonin profile.
-- **Coarse-grid DLMO search only (`fine_flag = FALSE`)**: ~1 minute
-  (Windows)/\< 1 minute (Mac) per melatonin profile.
+- **Coarse- + Fine-grid DLMO search** (`fine_flag = TRUE`, default): ~10 min (Windows) / ~2 min (Mac) per profile  
+- **Coarse-grid DLMO search only** (`fine_flag = FALSE`): ~1 min (Windows) / <1 min (Mac) per profile
 
+For exploratory work, we recommend running `fine_flag = FALSE` first, then re-running promising profiles with `fine_flag = TRUE`.
 For **batch processing**, runtime scales approximately linearly with the
-number of profiles analyzed.
+number of profiles analyzed. Parallelization (e.g., using `future.apply`, `furrr`, or an HPC scheduler) can substantially reduce wall-clock time in high-throughput settings but is not required.
+
+## **Getting Help**
+
+For bug reports, usage questions, and feature requests, please open an issue on the GitHub
+[Issues page](https://github.com/tscnlab/dlmoR/issues).
 
 ## **Citing `dlmoR`**
 
-If you use `dlmoR` in your research, please cite the following preprint,
-which describes the package and its implementation:
+If you use `dlmoR` in your research, please cite the following preprint, (forthcoming in Journal of Biological Rhythms; citation will be updated upon publication)
+which describes the package and its implementation and provides a systematic 
+evaluation of the hockey-stick DLMO method and its software behavior:
 
 Thalji, S. M., & Spitschan, M. (2025). *dlmoR: An open-source R package
 for the dim-light melatonin onset (DLMO) hockey-stick method.* [bioRxiv,
 2025-01](https://doi.org/10.1101/2025.01.13.632603).
+
+```bibtex
+@article{thalji2025dlmor,
+  author  = {Thalji, Salma M. and Spitschan, Manuel},
+  title   = {dlmoR: An open-source R package for the dim-light melatonin onset (DLMO) hockey-stick method},
+  journal = {bioRxiv},
+  year    = {2025},
+  doi     = {10.1101/2025.01.13.632603}
+}
+```
+
+## **Data and analysis code availability**
+All raw data, analysis code, result tables, and figures related to this 
+publication are available in the corresponding 
+[publication repository](https://github.com/tscnlab/ThaljiEtAl_JBiolRhythms_2026).
