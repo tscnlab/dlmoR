@@ -478,7 +478,9 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
     # Corrected legend position
     ggplot2::theme(legend.position = "none") +
 
-    ggplot2::scale_linetype_manual(values = c("Full Profile" = "dotted"))
+    ggplot2::scale_linetype_manual(values = c("Full Profile" = "dotted")) +
+    ggplot2::expand_limits(y = -0.21) +
+    scale_y_continuous(limits = c(-0.21, NA), expand = c(0, 0.05))
 
 
   # Overlay Parallelogram if enabled

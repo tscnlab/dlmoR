@@ -46,7 +46,7 @@ csv_files <- list.files(profile_folder, pattern = "\\.csv$", full.names = TRUE)
 
 profiles <- set_names(csv_files, file_path_sans_ext(basename(csv_files))) %>%
   map(read_csv, show_col_types = FALSE)
-
+profiles <- head(profiles,1)
 # -----------------------------
 # 1b. Set output directory
 # -----------------------------
@@ -76,13 +76,13 @@ extract_dlmo_value <- function(dlmo_result) {
 # 4. Profile-level function with internal resample-level error capture
 # -----------------------------
 process_profile <- function(profile_id, df, resample_intervals_mins) {
-  original_dlmo_full <- calculate_dlmo(df, threshold = 5)
+  original_dlmo_full <- calculate_dlmo(df, threshold = 2.3)
   original_dlmo_val <- extract_dlmo_value(original_dlmo_full)
 
   # Safely handle a single resample interval
   safe_inner <- safely(function(interval) {
     resampled_df <- resample_profile(df, interval)
-    resampled_dlmo_full <- calculate_dlmo(resampled_df, threshold = 5)
+    resampled_dlmo_full <- calculate_dlmo(resampled_df, threshold = 2.3)
     resampled_dlmo_val <- extract_dlmo_value(resampled_dlmo_full)
 
     tibble(
@@ -208,7 +208,7 @@ combined_errors <- bind_rows(profile_errors, interval_errors)
 write_csv(combined_errors, file.path(results_dir, "dlmo_resampling_all_errors.csv"))
 write_csv(all_results %>% select(-original_dlmo_full, -resampled_dlmo_full),
           file.path(results_dir, "dlmo_resampling_results_summary.csv"))
-saveRDS(all_results, file.path(results_dir, "dlmo_resampling_results_full.rds"))
+saveRDS(all_results, file.path(results_dir, "civibe_dlmo_resampling_results_full.rds"))
 
 # -----------------------------
 # 8. Plot the results
@@ -430,7 +430,7 @@ summary_df <- all_results %>%
     )
 
 print(summary_df)
-write.csv(summary_df, "blume_dlmo_sampling_summary.csv", row.names = FALSE)
+write.csv(summary_df, "civibe_dlmo_sampling_summary.csv", row.names = FALSE)
 ribbons_df <- summary_df %>%
   select(resample_interval, mean_diff, sd_diff, se_diff) %>%
   tidyr::pivot_longer(cols = c(sd_diff, se_diff),

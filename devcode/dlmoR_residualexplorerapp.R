@@ -225,7 +225,7 @@ shinyApp(
       centroids$cluster <- factor(centroids$cluster)
 
       # ---- Plot ----
-      ggplot(df, aes(x = y, y = x)) +
+      p<- ggplot(df, aes(x = y, y = x)) +
         geom_raster(aes(fill = resid)) +
 
         # draw hull polygons
@@ -243,12 +243,16 @@ shinyApp(
           data = data.frame(
             x = decimal_to_posixct(dlmo_result$ip$inflection_point_fine$x,
                                    dlmo_result$prof$datetime[3]),
-            y = dlmo_result$ip$inflection_point_fine$y
+            y = dlmo_result$ip$inflection_point_fine$y,
+            shape_label = "DLMO estimate"
           ),
-          aes(x = x, y = y),
-          color = "black",fill = "white", stroke = 0.5, size = 4, shape = 23
+          aes(x = x, y = y, shape = shape_label),
+          color = "black",fill = "white", stroke = 0.5, size = 4
         ) +
-
+        scale_shape_manual(
+          name = "",   # legend title for shapes
+          values = c("DLMO estimate" = 23) # diamond shape
+        ) +
         scale_fill_gradientn(
           colours = viridis::viridis(256),
           name = "Residual values",
@@ -283,7 +287,8 @@ shinyApp(
           axis.text.x  = element_text(size = 14),   # x-axis tick text
           axis.text.y  = element_text(size = 14)    # y-axis tick text
         )
-
+      ggsave("residual_heatmap.svg", p, width = 7, height = 5, dpi = 300)
+      p
     })
 
 
@@ -376,7 +381,7 @@ shinyApp(
 
       df <- data.frame(TimeDifference = time_diffs, Cluster = factor(cluster_ids))
 
-      ggplot(df, aes(x = TimeDifference, y = Cluster, fill = Cluster)) +
+      p<- ggplot(df, aes(x = TimeDifference, y = Cluster, fill = Cluster)) +
         geom_violin(trim = FALSE) +
         geom_boxplot(width = 0.1, fill = "white") +
         geom_vline(aes(xintercept = 0, color = "DLMO"), linewidth = 1) +
@@ -402,6 +407,8 @@ shinyApp(
           axis.text.x  = element_text(size = 14),
           axis.text.y  = element_text(size = 14)
         )
+      ggsave("offset_violin.svg",   p, width = 6, height = 5, dpi = 300)
+      p
 
     })
 

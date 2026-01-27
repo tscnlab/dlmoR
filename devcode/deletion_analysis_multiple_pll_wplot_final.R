@@ -201,7 +201,8 @@ library(gghalves)
 library(RColorBrewer)
 
 # Load results (adjust the path if needed)
-all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Civibe/multiple_deletion/multiple_deletion_results/dlmo_deletion_all_results.rds")
+#all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Civibe/multiple_deletion/multiple_deletion_results/dlmo_deletion_all_results.rds")
+all_results <- readRDS("~/Documents/Projects/DLMO/dlmoRpaperresults/Blume/multiple_deletion_results/dlmo_deletion_all_results.rds")
 
 # Define consistent color palette
 deletion_levels <- c("10", "20", "30", "40", "50")
@@ -449,7 +450,7 @@ combined_plot <- p1 / p2 + plot_layout(heights = c(2, 1))
 print(combined_plot)
 
 print(dlmo_summary)
-write.csv(dlmo_summary, "civibe_dlmo_deletion_summary.csv", row.names = FALSE)
+write.csv(dlmo_summary, "blume_dlmo_deletion_summary.csv", row.names = FALSE)
 
 
 ####
@@ -535,4 +536,4 @@ dlmo_summary <- violin_df %>%
     .groups = "drop"
   )
 print(dlmo_summary)
-#write.csv(dlmo_summary, "civibe_full_dlmo_deletion_summary.csv", row.names = FALSE)
+write.csv(dlmo_summary, "blume_full_dlmo_deletion_summary.csv", row.names = FALSE)
