@@ -1,8 +1,8 @@
 Package: dlmoR
 Title: Determine Time of Dimlight Melatonin Onset 
-Version: 0.0.0.9000
+Version: Version: 0.1.0
 Authors@R: c(
-    person("Salma", "Thalji", , "salma.thalji@tuebingen.mpg.de", role = c("aut", "cre"),
+    person("Salma M.", "Thalji", , "salma.thalji@tum.de", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0002-7320-9289")),
     person("Manuel", "Spitschan", 
       email = "manuel.spitschan@tum.de", role = "aut",
