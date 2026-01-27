@@ -1,3 +1,7 @@
+# dlmoR 0.1.1
+
+- Fixed minor metadata typo. No changes to functionality.
+
 # dlmoR 0.1.0
 
 - Initial public release of the `dlmoR` R package.
