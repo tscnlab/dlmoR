@@ -17,7 +17,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Salma Thalji \email{salma.thalji@tuebingen.mpg.de} (\href{https://orcid.org/0009-0002-7320-9289}{ORCID})
+\strong{Maintainer}: Salma M. Thalji \email{salma.thalji@tum.de} (\href{https://orcid.org/0009-0002-7320-9289}{ORCID})
 
 Authors:
 \itemize{

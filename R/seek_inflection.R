@@ -446,7 +446,8 @@ fit_profile <- function(x, y, poi, fit_type = "linear", region = "base", base_ta
 #' x <- c(0, 1, 2, 3, 4)
 #' y <- c(0.5, 1.0, 2.0, 3.5, 5.0)
 #' poi <- list(x = 2, y = 2.0)
-#' fit_linear(x, y, poi, slope_bounds = c(-0.2, 0.2), weight_base = TRUE)
+#' base_id <- c(1, 1, 0, 0, 0)
+#' fit_linear(x, y, poi, base_id = base_id, slope_bounds = c(-0.2, 0.2), weight_base = TRUE)
 #'
 #' @export
 fit_linear <- function(x, y, poi, base_id = NULL, slope_bounds = NULL, edge_bounds = NULL, weight_base = TRUE) {
@@ -457,7 +458,11 @@ fit_linear <- function(x, y, poi, base_id = NULL, slope_bounds = NULL, edge_boun
 
   # Apply **weighting**: prioritize ascending points (lower weight for base points)
   if (weight_base) {
-    w <- (1 - base_id) + 0.5 * base_id
+    if (is.null(base_id)) {
+      w <- 1  # Uniform weighting (fallback if base_id not provided)
+    } else {
+      w <- (1 - base_id) + 0.5 * base_id
+    }
   } else {
     w <- 1  # Uniform weighting
   }
@@ -465,13 +470,22 @@ fit_linear <- function(x, y, poi, base_id = NULL, slope_bounds = NULL, edge_boun
   # Compute weighted **least squares slope**: m = Σ(w * Δx * Δy) / Σ(w * Δx²)
   num <- sum(w * x_diff * y_diff)   # Weighted numerator (covariance)
   denom <- sum(w * x_diff^2)        # Weighted denominator (variance)
-  slope <- num / denom
+
+  # Guard against degenerate denominators (e.g., all x equal to poi$x)
+  if (!is.finite(denom) || denom == 0) {
+    slope <- 0
+  } else {
+    slope <- num / denom
+    if (!is.finite(slope)) slope <- 0
+  }
 
   # **Enforce slope constraints**: ensure slope remains within [min, max] bounds
-  if (slope < min(slope_bounds)) {
-    slope <- min(slope_bounds)
-  } else if (slope > max(slope_bounds)) {
-    slope <- max(slope_bounds)
+  if (!is.null(slope_bounds) && length(slope_bounds) == 2 && all(is.finite(slope_bounds))) {
+    if (slope < min(slope_bounds)) {
+      slope <- min(slope_bounds)
+    } else if (slope > max(slope_bounds)) {
+      slope <- max(slope_bounds)
+    }
   }
 
   # **Apply edge constraints** (if specified)
@@ -488,7 +502,11 @@ fit_linear <- function(x, y, poi, base_id = NULL, slope_bounds = NULL, edge_boun
       } else {
         left_edge <- edge_bounds$left[2]  # Clip to upper bound
       }
-      slope <- (left_edge - right_edge) / (x[1] - poi$x)  # Recompute slope
+      if ((x[1] - poi$x) != 0) {
+        slope <- (left_edge - right_edge) / (x[1] - poi$x)  # Recompute slope
+      } else {
+        slope <- 0
+      }
     }
 
     # **Enforce right edge constraints**
@@ -498,14 +516,17 @@ fit_linear <- function(x, y, poi, base_id = NULL, slope_bounds = NULL, edge_boun
       } else {
         right_edge <- edge_bounds$right[2]  # Clip to upper bound
       }
-      slope <- (left_edge - right_edge) / (x[1] - poi$x)  # Recompute slope
+      if ((x[1] - poi$x) != 0) {
+        slope <- (left_edge - right_edge) / (x[1] - poi$x)  # Recompute slope
+      } else {
+        slope <- 0
+      }
     }
   }
 
   # Return the estimated slope
-  return(list(params = c(slope)))
+  return(list(params = c(unname(slope))))
 }
-
 
 #' Fit Two Splines Around a Point of Interest (POI)
 #'
@@ -577,8 +598,8 @@ fit <- function(data, poi, fit_type = "linear", threshold = threshold) {
     threshold = threshold
   )
 
-  # If ascending segment has **more than 2 points**, refine fit with a parabolic model
-  if (length(right_indcs) > 2) {
+  # Optional parabolic refinement ONLY when requested (refinement phase)
+  if (fit_type == "parabolic" && length(right_indcs) >= 2) {
     slope_initial_ascending <- result_ascending$params[1]  # Initial slope from linear fit
     result_ascending <- fit_profile(
       x = x[right_indcs], y = y[right_indcs], poi = poi,
@@ -662,7 +683,7 @@ seek_inflection <- function(data, threshold = threshold, roi, step_x = 0.1, step
   ### Step 1: Perform **Coarse Grid Search**
   for (i in seq_len(nrow(grid_points))) {
     poi <- grid_points[i, ]  # Evaluate each grid point
-    result <- fit(data, poi, fit_type, threshold = threshold)
+    result <- fit(data, poi, fit_type = "linear", threshold = threshold)
     res_big[i] <- result$residual
 
     # If the new residual is smaller, update the best fit
@@ -701,7 +722,7 @@ seek_inflection <- function(data, threshold = threshold, roi, step_x = 0.1, step
   if (fine_flag) {
     for (i in seq_len(nrow(grid_points))) {
       poi <- grid_points[i, ]  # Evaluate each grid point
-      result <- fit(data, poi, fit_type, threshold = threshold)
+      result <- fit(data, poi, fit_type = "parabolic", threshold = threshold)
       res_small[i] <- result$residual
 
       # If the new residual is smaller, update the best fit

@@ -23,6 +23,21 @@ A tibble containing the original profile data with three additional logical colu
 \item \code{warning_threshold_descend}: TRUE if there is a descent across the threshold within the base segment.
 \item \code{warning_large_diff}: TRUE if a slope exceeds half the threshold value within the base segment.
 }
+
+#' @examples
+\dontrun{
+# Example profile data
+profile_data <- tibble::tibble(
+  datetime = seq.POSIXt(from = as.POSIXct("2024-11-23 00:00:00"),
+                        by = "hour", length.out = 10),
+  melatonin = c(2.5, 2.2, 2.1, 2.3, 2.8, 2.9, 3.0, 2.7, 2.4, NA),
+  time = seq(0, 9, 1),
+  slope = c(-0.3, -0.1, 0.2, 0.5, 0.1, 0.1, -0.3, -0.3, NA, NA),
+  base = c(1, 1, 1, 1, 1, 0, 0, 0, 0, 0)
+)
+# Check for inconsistencies in the base segment
+dlmoR:::.check_base_profile_consistency(profile_data)
+}
 }
 \description{
 This function checks for consistency issues in the base segment of a melatonin profile.
@@ -36,20 +51,5 @@ It evaluates the following conditions:
 \details{
 The function prints warnings for any detected inconsistencies and returns a tibble
 containing the full profile with additional columns to indicate where inconsistencies occurred.
-}
-\examples{
-# Example profile data
-profile_data <- tibble::tibble(
-  datetime = seq.POSIXt(from = as.POSIXct("2024-11-23 00:00:00"),
-                        by = "hour", length.out = 10),
-  melatonin = c(2.5, 2.2, 2.1, 2.3, 2.8, 2.9, 3.0, 2.7, 2.4, NA),
-  time = seq(0, 9, 1),
-  slope = c(-0.3, -0.1, 0.2, 0.5, 0.1, 0.1, -0.3, -0.3, NA, NA),
-  base = c(1, 1, 1, 1, 1, 0, 0, 0, 0, 0)
-)
-
-# Check for inconsistencies in the base segment
-.check_base_profile_consistency(profile_data)
-
 }
 \keyword{internal}

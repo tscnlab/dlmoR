@@ -21,7 +21,8 @@
 #'   - `warning_threshold_descend`: TRUE if there is a descent across the threshold within the base segment.
 #'   - `warning_large_diff`: TRUE if a slope exceeds half the threshold value within the base segment.
 #'
-#' @examples
+#'#' @examples
+#' \dontrun{
 #' # Example profile data
 #' profile_data <- tibble::tibble(
 #'   datetime = seq.POSIXt(from = as.POSIXct("2024-11-23 00:00:00"),
@@ -31,9 +32,9 @@
 #'   slope = c(-0.3, -0.1, 0.2, 0.5, 0.1, 0.1, -0.3, -0.3, NA, NA),
 #'   base = c(1, 1, 1, 1, 1, 0, 0, 0, 0, 0)
 #' )
-#'
 #' # Check for inconsistencies in the base segment
-#' .check_base_profile_consistency(profile_data)
+#' dlmoR:::.check_base_profile_consistency(profile_data)
+#' }
 #'
 #' @keywords internal
 .check_base_profile_consistency <- function(profile_data, threshold = 2.3) {

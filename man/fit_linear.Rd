@@ -60,7 +60,8 @@ and \strong{edge boundary conditions} if specified.
 x <- c(0, 1, 2, 3, 4)
 y <- c(0.5, 1.0, 2.0, 3.5, 5.0)
 poi <- list(x = 2, y = 2.0)
-fit_linear(x, y, poi, slope_bounds = c(-0.2, 0.2), weight_base = TRUE)
+base_id <- c(1, 1, 0, 0, 0)
+fit_linear(x, y, poi, base_id = base_id, slope_bounds = c(-0.2, 0.2), weight_base = TRUE)
 
 }
 \seealso{

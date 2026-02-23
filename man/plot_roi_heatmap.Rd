@@ -4,33 +4,16 @@
 \alias{plot_roi_heatmap}
 \title{Add ROI Heatmap to a Plot}
 \usage{
-plot_roi_heatmap(
-  plot,
-  data = NULL,
-  roi_grid_big = NULL,
-  roi_grid_small = NULL,
-  residuals_big = NULL,
-  residuals_small = NULL,
-  show_roi_big = FALSE,
-  show_roi_small = FALSE
-)
+plot_roi_heatmap(plot, data = NULL, roi_grid = NULL, residuals = NULL)
 }
 \arguments{
 \item{plot}{A ggplot object. The base plot to which the heatmap should be added.}
 
 \item{data}{A dataframe containing the melatonin profile with \code{datetime} and \code{melatonin} values.}
 
-\item{roi_grid_big}{A dataframe containing \strong{coarse grid points} (large-scale ROI search).}
+\item{roi_grid}{A dataframe containing \strong{roi grid points} (ROI search area).}
 
-\item{roi_grid_small}{A dataframe containing \strong{fine grid points} (refined ROI search).}
-
-\item{residuals_big}{A numeric vector of residuals corresponding to \code{roi_grid_big}.}
-
-\item{residuals_small}{A numeric vector of residuals corresponding to \code{roi_grid_small}.}
-
-\item{show_roi_big}{Logical. If \code{TRUE}, overlays \strong{coarse grid residuals} as a heatmap.}
-
-\item{show_roi_small}{Logical. If \code{TRUE}, overlays \strong{fine grid residuals} as a heatmap.}
+\item{residuals}{A numeric vector of residuals corresponding to \code{roi_grid}.}
 }
 \value{
 A ggplot object with the residual heatmap overlay.
@@ -41,8 +24,6 @@ the \strong{goodness of fit} across the \strong{Region of Interest (ROI)} search
 }
 \details{
 \itemize{
-\item \strong{Coarse Grid (\code{roi_grid_big})}: Provides an \strong{initial broad search} for the inflection point.
-\item \strong{Fine Grid (\code{roi_grid_small})}: Focuses on \strong{refining} the best-fit region.
 \item The \strong{color gradient} represents residual values, with lower residuals indicating \strong{better fit}.
 \item Residuals are \strong{log-transformed} for visualization.
 }
@@ -51,8 +32,6 @@ the \strong{goodness of fit} across the \strong{Region of Interest (ROI)} search
 \dontrun{
   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = datetime, y = melatonin)) +
       ggplot2::geom_point()
-  plot <- plot_roi_heatmap(plot, data = profile_data,
-                           roi_grid_big = grid_big, residuals_big = res_big,
-                           show_roi_big = TRUE)
+  plot <- plot_roi_heatmap(plot, data = profile_data, roi_grid = grid, residuals = res)
 }
 }

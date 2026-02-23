@@ -40,70 +40,80 @@
 #' }
 #' @export
 plot_fit <- function(plot, profile_data, dlmoFit) {
-  # Convert base and ascending timepoints to decimal hours
-  xstart_num <- posixct_to_decimal(dplyr::filter(profile_data, base == 1)$datetime[1], profile_data$datetime[4])
-  xend_num <- posixct_to_decimal(tail(dplyr::filter(profile_data, ascending == 1)$datetime, n = 1), profile_data$datetime[4])
 
-  # Convert the inflection point x back to POSIXct for plotting
+  # Convert base and ascending timepoints to decimal hours
+  xstart_num <- posixct_to_decimal(
+    dplyr::filter(profile_data, base == 1)$datetime[1],
+    profile_data$datetime[4]
+  )
+
+  xend_num <- posixct_to_decimal(
+    tail(dplyr::filter(profile_data, ascending == 1)$datetime, n = 1),
+    profile_data$datetime[4]
+  )
+
+  # Convert inflection x to POSIXct for plotting
   ipx_posix <- decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime[4])
 
-  # --- BASE SEGMENT FIT ---
-  # Always linear: y = m * (x - poi_x) + poi_y
+  # --- BASE SEGMENT FIT (always linear) ---
   plot <- plot +
     ggplot2::geom_segment(
-      x = dplyr::filter(profile_data, base == 1)$datetime[1],  # Start from first base point
-      y = dlmoFit$base_params * (xstart_num - dlmoFit$inflection_point$x) + dlmoFit$inflection_point$y,  # Compute y-start using linear equation
-      xend = ipx_posix,  # End at the inflection point
+      x = dplyr::filter(profile_data, base == 1)$datetime[1],
+      y = dlmoFit$base_params * (xstart_num - dlmoFit$inflection_point$x) + dlmoFit$inflection_point$y,
+      xend = ipx_posix,
       yend = dlmoFit$inflection_point$y,
       color = "darkgray",
       size = 1
     )
 
   # --- ASCENDING SEGMENT FIT ---
-  if (length(dlmoFit$ascending_params) == 1) {  # If ascending fit is linear
+  asc <- dlmoFit$ascending_params
+
+  is_linear <- !is.null(asc) && is.numeric(asc) && length(asc) == 1
+  is_parabolic <- !is.null(asc) && is.list(asc) && all(c("a", "b", "c") %in% names(asc))
+
+  if (is_linear) {
+
     plot <- plot +
       ggplot2::geom_segment(
-        x = ipx_posix,  # Start from inflection point
+        x = ipx_posix,
         y = dlmoFit$inflection_point$y,
-        xend = dplyr::filter(profile_data, ascending == 1)$datetime[length(dplyr::filter(profile_data, ascending == 1)$datetime)],  # Last ascending point
-        yend = dplyr::filter(profile_data, ascending == 1)$melatonin[length(dplyr::filter(profile_data, ascending == 1)$melatonin)],  # Last ascending melatonin value
+        xend = tail(dplyr::filter(profile_data, ascending == 1)$datetime, 1),
+        yend = tail(dplyr::filter(profile_data, ascending == 1)$melatonin, 1),
         color = "darkgray",
         size = 1
       )
-  } else {  # If ascending fit is parabolic
+
+  } else if (is_parabolic) {
+
+    a <- unname(asc$a); b <- unname(asc$b); c <- unname(asc$c)
+
     plot <- plot +
       ggplot2::geom_function(
         fun = function(x) {
-          # Convert x (POSIXct) to decimal hours
-          x_numeric <- posixct_to_decimal(x, profile_data$datetime[4])
+          # geom_function may pass numeric x even on datetime scales
+          if (is.numeric(x)) {
+            x <- as.POSIXct(x, origin = "1970-01-01", tz = attr(profile_data$datetime, "tzone"))
+          }
 
-          # Evaluate the parabolic function y = ax^2 + bx + c
-          y <- dlmoFit$ascending_params$a * x_numeric^2 +
-            dlmoFit$ascending_params$b * x_numeric +
-            dlmoFit$ascending_params$c
-          return(y)
+          x_numeric <- posixct_to_decimal(x, profile_data$datetime[4])
+          a * x_numeric^2 + b * x_numeric + c
         },
-        color = 'darkgray',
+        color = "darkgray",
         size = 1,
         n = 1000,
         xlim = c(
-          decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime[4]),  # Inflection point
-          decimal_to_posixct(xend_num, profile_data$datetime[4])  # Last ascending point
+          decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime[4]),
+          decimal_to_posixct(xend_num, profile_data$datetime[4])
         )
       )
-  }
 
-  # Format x-axis with time labels
-  ggplot2::scale_x_datetime(
-    limits = c(decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime[4]),
-               decimal_to_posixct(xend_num, profile_data$datetime[4])),
-    date_labels = "%H:%M",  # Display hour and minute
-    date_breaks = "1 hour"   # Set breaks at every hour
-  )
+  } else {
+    warning("plot_fit(): ascending_params is neither linear nor parabolic; skipping ascending overlay.")
+  }
 
   return(plot)
 }
-
 
 
 #' Add DLMO Inflection Point to the Plot
@@ -392,37 +402,40 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
   }
 
   # Define title and coefficients conditionally
-  dlmo_values <- if (!is.null(dlmoFit)) {
-    if (is.null(dlmo$fine) || plot_coarse){
-      # If no fine fit exists, use COARSE fit
-      dlmo_time <- dlmo$coarse$time
-      plot_title <- paste("Coarse Fit - DLMO time:", as.character(dlmo_time))
-      a1 <- dlmo$coarse$fit_lines$base$m
-      b1 <- dlmo$coarse$fit_lines$base$b
-      a2 <- dlmo$coarse$fit_lines$ascending$m
-      b2 <- dlmo$coarse$fit_lines$ascending$b
-      c2 <- NULL  # Coarse fit is always linear
-    } else {       # If fine fit exists
-      if(!plot_coarse){ #if plot type is fine
-        dlmo_time <- dlmo$fine$time
-        plot_title <- paste("Fine Fit - DLMO time:", as.character(dlmo_time))
-        a1 <- dlmo$fine$fit_lines$base$m
-        b1 <- dlmo$fine$fit_lines$base$m
-        if (length(dlmo$fine$fit_lines$ascending$params) == 1) {
-          # Linear fine fit
-          a2 <- dlmo$fine$fit_lines$ascending$m
-          b2 <- dlmo$fine$fit_lines$ascending$b
-          c2 <- NULL  # No quadratic term
-        } else {
-          # Parabolic fine fit
-          a2 <- dlmo$fine$fit_lines$ascending$a
-          b2 <- dlmo$fine$fit_lines$ascending$b
-          c2 <- dlmo$fine$fit_lines$ascending$c
-        }
-      }
+  dlmo_values <- if (!is.null(dlmoFit) && !is.null(dlmo)) {
+
+    # pick which result object we’re using
+    d <- if (plot_coarse || is.null(dlmo$fine)) dlmo$coarse else dlmo$fine
+    plot_title <- if (identical(d, dlmo$coarse)) {
+      paste("Coarse Fit - DLMO time:", as.character(d$time))
+    } else {
+      paste("Fine Fit - DLMO time:", as.character(d$time))
+    }
+
+    # base coefficients (always linear)
+    a1 <- unname(d$fit_lines$base$m)
+    b1 <- unname(d$fit_lines$base$b)
+
+    # ascending coefficients (linear or parabolic)
+    asc <- d$fit_lines$ascending
+
+    if (!is.null(asc$type) && asc$type == "linear") {
+      a2 <- unname(asc$m)
+      b2 <- unname(asc$b)
+      c2 <- NULL
+
+    } else if (!is.null(asc$type) && asc$type == "parabolic") {
+      a2 <- unname(asc$a)
+      b2 <- unname(asc$b)
+      c2 <- unname(asc$c)
+
+    } else {
+      # unknown/missing type -> don’t pretend we have a fit
+      a2 <- b2 <- c2 <- NULL
     }
 
     list(plot_title = plot_title, a1 = a1, b1 = b1, a2 = a2, b2 = b2, c2 = c2)
+
   } else {
     list(plot_title = "Melatonin profile", a1 = NULL, b1 = NULL, a2 = NULL, b2 = NULL, c2 = NULL)
   }
@@ -435,25 +448,26 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
   b2 <- dlmo_values$b2
   c2 <- dlmo_values$c2
 
+  # Define subtitle conditionally (linear vs parabolic)
+  is_scalar_finite <- function(x) !is.null(x) && length(x) == 1 && is.finite(as.numeric(x))
 
+  ok_base <- is_scalar_finite(a1) && is_scalar_finite(b1)
+  ok_asc_linear <- is_scalar_finite(a2) && is_scalar_finite(b2) && (is.null(c2) || !is_scalar_finite(c2))
+  ok_asc_parab  <- is_scalar_finite(a2) && is_scalar_finite(b2) && is_scalar_finite(c2)
 
-  # Define subtitle conditionally
-  if (!is.null(a2) && !is.null(b2)) {
-    if (is.null(c2)) {  # If c2 is NULL, it's a linear fit
-      subtitle_text <- bquote(
-        bold(f[e]) == .(ensure_non_null(a1)) * x[t] + .(ensure_non_null(b1)) * "," ~ "\n" ~
-          bold(f[l]) == .(ensure_non_null(a2)) * x[t] + .(ensure_non_null(b2))
-      )
-    } else {  # If c2 exists, it's a parabolic fit
-      subtitle_text <- bquote(
-        bold(f[e]) == .(ensure_non_null(a1)) * x[t] + .(ensure_non_null(b1)) * "," ~ "\n" ~
-          bold(f[l]) == .(ensure_non_null(a2)) * x[t]^2 + .(ensure_non_null(b2)) * x[t] + .(ensure_non_null(c2))
-      )
-    }
+  if (ok_base && ok_asc_parab) {
+    subtitle_text <- bquote(
+      bold(f[e]) == .(as.numeric(a1)) * x[t] + .(as.numeric(b1)) * "," ~ "\n" ~
+        bold(f[l]) == .(as.numeric(a2)) * x[t]^2 + .(as.numeric(b2)) * x[t] + .(as.numeric(c2))
+    )
+  } else if (ok_base && ok_asc_linear) {
+    subtitle_text <- bquote(
+      bold(f[e]) == .(as.numeric(a1)) * x[t] + .(as.numeric(b1)) * "," ~ "\n" ~
+        bold(f[l]) == .(as.numeric(a2)) * x[t] + .(as.numeric(b2))
+    )
   } else {
     subtitle_text <- "No valid fit available"
   }
-
 
   # Initialize base plot
   plot <- ggplot2::ggplot(profile_data, ggplot2::aes(x = .data$datetime, y = .data$melatonin)) +
@@ -478,9 +492,9 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
     # Corrected legend position
     ggplot2::theme(legend.position = "none") +
 
-    ggplot2::scale_linetype_manual(values = c("Full Profile" = "dotted")) +
+    # ggplot2::scale_linetype_manual(values = c("Full Profile" = "dotted")) +
     ggplot2::expand_limits(y = -0.21) +
-    scale_y_continuous(limits = c(-0.21, NA), expand = c(0, 0.05))
+    ggplot2::scale_y_continuous(limits = c(-0.21, NA), expand = c(0, 0.05))
 
 
   # Overlay Parallelogram if enabled

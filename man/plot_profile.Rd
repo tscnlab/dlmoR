@@ -15,11 +15,11 @@ plot_profile(
   roi_line_only = TRUE,
   roi = NULL,
   show_dlmoIP = TRUE,
+  dlmo = NULL,
   dlmoFit = NULL,
   show_fit = FALSE,
   show_roi_heatmap = FALSE,
-  show_roi_small = FALSE,
-  show_roi_big = FALSE
+  plot_coarse = FALSE
 )
 }
 \arguments{
@@ -54,19 +54,13 @@ plot_profile(
 \item \code{inflection_point}: A list with \code{x} (decimal hours) and \code{y} (melatonin level).
 \item \code{base_params}: Parameters of the \strong{base segment fit}.
 \item \code{ascending_params}: Parameters of the \strong{ascending segment fit}.
-\item \code{grid_big}: Coarse search grid for inflection point.
-\item \code{grid_small}: Fine search grid for inflection point.
-\item \code{res_big}: Residuals from coarse grid search.
-\item \code{res_small}: Residuals from fine grid search.
+\item \code{grid}: search grid for inflection point.
+\item \code{res}: Residuals from grid search.
 }}
 
 \item{show_fit}{Logical. If \code{TRUE}, overlays \strong{DLMO fit lines}.}
 
 \item{show_roi_heatmap}{Logical. If \code{TRUE}, adds a \strong{heatmap} for \strong{ROI residuals}.}
-
-\item{show_roi_small}{Logical. If \code{TRUE}, plots the \strong{fine-resolution} ROI grid.}
-
-\item{show_roi_big}{Logical. If \code{TRUE}, plots the \strong{coarse-resolution} ROI grid.}
 }
 \value{
 A \code{ggplot2} object with the melatonin profile and optional overlays.

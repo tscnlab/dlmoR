@@ -153,6 +153,13 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
       time = dlmo_coarse_time,
       fit_melatonin = ipx_coarse$inflection_point$y
     )
+
+    # cat("\nCOARSE ascending_params:\n")
+    # str(ipx_coarse$ascending_params)
+    #
+    # cat("\nFINE ascending_params:\n")
+    # if (!is.null(ipx_fine)) str(ipx_fine$ascending_params)
+
     dlmo$coarse <- process_fits(ipx_coarse, dlmo$coarse)
   }
 
@@ -191,7 +198,7 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
     stop("The file does not exist: ", file_path)
   }
   # data <- read.csv(file_path, sep = ";", header = TRUE)
-  data <- readr::read_delim(file_path, delim = NULL)
+  data <- readr::read_delim(file_path, delim = NULL, show_col_types = FALSE)
   # # check if file is a dataframe
   # if (!is.data.frame(data)) {
   #   stop("`data` must be a data frame containing `datetime` (or `time`) and `melatonin` columns.")
