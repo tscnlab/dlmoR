@@ -114,7 +114,17 @@ For **batch processing**, runtime scales approximately linearly with the number 
 
 ## **Citing `dlmoR`**  
 
-If you use `dlmoR` in your research, please cite the following preprint, which describes the package and its implementation:  
+If you use `dlmoR` in your research, please cite the following publication, which describes the package, its implementation and the evaluation of its performance:  
 
-Thalji, S. M., & Spitschan, M. (2025). *dlmoR: An open-source R package for the dim-light melatonin onset (DLMO) hockey-stick method.* [bioRxiv, 2025-01](https://doi.org/10.1101/2025.01.13.632603).
+Thalji, S. M., & Spitschan, M. (2026). *[dlmoR: An Open-Source R Package for the Dim-Light Melatonin Onset (DLMO) Hockey-Stick Method.](https://doi.org/10.1177/07487304251389994)* Journal of Biological Rhythms, 41(3), 301–323.
+
+```bibtex
+@article{thalji2026dlmor,
+  author  = {Thalji, Salma M. and Spitschan, Manuel},
+  title   = {dlmoR: An open-source R package for the dim-light melatonin onset (DLMO) hockey-stick method},
+  journal = {Journal of Biological Rhythms},
+  year    = {2026},
+  doi     = {10.1177/07487304251389994}
+}
+```
 

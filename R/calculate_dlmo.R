@@ -81,9 +81,11 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
   }
 
   # Convert numeric interval_limit to a lubridate duration (interpreted as hours)
-  if (is.numeric(interval_limit)) {
+  if (lubridate::is.duration(interval_limit) || lubridate::is.period(interval_limit)) {
+    interval_limit <- interval_limit
+  } else if (is.numeric(interval_limit)) {
     interval_limit <- lubridate::hours(interval_limit)
-  } else if (!lubridate::is.duration(interval_limit)) {
+  } else {
     stop("`interval_limit` must be a numeric value (interpreted as hours) or a lubridate duration.")
   }
   # Load data if file_path is provided
@@ -291,4 +293,3 @@ process_fits <- function(ip, dlmo) {
   # Return the updated dlmo object
   return(dlmo)
 }
-

@@ -54,6 +54,22 @@ truncate_ascending_segment <- function(profile_data) {
     return(profile_data)
   }
 
+  # Crop the ascending segment at the first drop. The slope column is aligned
+  # to the current row, so a non-positive slope on an ascending row means the
+  # rise has already ended at the previous ascending point.
+  first_drop_index <- profile_data %>%
+    dplyr::mutate(row_index = dplyr::row_number()) %>%
+    dplyr::filter(.data$ascending == 1, !is.na(.data$slope), .data$slope <= 0) %>%
+    dplyr::slice(1) %>%
+    dplyr::pull(.data$row_index)
+
+  if (length(first_drop_index) > 0) {
+    profile_data <- profile_data %>%
+      dplyr::mutate(
+        ascending = dplyr::if_else(dplyr::row_number() >= first_drop_index, 0, .data$ascending)
+      )
+  }
+
   # Find the steepest slope in the ascending segment
   max_slope <- max(profile_data$slope[profile_data$ascending == 1], na.rm = TRUE)
 
@@ -104,6 +120,16 @@ check_last <- function(profile_data) {
   # Identify the last ascending index
   last_ascending_index <- max(which(profile_data$ascending == 1))
 
+  # Keep the peak when it is the right edge of the ascending segment. This
+  # prevents the half-steepest-slope rule from removing the maximum point after
+  # an internal drop has already cropped the rise, while still removing slow
+  # plateau/drift points.
+  ascending_melatonin <- profile_data$melatonin[profile_data$ascending == 1]
+  if (profile_data$melatonin[last_ascending_index] >= max(ascending_melatonin, na.rm = TRUE) &&
+      profile_data$slope[last_ascending_index] >= 0.25 * max_slope) {
+    return(TRUE)
+  }
+
   # Check if the rightmost slope satisfies the rule
   return(profile_data$slope[last_ascending_index] >= 0.5 * max_slope)
 }
@@ -139,4 +165,3 @@ check_rules <- function(profile_data, max_slope) {
   # If all rules are satisfied
   return(TRUE)
 }
-

@@ -38,9 +38,16 @@ define_ascending_segment <- function(profile_data, threshold = 2.3, interval_lim
     last_base_melatonin <- NA_real_
   }
 
-  # Exclude base segments before threshold checks
+  # Exclude base segments before threshold checks. If a base segment exists,
+  # only consider points after the last base point so early above-threshold
+  # samples before the baseline are not treated as the melatonin onset.
   non_base_data <- profile_data %>%
     dplyr::filter(.data$base != 1)
+
+  if (!is.na(last_base_point$datetime)) {
+    non_base_data <- non_base_data %>%
+      dplyr::filter(.data$datetime > last_base_point$datetime)
+  }
 
   # Identify transitions where melatonin rises above the threshold
   non_base_data <- non_base_data %>%
@@ -64,14 +71,37 @@ define_ascending_segment <- function(profile_data, threshold = 2.3, interval_lim
     dplyr::group_by(.data$rise_group) %>%
     dplyr::summarize(start_time = min(.data$datetime), .groups = "drop")
 
-  # Compute the time intervals between consecutive rise groups
-  rise_times <- rise_times %>%
-    dplyr::mutate(interval = .data$start_time - dplyr::lag(.data$start_time))
+  # Identify valid rise groups based on the interval limit. Within a short
+  # interval, repeated threshold crossings are treated as the same rise event,
+  # and the later crossing is used to represent that event.
+  valid_rise_groups <- integer(0)
+  pending_rise_group <- NULL
+  previous_start_time <- NULL
+  interval_limit_seconds <- as.numeric(interval_limit)
 
-  # Identify valid rise groups based on the interval limit
-  valid_rise_groups <- rise_times %>%
-    dplyr::filter(is.na(.data$interval) | .data$interval >= interval_limit) %>%
-    dplyr::pull(.data$rise_group)
+  for (i in seq_len(nrow(rise_times))) {
+    current_start_time <- rise_times$start_time[i]
+    current_rise_group <- rise_times$rise_group[i]
+
+    if (is.null(pending_rise_group)) {
+      pending_rise_group <- current_rise_group
+    } else if (as.numeric(difftime(current_start_time, previous_start_time, units = "secs")) <= interval_limit_seconds) {
+      pending_rise_group <- current_rise_group
+    } else {
+      valid_rise_groups <- c(valid_rise_groups, pending_rise_group)
+      pending_rise_group <- current_rise_group
+    }
+
+    previous_start_time <- current_start_time
+  }
+
+  if (!is.null(pending_rise_group)) {
+    valid_rise_groups <- c(valid_rise_groups, pending_rise_group)
+  }
+
+  if (length(valid_rise_groups) > 0) {
+    valid_rise_groups <- valid_rise_groups[1]
+  }
 
   # Mark rows as ascending if they belong to valid rise groups and exceed the threshold
   non_base_data <- non_base_data %>%
@@ -84,15 +114,16 @@ define_ascending_segment <- function(profile_data, threshold = 2.3, interval_lim
     dplyr::left_join(non_base_data %>% dplyr::select(datetime, ascending), by = "datetime") %>%
     dplyr::mutate(ascending = dplyr::coalesce(.data$ascending, 0)) # Fill NA with 0 for non-ascending rows
 
-  # Exclude base segments to identify steepest slopes
-  non_base_data <- profile_data %>%
-    dplyr::filter(.data$base != 1)
+  # Use accepted ascending points to identify steepest slopes. This avoids
+  # re-introducing threshold crossings that were rejected by interval_limit.
+  accepted_ascending_data <- profile_data %>%
+    dplyr::filter(.data$ascending == 1)
 
-  # Identify the steepest slope among non-base rows
-  steepest_slope <- if (all(is.na(non_base_data$slope))) NA_real_ else max(non_base_data$slope, na.rm = TRUE)
+  # Identify the steepest slope among accepted ascending rows
+  steepest_slope <- if (all(is.na(accepted_ascending_data$slope))) NA_real_ else max(accepted_ascending_data$slope, na.rm = TRUE)
 
   # Identify segments with slopes >= half of the steepest slope
-  steep_segments <- non_base_data %>%
+  steep_segments <- accepted_ascending_data %>%
     dplyr::filter(.data$slope >= steepest_slope / 2) %>%
     dplyr::pull(.data$datetime)
 
