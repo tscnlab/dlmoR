@@ -136,19 +136,16 @@ If you use `dlmoR` in your research, please cite the following preprint, (forthc
 which describes the package and its implementation and provides a systematic 
 evaluation of the hockey-stick DLMO method and its software behavior:
 
-Thalji, S. M., & Spitschan, M. (2025). *dlmoR: An open-source R package
-for the dim-light melatonin onset (DLMO) hockey-stick method.* [bioRxiv,
-2025-01](https://doi.org/10.1101/2025.01.13.632603).
+Thalji, S. M., & Spitschan, M. (2026). *[dlmoR: An Open-Source R Package for the Dim-Light Melatonin Onset (DLMO) Hockey-Stick Method.](https://doi.org/10.1177/07487304251389994)* Journal of Biological Rhythms, 41(3), 301–323.
 
 ```bibtex
-@article{thalji2025dlmor,
+@article{thalji2026dlmor,
   author  = {Thalji, Salma M. and Spitschan, Manuel},
   title   = {dlmoR: An open-source R package for the dim-light melatonin onset (DLMO) hockey-stick method},
-  journal = {bioRxiv},
-  year    = {2025},
-  doi     = {10.1101/2025.01.13.632603}
+  journal = {Journal of Biological Rhythms},
+  year    = {2026},
+  doi     = {10.1177/07487304251389994}
 }
-```
 
 ## **Data and analysis code availability**
 All raw data, analysis code, result tables, and figures related to this 
