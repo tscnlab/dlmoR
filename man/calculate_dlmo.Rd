@@ -62,6 +62,7 @@ A list containing the following elements:
 \item \code{y_min} (numeric): Minimum melatonin value in the ROI.
 \item \code{y_max} (numeric): Maximum melatonin value in the ROI.
 }
+\item \strong{\code{threshold}}: Numeric. The melatonin threshold used for the DLMO calculation.
 \item \strong{\code{ip}}: List containing estimated DLMO inflection point.
 \itemize{
 \item \code{inflection_point} (tibble):

@@ -42,6 +42,8 @@
 #'   - `y_min` (numeric): Minimum melatonin value in the ROI.
 #'   - `y_max` (numeric): Maximum melatonin value in the ROI.
 #'
+#' - **`threshold`**: Numeric. The melatonin threshold used for the DLMO calculation.
+#'
 #' - **`ip`**: List containing estimated DLMO inflection point.
 #'   - `inflection_point` (tibble):
 #'     - `x` (numeric): Estimated DLMO time index in units of decimal-hours.
@@ -184,7 +186,7 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
   else{
     vis_fine <- NULL
   }
-  return(list(prof = prf$profile, prl = prf$plll, roi = roix, ip = ipx, dlmo = dlmo, dlmoplotcoarse = vis_coarse, dlmoplotfine = vis_fine))
+  return(list(prof = prf$profile, prl = prf$plll, roi = roix, threshold = threshold, ip = ipx, dlmo = dlmo, dlmoplotcoarse = vis_coarse, dlmoplotfine = vis_fine))
 }
 
 #' Helper Function to Read-in Melatonin Data from a CSV-File
