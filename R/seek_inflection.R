@@ -687,12 +687,16 @@ seek_inflection <- function(data, threshold = threshold, roi, step_x = 0.1, step
     res_big[i] <- result$residual
 
     # If the new residual is smaller, update the best fit
-    if (result$residual < best_residual_coarse) {
+    if (is.finite(result$residual) && result$residual < best_residual_coarse) {
       best_residual_coarse <- result$residual
       best_point_coarse <- poi
       best_params_base_coarse <- result$base_params
       best_params_ascending_coarse <- result$ascending_params
     }
+  }
+
+  if (is.null(best_point_coarse)) {
+    stop("No valid coarse DLMO fit was found for this profile.")
   }
 
   ### Step 2: Define Function to **Refine Grid Based on Best 10%**
@@ -726,12 +730,16 @@ seek_inflection <- function(data, threshold = threshold, roi, step_x = 0.1, step
       res_small[i] <- result$residual
 
       # If the new residual is smaller, update the best fit
-      if (result$residual < best_residual_fine) {
+      if (is.finite(result$residual) && result$residual < best_residual_fine) {
         best_residual_fine <- result$residual
         best_point_fine <- poi
         best_params_base_fine <- result$base_params
         best_params_ascending_fine <- result$ascending_params
       }
+    }
+
+    if (is.null(best_point_fine)) {
+      warning("No valid fine DLMO fit was found; returning coarse fit only.")
     }
   }
 
@@ -746,7 +754,8 @@ seek_inflection <- function(data, threshold = threshold, roi, step_x = 0.1, step
     grid_big = grid_big,
     res_big = res_big,
     grid_small = grid_small,
-    res_small = res_small
+    res_small = res_small,
+    datetime_ref = attr(roi, "datetime_ref")
   ))
 }
 
@@ -792,12 +801,6 @@ seek_inflection <- function(data, threshold = threshold, roi, step_x = 0.1, step
 #' @export
 get_inflection <- function(profile_data, threshold = 2.3, posix_roi, fit_type = "linear", fine_flag = TRUE) {
 
-  # Convert POSIXct ROI coordinates to decimal time for numerical fitting
-  roi <- list(
-    x = posixct_to_decimal(c(posix_roi$x_start, posix_roi$x_end), profile_data$datetime[3]),
-    y = c(posix_roi$y_min, posix_roi$y_max)
-  )
-
   # Select relevant segments: include "intermediate" if it exists
   if ("intermediate" %in% colnames(profile_data)) {
     filtered_data <- dplyr::filter(profile_data, base == 1 | ascending == 1 | intermediate == 1)
@@ -805,9 +808,16 @@ get_inflection <- function(profile_data, threshold = 2.3, posix_roi, fit_type = 
     filtered_data <- dplyr::filter(profile_data, base == 1 | ascending == 1)
   }
 
+  # Convert POSIXct ROI coordinates to decimal time for numerical fitting.
+  # Use the same datetime reference as fit(), which operates on filtered_data.
+  roi <- list(
+    x = posixct_to_decimal(c(posix_roi$x_start, posix_roi$x_end), filtered_data$datetime[3]),
+    y = c(posix_roi$y_min, posix_roi$y_max)
+  )
+  attr(roi, "datetime_ref") <- filtered_data$datetime[3]
+
   # Run the inflection search using the selected data and ROI
   poi <- seek_inflection(filtered_data, threshold = threshold, roi, fit_type = fit_type, fine_flag = fine_flag)
 
   return(poi)
 }
-

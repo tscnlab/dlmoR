@@ -40,20 +40,21 @@
 #' }
 #' @export
 plot_fit <- function(plot, profile_data, dlmoFit) {
+  datetime_ref <- if (!is.null(dlmoFit$datetime_ref)) dlmoFit$datetime_ref else profile_data$datetime[4]
 
   # Convert base and ascending timepoints to decimal hours
   xstart_num <- posixct_to_decimal(
     dplyr::filter(profile_data, base == 1)$datetime[1],
-    profile_data$datetime[4]
+    datetime_ref
   )
 
   xend_num <- posixct_to_decimal(
     tail(dplyr::filter(profile_data, ascending == 1)$datetime, n = 1),
-    profile_data$datetime[4]
+    datetime_ref
   )
 
   # Convert inflection x to POSIXct for plotting
-  ipx_posix <- decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime[4])
+  ipx_posix <- decimal_to_posixct(dlmoFit$inflection_point$x, datetime_ref)
 
   # --- BASE SEGMENT FIT (always linear) ---
   plot <- plot +
@@ -96,15 +97,15 @@ plot_fit <- function(plot, profile_data, dlmoFit) {
             x <- as.POSIXct(x, origin = "1970-01-01", tz = attr(profile_data$datetime, "tzone"))
           }
 
-          x_numeric <- posixct_to_decimal(x, profile_data$datetime[4])
+          x_numeric <- posixct_to_decimal(x, datetime_ref)
           a * x_numeric^2 + b * x_numeric + c
         },
         color = "darkgray",
         size = 1,
         n = 1000,
         xlim = c(
-          decimal_to_posixct(dlmoFit$inflection_point$x, profile_data$datetime[4]),
-          decimal_to_posixct(xend_num, profile_data$datetime[4])
+          decimal_to_posixct(dlmoFit$inflection_point$x, datetime_ref),
+          decimal_to_posixct(xend_num, datetime_ref)
         )
       )
 
@@ -147,10 +148,11 @@ plot_fit <- function(plot, profile_data, dlmoFit) {
 #'   plot_ip(plot, profile_data, dlmoip)
 #' }
 #' @export
-plot_ip <- function(plot, profile_data, dlmoip) {
+plot_ip <- function(plot, profile_data, dlmoip, datetime_ref = NULL) {
+  datetime_ref <- if (!is.null(datetime_ref)) datetime_ref else profile_data$datetime[4]
   plot <- plot +
     ggplot2::geom_point(
-      x = decimal_to_posixct(dlmoip$x, profile_data$datetime[4]),  # Convert decimal hours to POSIXct for x-axis
+      x = decimal_to_posixct(dlmoip$x, datetime_ref),  # Convert decimal hours to POSIXct for x-axis
       y = dlmoip$y,  # Inflection point melatonin concentration
       color = "deeppink4",  # Outline color
       fill = "deeppink4",  # Fill color
@@ -242,12 +244,13 @@ plot_roi <- function(plot, roi, roi_line_only) {
 #'   plot <- plot_roi_heatmap(plot, data = profile_data, roi_grid = grid, residuals = res)
 #' }
 #' @export
-plot_roi_heatmap <- function(plot, data = NULL, roi_grid = NULL, residuals = NULL) {
+plot_roi_heatmap <- function(plot, data = NULL, roi_grid = NULL, residuals = NULL, datetime_ref = NULL) {
   # Ensure at least one grid is selected for visualization
+  datetime_ref <- if (!is.null(datetime_ref)) datetime_ref else data$datetime[4]
 
   # Convert x-coordinates from decimal hours to POSIXct timestamps
   dt_roi_grid <- data.frame(
-    x = decimal_to_posixct(roi_grid$x, data$datetime[4]),
+    x = decimal_to_posixct(roi_grid$x, datetime_ref),
     y = roi_grid$y
   )
 
@@ -307,10 +310,11 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
   x1_posix <- pll_result$pll_datetime_1  # Right boundary
   slope <- pll_result$pll_slope          # Edge slope
   corners <- pll_result$corners          # Corner coordinates
+  datetime_ref <- if (!is.null(pll_result$datetime_ref)) pll_result$datetime_ref else profile_data$datetime[3]
 
   # Convert corner x-values from numeric (decimal hours) to POSIXct timestamps
   corners_datetime <- lapply(corners, function(corner) {
-    list(datetime = decimal_to_posixct(corner[1], profile_data$datetime[4]),
+    list(datetime = decimal_to_posixct(corner[1], datetime_ref),
          melatonin = corner[2])  # Preserve melatonin concentration
   })
 
@@ -509,7 +513,7 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
 
   # Add ROI heatmap if enabled
   if (show_roi_heatmap) {
-    plot <- plot_roi_heatmap(plot, data = profile_data, roi_grid = dlmoFit$grid,residuals = dlmoFit$res)
+    plot <- plot_roi_heatmap(plot, data = profile_data, roi_grid = dlmoFit$grid, residuals = dlmoFit$res, datetime_ref = dlmoFit$datetime_ref)
   }
 
   # Re-add full profile line to ensure clarity
@@ -522,7 +526,7 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
 
   # Mark Inflection Point (DLMO) if enabled
   if (show_dlmoIP) {
-    plot <- plot_ip(plot, profile_data, dlmoFit$inflection_point)
+    plot <- plot_ip(plot, profile_data, dlmoFit$inflection_point, datetime_ref = dlmoFit$datetime_ref)
   }
 
   # Add threshold line if enabled

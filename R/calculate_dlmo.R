@@ -125,7 +125,8 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
       base_params = ipx$base_params_fine,
       ascending_params = ipx$ascending_params_fine,
       grid = ipx$grid_small,
-      res = ipx$res_small
+      res = ipx$res_small,
+      datetime_ref = ipx$datetime_ref
     )
 
     ipx_coarse <- list(
@@ -133,7 +134,8 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
       base_params = ipx$base_params_coarse,
       ascending_params = ipx$ascending_params_coarse,
       grid = ipx$grid_big,
-      res = ipx$res_big
+      res = ipx$res_big,
+      datetime_ref = ipx$datetime_ref
     )
   } else {
     ipx_coarse <- list(
@@ -141,7 +143,8 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
       base_params = ipx$base_params_coarse,
       ascending_params = ipx$ascending_params_coarse,
       grid = ipx$grid_big,
-      res = ipx$res_big
+      res = ipx$res_big,
+      datetime_ref = ipx$datetime_ref
     )
   }
 

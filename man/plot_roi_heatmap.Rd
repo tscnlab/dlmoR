@@ -4,7 +4,13 @@
 \alias{plot_roi_heatmap}
 \title{Add ROI Heatmap to a Plot}
 \usage{
-plot_roi_heatmap(plot, data = NULL, roi_grid = NULL, residuals = NULL)
+plot_roi_heatmap(
+  plot,
+  data = NULL,
+  roi_grid = NULL,
+  residuals = NULL,
+  datetime_ref = NULL
+)
 }
 \arguments{
 \item{plot}{A ggplot object. The base plot to which the heatmap should be added.}

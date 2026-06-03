@@ -4,7 +4,7 @@
 \alias{plot_ip}
 \title{Add DLMO Inflection Point to the Plot}
 \usage{
-plot_ip(plot, profile_data, dlmoip)
+plot_ip(plot, profile_data, dlmoip, datetime_ref = NULL)
 }
 \arguments{
 \item{plot}{A ggplot object. The base plot of the melatonin profile.}
