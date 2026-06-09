@@ -47,7 +47,9 @@ pak::pak("tscnlab/dlmoR")
 
 ## Example
 
-This is a simple example that illustrates how to use **`dlmoR`**:
+This is a simple example that illustrates how to use **`dlmoR`**. For a
+more detailed walkthrough, see the [Get started
+vignette](articles/get-started.html).
 
 ``` r
 # Load the package

@@ -379,6 +379,12 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
 #'   }
 #' @param show_fit Logical. If `TRUE`, overlays **DLMO fit lines**.
 #' @param show_roi_heatmap Logical. If `TRUE`, adds a **heatmap** for **ROI residuals**.
+#' @param mode Character. Plot mode, either `"analyzed"` (default) for the
+#'   diagnostic DLMO plot or `"raw"` for a raw time-series plot before
+#'   segmentation and fitting. In `"raw"` mode, analysis overlays are disabled.
+#'   `profile_data` must already be a data frame; if starting from a CSV file,
+#'   read it first with `readr::read_delim(file_path, delim = ";")` or use
+#'   [plot_raw_profile()] directly.
 #' @return A `ggplot2` object with the melatonin profile and optional overlays.
 #'
 #' @details
@@ -387,18 +393,43 @@ plot_parallelogram <- function(plot, profile_data, pll_result) {
 #' - The **inflection point** is highlighted using a **pink marker**.
 #' - A **parallelogram** can be overlaid to show **truncated ascending segments**.
 #' - The **ROI heatmap** provides a **residuals-based visualization** of the inflection search.
+#' - Use `mode = "raw"` to plot an unsegmented profile before running
+#'   [calculate_dlmo()]. This is useful for checking threshold choice and
+#'   identifying possible early above-threshold excursions.
+#'
+#' @seealso [plot_raw_profile()] for a convenience wrapper that accepts either a
+#'   data frame or a CSV file path.
 #'
 #' @examples
-#' \dontrun{
-#'   plot <- plot_profile(profile_data, show_threshold = TRUE, show_segments = TRUE, show_dlmoIP = TRUE)
-#'   print(plot)
-#' }
+#' filename <- system.file("extdata/sample_melatonin_profile.csv", package = "dlmoR")
+#' raw_data <- readr::read_delim(filename, delim = ";", show_col_types = FALSE)
+#'
+#' plot_profile(raw_data, threshold = 5, mode = "raw")
+#'
+#' dlmo_result <- calculate_dlmo(file_path = filename, threshold = 5, fine_flag = FALSE)
+#' dlmo_result$dlmoplotcoarse
+#'
+#' plot_raw_profile(file_path = filename, threshold = 5)
 #' @export
 plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
                          show_segments = TRUE, show_parallelogram = FALSE, pll_result = NULL,
                          show_roi = FALSE, roi_line_only = TRUE, roi = NULL,
                          show_dlmoIP = TRUE, dlmo = NULL, dlmoFit = NULL, show_fit = FALSE,
-                         show_roi_heatmap = FALSE, plot_coarse = FALSE) {
+                         show_roi_heatmap = FALSE, plot_coarse = FALSE,
+                         mode = c("analyzed", "raw")) {
+
+  mode <- match.arg(mode)
+
+  if (mode == "raw") {
+    show_segments <- FALSE
+    show_parallelogram <- FALSE
+    show_roi <- FALSE
+    show_dlmoIP <- FALSE
+    show_fit <- FALSE
+    show_roi_heatmap <- FALSE
+    dlmo <- NULL
+    dlmoFit <- NULL
+  }
 
   # Function to safely replace NULL values
   ensure_non_null <- function(value, fallback = "NA") {
@@ -440,6 +471,8 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
 
     list(plot_title = plot_title, a1 = a1, b1 = b1, a2 = a2, b2 = b2, c2 = c2)
 
+  } else if (mode == "raw") {
+    list(plot_title = "Raw melatonin profile", a1 = NULL, b1 = NULL, a2 = NULL, b2 = NULL, c2 = NULL)
   } else {
     list(plot_title = "Melatonin profile", a1 = NULL, b1 = NULL, a2 = NULL, b2 = NULL, c2 = NULL)
   }
@@ -469,8 +502,10 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
       bold(f[e]) == .(as.numeric(a1)) * x[t] + .(as.numeric(b1)) * "," ~ "\n" ~
         bold(f[l]) == .(as.numeric(a2)) * x[t] + .(as.numeric(b2))
     )
-  } else {
+  } else if (show_fit || show_dlmoIP) {
     subtitle_text <- "No valid fit available"
+  } else {
+    subtitle_text <- NULL
   }
 
   # Initialize base plot
@@ -525,7 +560,7 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
   }
 
   # Mark Inflection Point (DLMO) if enabled
-  if (show_dlmoIP) {
+  if (show_dlmoIP && !is.null(dlmoFit) && !is.null(dlmoFit$inflection_point)) {
     plot <- plot_ip(plot, profile_data, dlmoFit$inflection_point, datetime_ref = dlmoFit$datetime_ref)
   }
 
@@ -563,5 +598,54 @@ plot_profile <- function(profile_data, show_threshold = TRUE, threshold = 2.3,
   }
 
   # Return the final plot
+  return(plot)
+}
+
+
+#' Plot Raw Melatonin Profile
+#'
+#' Creates a simple time-series plot of melatonin concentration before DLMO
+#' segmentation or fitting. This is useful for checking timestamp order, the
+#' approximate timing of threshold crossings, and whether a chosen threshold is
+#' likely to identify the intended melatonin rise.
+#'
+#' @param data Optional data frame containing `datetime` and `melatonin` columns.
+#' @param file_path Optional path to a CSV file containing `datetime` and
+#'   `melatonin` columns. Used when `data` is `NULL`.
+#' @param threshold Optional numeric threshold to draw as a horizontal reference
+#'   line. If `NULL`, no threshold line is drawn.
+#'
+#' @return A `ggplot2` object showing the raw melatonin time series.
+#'
+#' @seealso [plot_profile()] with `mode = "raw"` for the underlying plotting
+#'   method.
+#'
+#' @examples
+#' filename <- system.file("extdata/sample_melatonin_profile.csv", package = "dlmoR")
+#' plot_raw_profile(file_path = filename, threshold = 5)
+#'
+#' raw_data <- readr::read_delim(filename, delim = ";")
+#' plot_raw_profile(data = raw_data)
+#'
+#' @export
+plot_raw_profile <- function(data = NULL, file_path = NULL, threshold = NULL) {
+  if (is.null(data) && is.null(file_path)) {
+    stop("You must provide either `data` or `file_path`.", call. = FALSE)
+  }
+
+  if (!is.null(file_path)) {
+    message("Loading data from file: ", file_path)
+    data <- .read_melatonin_data(file_path)
+  }
+
+  data <- validate_df_structure(data)
+
+  plot <- plot_profile(
+    profile_data = data,
+    show_threshold = !is.null(threshold),
+    threshold = if (is.null(threshold)) 2.3 else threshold,
+    mode = "raw"
+  )
+
   return(plot)
 }

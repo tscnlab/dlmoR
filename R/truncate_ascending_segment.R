@@ -50,8 +50,12 @@ truncate_ascending_segment <- function(profile_data) {
 
   # If no ascending segment exists, issue a warning and return the data unchanged
   if (nrow(ascending_data) == 0) {
-    warning("No ascending segments found in the profile data.")
-    return(profile_data)
+    warning(
+      "No ascending segments found in the profile data. Inspect the segmented profile ",
+      "and consider adjusting `threshold` and/or increasing `interval_limit` if a later ",
+      "sustained rise should be selected."
+    )
+    return(list(profile = profile_data, plll = NULL))
   }
 
   # Crop the ascending segment at the first drop. The slope column is aligned

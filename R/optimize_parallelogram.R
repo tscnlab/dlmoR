@@ -82,6 +82,8 @@ constraints <- function(params, x, y, y0, y1) {
 #'
 #' This function defines the objective to minimize when fitting a parallelogram.
 #' The objective is to find the smallest parallelogram that includes all points.
+#' Non-finite or non-positive slopes are rejected because the parallelogram
+#' diagnostic is only meaningful for ascending melatonin segments.
 #'
 #' @param params Numeric vector of optimization parameters: x0, x1, slope.
 #' @param x Numeric vector of x-coordinates for data points.
@@ -94,6 +96,12 @@ objective <- function(params, x, y, y0, y1) {
   x0 <- params[1]
   x1 <- params[2]
   slope <- params[3]
+
+  # The parallelogram diagnostic is only meaningful for an ascending segment.
+  # Reject non-positive or non-finite slopes before computing corners.
+  if (!is.finite(slope) || slope <= 0) {
+    return(1e9 + 1e6 * abs(slope))
+  }
 
   # Compute parallelogram corners
   corners <- get_corners(x0, y0, x1, y1, slope)
@@ -123,6 +131,11 @@ objective <- function(params, x, y, y0, y1) {
 #'
 #' This function fits the smallest possible parallelogram that fully encloses all input points.
 #' It minimizes the area while ensuring that all points remain within the defined region.
+#' The stochastic optimizer is run with a local fixed seed and restores the user's
+#' random-number generator state afterward, so the diagnostic fit is reproducible
+#' without changing the surrounding R session's RNG state. Non-positive slopes are
+#' penalized by the objective function because this diagnostic is intended for
+#' ascending segments.
 #'
 #' @param x A numeric vector representing x-coordinates (e.g., time in decimal hours).
 #' @param y A numeric vector representing y-coordinates (e.g., melatonin concentration).
@@ -143,6 +156,20 @@ optimize_parallelogram <- function(x, y) {
   delta_y <- y1 - y0
   x_right_initial <- x1_initial - delta_y / slope_initial
   initial_guess <- c(x0_initial * 0.8, x_right_initial * 1.1, slope_initial)
+
+  old_seed_exists <- exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  if (old_seed_exists) {
+    old_seed <- get(".Random.seed", envir = .GlobalEnv)
+  }
+  on.exit({
+    if (old_seed_exists) {
+      assign(".Random.seed", old_seed, envir = .GlobalEnv)
+    } else if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+      rm(".Random.seed", envir = .GlobalEnv)
+    }
+  }, add = TRUE)
+
+  set.seed(1)
 
   # Perform optimization to minimize area while including all points
   result <- stats::optim(

@@ -20,6 +20,11 @@ Optimize Parallelogram to Fit Input Data
 \details{
 This function fits the smallest possible parallelogram that fully encloses all input points.
 It minimizes the area while ensuring that all points remain within the defined region.
+The stochastic optimizer is run with a local fixed seed and restores the user's
+random-number generator state afterward, so the diagnostic fit is reproducible
+without changing the surrounding R session's RNG state. Non-positive slopes are
+penalized by the objective function because this diagnostic is intended for
+ascending segments.
 }
 \examples{
 optimize_parallelogram(c(18.56, 20.05), c(1.84, 9.203))

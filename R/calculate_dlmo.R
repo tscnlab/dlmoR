@@ -9,12 +9,20 @@
 #' @param file_path A string specifying the path to a CSV file containing the data.
 #' The file must have two columns: `datetime` (POSIXct) and `melatonin` (numeric).
 #' @param threshold The numeric melatonin threshold for defining DLMO (default: 2.3 pg/mL).
-#' @param interval_limit Numeric or lubridate duration. Indicates the time window within which,
-#' if two melatonin threshold crossings occur, the second crossing is taken to represent
-#' the melatonin rise. If provided as a numeric value, it represents the window in hours
-#' (e.g., `interval_limit = 2` for 2 hours, or `interval_limit = 0.5` for 30 minutes).
-#' Alternatively, users can specify a `lubridate` duration object
-#' (e.g., `lubridate::hours(2)` for 2 hours, `lubridate::minutes(30)` for 30 minutes).
+#' @param interval_limit Numeric or lubridate duration. Indicates the time window within which
+#' repeated melatonin threshold crossings are treated as part of the same rise event. When
+#' multiple candidate rises occur within this window, the later crossing is taken to represent
+#' the melatonin rise. Single-point excursions above threshold that immediately return below
+#' threshold are treated as blips and ignored automatically. Excursions with more than one
+#' consecutive above-threshold point are treated as candidate rises; if a later rise should be
+#' preferred, set `interval_limit` large enough to include both candidate rise starts. The
+#' interval is measured between the start times of candidate rises, not from when the earlier
+#' excursion falls back below threshold. For example, if an early candidate rise starts at
+#' 12:00 and a later sustained rise starts at 22:00, the relevant interval is 10 hours. If
+#' provided as a numeric value, it represents the window in hours (e.g.,
+#' `interval_limit = 2` for 2 hours, or `interval_limit = 0.5` for 30 minutes).
+#' Alternatively, users can specify a `lubridate` duration object (e.g.,
+#' `lubridate::hours(2)` for 2 hours, `lubridate::minutes(30)` for 30 minutes).
 #' Default is 2 hours.
 #' @param fine_flag Logical. If `TRUE`, performs an additional fine-grid search to refine the DLMO point after the initial coarse search (default: `TRUE`).
 #' @return A list containing the following elements:
@@ -44,6 +52,9 @@
 #'
 #' - **`threshold`**: Numeric. The melatonin threshold used for the DLMO calculation.
 #'
+#' - **`interval_limit`**: lubridate duration. The interval-limit setting used
+#'   for repeated threshold-crossing selection.
+#'
 #' - **`ip`**: List containing estimated DLMO inflection point.
 #'   - `inflection_point` (tibble):
 #'     - `x` (numeric): Estimated DLMO time index in units of decimal-hours.
@@ -61,6 +72,10 @@
 #' - The `prof` tibble contains labeled data for different melatonin profile phases.
 #' - The `prl` list provides the parallelogram rule fit used to trim the melatonin rise segment of the profile to ensure only strong rises are fit when determining DLMO.
 #' - The `roi` specifies the bounds of the search window used for DLMO determination.
+#' - The `threshold` value records the melatonin concentration threshold used for
+#'   the calculation.
+#' - The `interval_limit` value records the repeated-crossing time window used
+#'   for ascending-segment selection, stored as a `lubridate` duration.
 #' - The `ip` list contains the  DLMO inflection point, the fit parameters for the base and ascending regions, as well as the grid of residuals from fitting the melatonin profile at each point of the ROI.
 #' - The `dlmo_time` variable contains the DLMO timestamp in units of hh:mm:ss (equivalent to `ip$inflection_point$x` in decimal-hours)
 #' - The plots (`dlmoplotcoarse` and `dlmoplotfine`) visualize the results of the coarse and fine grid DLMO search, respectively.
@@ -86,7 +101,7 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
   if (lubridate::is.duration(interval_limit) || lubridate::is.period(interval_limit)) {
     interval_limit <- interval_limit
   } else if (is.numeric(interval_limit)) {
-    interval_limit <- lubridate::hours(interval_limit)
+    interval_limit <- lubridate::duration(hours = interval_limit)
   } else {
     stop("`interval_limit` must be a numeric value (interpreted as hours) or a lubridate duration.")
   }
@@ -106,6 +121,16 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
   prf<-define_base_segment(prf, threshold = threshold)
   .check_base_profile_consistency(prf, threshold = threshold)
   prf<-define_ascending_segment(prf, threshold = threshold, interval_limit = interval_limit)
+  if (!any(prf$ascending == 1, na.rm = TRUE)) {
+    stop(
+      "No ascending segment could be identified at threshold = ", threshold, ". ",
+      "This can happen when the profile does not cross the threshold from a usable baseline ",
+      "or when the first usable samples are already above threshold. Inspect the segmented ",
+      "profile and consider adjusting `threshold` so the selected rise better matches the ",
+      "intended DLMO event.",
+      call. = FALSE
+    )
+  }
   prf<-truncate_ascending_segment(prf)
   prf$profile<-truncate_base_segment(prf$profile, threshold = threshold)
   prf$profile<-define_intermediate_segment(prf$profile, threshold = threshold)
@@ -189,7 +214,17 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
   else{
     vis_fine <- NULL
   }
-  return(list(prof = prf$profile, prl = prf$plll, roi = roix, threshold = threshold, ip = ipx, dlmo = dlmo, dlmoplotcoarse = vis_coarse, dlmoplotfine = vis_fine))
+  return(list(
+    prof = prf$profile,
+    prl = prf$plll,
+    roi = roix,
+    threshold = threshold,
+    interval_limit = interval_limit,
+    ip = ipx,
+    dlmo = dlmo,
+    dlmoplotcoarse = vis_coarse,
+    dlmoplotfine = vis_fine
+  ))
 }
 
 #' Helper Function to Read-in Melatonin Data from a CSV-File

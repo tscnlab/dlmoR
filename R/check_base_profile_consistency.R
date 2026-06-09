@@ -21,7 +21,7 @@
 #'   - `warning_threshold_descend`: TRUE if there is a descent across the threshold within the base segment.
 #'   - `warning_large_diff`: TRUE if a slope exceeds half the threshold value within the base segment.
 #'
-#'#' @examples
+#' @examples
 #' \dontrun{
 #' # Example profile data
 #' profile_data <- tibble::tibble(
@@ -86,4 +86,3 @@
 
   return(warnings_combined)
 }
-

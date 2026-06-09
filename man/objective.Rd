@@ -23,4 +23,6 @@ The computed objective value (area plus penalties for constraint violations).
 \description{
 This function defines the objective to minimize when fitting a parallelogram.
 The objective is to find the smallest parallelogram that includes all points.
+Non-finite or non-positive slopes are rejected because the parallelogram
+diagnostic is only meaningful for ascending melatonin segments.
 }

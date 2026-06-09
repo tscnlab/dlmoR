@@ -21,8 +21,14 @@ define_ascending_segment(
 
 \item{threshold}{Numeric. The melatonin concentration threshold to define the ascending segment (default = 2.3 pg/mL).}
 
-\item{interval_limit}{Numeric or lubridate duration. Specifies the minimum time interval between
-consecutive threshold crossings to consider them as independent ascending events. If numeric, it is interpreted as hours (default = 2 hours).}
+\item{interval_limit}{Numeric or lubridate duration. Specifies the time window within
+which repeated threshold crossings are treated as the same rise event. When multiple
+candidate rises occur within this window, the later crossing is used. Single-point
+excursions above threshold that immediately return below threshold are ignored
+automatically; excursions with more than one consecutive above-threshold point are
+treated as candidate rises. The interval is measured between candidate rise start
+times, not from when the earlier excursion falls back below threshold. If numeric,
+\code{interval_limit} is interpreted as hours (default = 2 hours).}
 }
 \value{
 A tibble with the following columns:

@@ -19,7 +19,8 @@ plot_profile(
   dlmoFit = NULL,
   show_fit = FALSE,
   show_roi_heatmap = FALSE,
-  plot_coarse = FALSE
+  plot_coarse = FALSE,
+  mode = c("analyzed", "raw")
 )
 }
 \arguments{
@@ -61,6 +62,13 @@ plot_profile(
 \item{show_fit}{Logical. If \code{TRUE}, overlays \strong{DLMO fit lines}.}
 
 \item{show_roi_heatmap}{Logical. If \code{TRUE}, adds a \strong{heatmap} for \strong{ROI residuals}.}
+
+\item{mode}{Character. Plot mode, either \code{"analyzed"} (default) for the
+diagnostic DLMO plot or \code{"raw"} for a raw time-series plot before
+segmentation and fitting. In \code{"raw"} mode, analysis overlays are disabled.
+\code{profile_data} must already be a data frame; if starting from a CSV file,
+read it first with \code{readr::read_delim(file_path, delim = ";")} or use
+\code{\link[=plot_raw_profile]{plot_raw_profile()}} directly.}
 }
 \value{
 A \code{ggplot2} object with the melatonin profile and optional overlays.
@@ -77,11 +85,23 @@ optional overlays, including \strong{DLMO fit lines, DLMO time stamp, threshold 
 \item The \strong{inflection point} is highlighted using a \strong{pink marker}.
 \item A \strong{parallelogram} can be overlaid to show \strong{truncated ascending segments}.
 \item The \strong{ROI heatmap} provides a \strong{residuals-based visualization} of the inflection search.
+\item Use \code{mode = "raw"} to plot an unsegmented profile before running
+\code{\link[=calculate_dlmo]{calculate_dlmo()}}. This is useful for checking threshold choice and
+identifying possible early above-threshold excursions.
 }
 }
 \examples{
-\dontrun{
-  plot <- plot_profile(profile_data, show_threshold = TRUE, show_segments = TRUE, show_dlmoIP = TRUE)
-  print(plot)
+filename <- system.file("extdata/sample_melatonin_profile.csv", package = "dlmoR")
+raw_data <- readr::read_delim(filename, delim = ";", show_col_types = FALSE)
+
+plot_profile(raw_data, threshold = 5, mode = "raw")
+
+dlmo_result <- calculate_dlmo(file_path = filename, threshold = 5, fine_flag = FALSE)
+dlmo_result$dlmoplotcoarse
+
+plot_raw_profile(file_path = filename, threshold = 5)
 }
+\seealso{
+\code{\link[=plot_raw_profile]{plot_raw_profile()}} for a convenience wrapper that accepts either a
+data frame or a CSV file path.
 }

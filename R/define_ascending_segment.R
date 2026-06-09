@@ -11,8 +11,14 @@
 #'   - `base`: A binary column (1 for base segments, 0 otherwise) indicating low melatonin baseline segments.
 #'   - `slope`: A numeric column representing the rate of change in melatonin concentrations between consecutive points.
 #' @param threshold Numeric. The melatonin concentration threshold to define the ascending segment (default = 2.3 pg/mL).
-#' @param interval_limit Numeric or lubridate duration. Specifies the minimum time interval between
-#' consecutive threshold crossings to consider them as independent ascending events. If numeric, it is interpreted as hours (default = 2 hours).
+#' @param interval_limit Numeric or lubridate duration. Specifies the time window within
+#' which repeated threshold crossings are treated as the same rise event. When multiple
+#' candidate rises occur within this window, the later crossing is used. Single-point
+#' excursions above threshold that immediately return below threshold are ignored
+#' automatically; excursions with more than one consecutive above-threshold point are
+#' treated as candidate rises. The interval is measured between candidate rise start
+#' times, not from when the earlier excursion falls back below threshold. If numeric,
+#' `interval_limit` is interpreted as hours (default = 2 hours).
 #' @return A tibble with the following columns:
 #'   - `datetime`: The original timestamps.
 #'   - `melatonin`: The input melatonin concentrations.
@@ -23,6 +29,14 @@
 #' @export
 
 define_ascending_segment <- function(profile_data, threshold = 2.3, interval_limit = lubridate::hours(2)) {
+  if (lubridate::is.duration(interval_limit) || lubridate::is.period(interval_limit)) {
+    interval_limit <- interval_limit
+  } else if (is.numeric(interval_limit)) {
+    interval_limit <- lubridate::duration(hours = interval_limit)
+  } else {
+    stop("`interval_limit` must be a numeric value (interpreted as hours) or a lubridate duration.")
+  }
+
   # Ensure datetime is sorted in ascending order
   profile_data <- profile_data %>% dplyr::arrange(.data$datetime)
 
@@ -64,6 +78,11 @@ define_ascending_segment <- function(profile_data, threshold = 2.3, interval_lim
                                   NA_integer_)
     ) %>%
     tidyr::fill(.data$rise_group, .direction = "down") # Propagate group values downwards
+
+  if (!any(!is.na(non_base_data$rise_group))) {
+    profile_data$ascending <- 0
+    return(profile_data)
+  }
 
   # Calculate the start time of each rise group
   rise_times <- non_base_data %>%

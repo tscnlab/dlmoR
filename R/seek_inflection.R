@@ -28,6 +28,26 @@ make_grid <- function(roi, step_x, step_y) {
   ymin <- roi$y[1]  # Minimum y-value
   ymax <- roi$y[2]  # Maximum y-value
 
+  if (!all(is.finite(c(xmin, xmax, ymin, ymax)))) {
+    stop(
+      "Cannot create the DLMO search grid because the region of interest contains non-finite bounds. ",
+      "This usually means the base, intermediate, or ascending segments were not valid for the selected ",
+      "`threshold` and `interval_limit`. Inspect the segmented profile and consider increasing ",
+      "`interval_limit` to include a later sustained rise, or adjusting `threshold` so the selected rise ",
+      "better matches the intended DLMO event.",
+      call. = FALSE
+    )
+  }
+
+  if (xmin >= xmax || ymin >= ymax) {
+    stop(
+      "Cannot create the DLMO search grid because the region of interest has invalid bounds. ",
+      "The start must be before the end, and the lower melatonin bound must be below the threshold. ",
+      "Inspect the segmented profile and consider adjusting `threshold` and/or `interval_limit`.",
+      call. = FALSE
+    )
+  }
+
   # Generate sequences of x and y values based on step sizes
   x_seq <- seq(from = xmin, to = xmax, by = step_x)  # X-coordinates
   y_seq <- seq(from = ymin, to = ymax, by = step_y)  # Y-coordinates
@@ -808,13 +828,44 @@ get_inflection <- function(profile_data, threshold = 2.3, posix_roi, fit_type = 
     filtered_data <- dplyr::filter(profile_data, base == 1 | ascending == 1)
   }
 
+  if (nrow(filtered_data) < 3) {
+    stop(
+      "Cannot estimate DLMO because fewer than three points remain in the fitting region ",
+      "after segment selection. This usually means the selected threshold/interval produced ",
+      "too few base, intermediate, or ascending points. Inspect the segmented profile and consider ",
+      "increasing `interval_limit` to include a later sustained rise, or adjusting `threshold` so ",
+      "the selected rise better matches the intended DLMO event.",
+      call. = FALSE
+    )
+  }
+
+  datetime_ref <- filtered_data$datetime[3]
+  if (is.na(datetime_ref)) {
+    stop(
+      "Cannot estimate DLMO because the fitting-region datetime reference is missing. ",
+      "Inspect the segmented profile and consider adjusting `threshold` and/or `interval_limit`.",
+      call. = FALSE
+    )
+  }
+
   # Convert POSIXct ROI coordinates to decimal time for numerical fitting.
   # Use the same datetime reference as fit(), which operates on filtered_data.
   roi <- list(
-    x = posixct_to_decimal(c(posix_roi$x_start, posix_roi$x_end), filtered_data$datetime[3]),
+    x = posixct_to_decimal(c(posix_roi$x_start, posix_roi$x_end), datetime_ref),
     y = c(posix_roi$y_min, posix_roi$y_max)
   )
-  attr(roi, "datetime_ref") <- filtered_data$datetime[3]
+  attr(roi, "datetime_ref") <- datetime_ref
+
+  if (!all(is.finite(c(roi$x, roi$y)))) {
+    stop(
+      "Cannot estimate DLMO because the search region could not be converted to finite numeric bounds. ",
+      "This usually means the selected threshold/interval produced invalid base, intermediate, or ",
+      "ascending segments. Inspect the segmented profile and consider increasing `interval_limit` ",
+      "to include a later sustained rise, or adjusting `threshold` so the selected rise better ",
+      "matches the intended DLMO event.",
+      call. = FALSE
+    )
+  }
 
   # Run the inflection search using the selected data and ROI
   poi <- seek_inflection(filtered_data, threshold = threshold, roi, fit_type = fit_type, fine_flag = fine_flag)

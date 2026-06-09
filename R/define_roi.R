@@ -44,8 +44,28 @@ define_roi <- function(profile_data, threshold = 2.3) {
   base_points <- profile_data %>% dplyr::filter(base == 1)
   ascending_points <- profile_data %>% dplyr::filter(ascending == 1)
 
+  if (nrow(base_points) == 0) {
+    stop(
+      "Cannot define the DLMO search region because no base segment was identified. ",
+      "This can happen when the selected threshold is below the first usable melatonin values. ",
+      "Inspect the segmented profile and consider adjusting `threshold` so the selected ",
+      "rise better matches the intended DLMO event.",
+      call. = FALSE
+    )
+  }
+
+  if (nrow(ascending_points) == 0) {
+    stop(
+      "Cannot define the DLMO search region because no ascending segment was identified. ",
+      "This can happen when an early above-threshold excursion is selected but then cropped as an unstable rise. ",
+      "Inspect the segmented profile and consider increasing `interval_limit` to include the later sustained rise, ",
+      "or adjusting `threshold` so the selected rise better matches the intended DLMO event.",
+      call. = FALSE
+    )
+  }
+
   # Determine horizontal bounds (x_start and x_end)
-  if ("intermediate" %in% colnames(profile_data)) {
+  if ("intermediate" %in% colnames(profile_data) && any(profile_data$intermediate == 1, na.rm = TRUE)) {
     # Case 1: Intermediate segment exists
     intermediate_points <- profile_data %>% dplyr::filter(intermediate == 1)
     x_start <- tail(base_points$datetime, n = 1) +

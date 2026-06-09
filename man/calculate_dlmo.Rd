@@ -21,12 +21,20 @@ The file must have two columns: \code{datetime} (POSIXct) and \code{melatonin} (
 
 \item{threshold}{The numeric melatonin threshold for defining DLMO (default: 2.3 pg/mL).}
 
-\item{interval_limit}{Numeric or lubridate duration. Indicates the time window within which,
-if two melatonin threshold crossings occur, the second crossing is taken to represent
-the melatonin rise. If provided as a numeric value, it represents the window in hours
-(e.g., \code{interval_limit = 2} for 2 hours, or \code{interval_limit = 0.5} for 30 minutes).
-Alternatively, users can specify a \code{lubridate} duration object
-(e.g., \code{lubridate::hours(2)} for 2 hours, \code{lubridate::minutes(30)} for 30 minutes).
+\item{interval_limit}{Numeric or lubridate duration. Indicates the time window within which
+repeated melatonin threshold crossings are treated as part of the same rise event. When
+multiple candidate rises occur within this window, the later crossing is taken to represent
+the melatonin rise. Single-point excursions above threshold that immediately return below
+threshold are treated as blips and ignored automatically. Excursions with more than one
+consecutive above-threshold point are treated as candidate rises; if a later rise should be
+preferred, set \code{interval_limit} large enough to include both candidate rise starts. The
+interval is measured between the start times of candidate rises, not from when the earlier
+excursion falls back below threshold. For example, if an early candidate rise starts at
+12:00 and a later sustained rise starts at 22:00, the relevant interval is 10 hours. If
+provided as a numeric value, it represents the window in hours (e.g.,
+\code{interval_limit = 2} for 2 hours, or \code{interval_limit = 0.5} for 30 minutes).
+Alternatively, users can specify a \code{lubridate} duration object (e.g.,
+\code{lubridate::hours(2)} for 2 hours, \code{lubridate::minutes(30)} for 30 minutes).
 Default is 2 hours.}
 
 \item{fine_flag}{Logical. If \code{TRUE}, performs an additional fine-grid search to refine the DLMO point after the initial coarse search (default: \code{TRUE}).}
@@ -63,6 +71,8 @@ A list containing the following elements:
 \item \code{y_max} (numeric): Maximum melatonin value in the ROI.
 }
 \item \strong{\code{threshold}}: Numeric. The melatonin threshold used for the DLMO calculation.
+\item \strong{\code{interval_limit}}: lubridate duration. The interval-limit setting used
+for repeated threshold-crossing selection.
 \item \strong{\code{ip}}: List containing estimated DLMO inflection point.
 \itemize{
 \item \code{inflection_point} (tibble):
@@ -92,6 +102,10 @@ or specify a .csv file to load the data.
 \item The \code{prof} tibble contains labeled data for different melatonin profile phases.
 \item The \code{prl} list provides the parallelogram rule fit used to trim the melatonin rise segment of the profile to ensure only strong rises are fit when determining DLMO.
 \item The \code{roi} specifies the bounds of the search window used for DLMO determination.
+\item The \code{threshold} value records the melatonin concentration threshold used for
+the calculation.
+\item The \code{interval_limit} value records the repeated-crossing time window used
+for ascending-segment selection, stored as a \code{lubridate} duration.
 \item The \code{ip} list contains the  DLMO inflection point, the fit parameters for the base and ascending regions, as well as the grid of residuals from fitting the melatonin profile at each point of the ROI.
 \item The \code{dlmo_time} variable contains the DLMO timestamp in units of hh:mm:ss (equivalent to \code{ip$inflection_point$x} in decimal-hours)
 \item The plots (\code{dlmoplotcoarse} and \code{dlmoplotfine}) visualize the results of the coarse and fine grid DLMO search, respectively.

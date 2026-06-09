@@ -1,6 +1,6 @@
 Package: dlmoR
 Title: Determine Time of Dimlight Melatonin Onset 
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person("Salma M.", "Thalji", , "salma.thalji@tum.de", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0002-7320-9289")),
@@ -14,7 +14,8 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-URL: https://github.com/tscnlab/dlmoR
+URL: https://github.com/tscnlab/dlmoR,
+    https://tscnlab.github.io/dlmoR/
 BugReports: https://github.com/tscnlab/dlmoR/issues
 Imports: 
     dplyr,
@@ -26,3 +27,11 @@ Imports:
     rlang,
     scales,
     tidyr
+Suggests:
+    knitr,
+    quarto,
+    rmarkdown,
+    shiny
+Config/Needs/website:
+    pkgdown,
+    quarto

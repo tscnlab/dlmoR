@@ -245,7 +245,7 @@ shinyApp(
     # Keep slider synchronized with numeric input
     observeEvent(input$top_percent_num, {
       val <- input$top_percent_num
-      if (!is.null(val) && val >= 0.1 && val <= 100) {
+      if (!is.null(val) && length(val) == 1 && !is.na(val) && val >= 0.1 && val <= 100) {
         updateSliderInput(session, "top_percent", value = val)
       }
     })

@@ -1,0 +1,16 @@
+url: https://tscnlab.github.io/dlmoR/
+
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [github]
+
+articles:
+  - title: Tutorials
+    navbar: Tutorials
+    contents:
+      - articles/get-started
+

@@ -12,6 +12,7 @@ Calculate the time of dimlight melatonin onset from a time series of melatonin c
 Useful links:
 \itemize{
   \item \url{https://github.com/tscnlab/dlmoR}
+  \item \url{https://tscnlab.github.io/dlmoR/}
   \item Report bugs at \url{https://github.com/tscnlab/dlmoR/issues}
 }
 
