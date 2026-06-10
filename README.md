@@ -3,9 +3,7 @@ dlmoR: Dim-light melatonin onset estimation
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-<img src="man/figures/logo.svg" align="right" width="160" class="readme-logo"/>
-
-## **`dlmoR`**
+<img src="man/figures/logo.svg" class="readme-logo" align="right" width="160"/>
 
 **`dlmoR`** is an R package that implements the hockey-stick method
 [(Danilenko et al., 2014)](https://doi.org/10.3109/07420528.2013.855226)
