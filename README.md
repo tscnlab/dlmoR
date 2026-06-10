@@ -1,7 +1,9 @@
-dlmoR: Dim-Light Melatonin Onset Estimation
+dlmoR: Dim-light melatonin onset estimation
 ================
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+<img src="man/figures/logo.svg" align="right" width="160" class="readme-logo"/>
 
 ## **`dlmoR`**
 
@@ -45,11 +47,12 @@ You can install the latest development version of **`dlmoR`** from
 pak::pak("tscnlab/dlmoR")
 ```
 
-## Example
+## Quick start guide
 
-This is a simple example that illustrates how to use **`dlmoR`**. For a
-more detailed walkthrough, see the [Get started
-vignette](articles/get-started.html).
+This short example shows the basic `dlmoR` workflow. For a more detailed
+tutorial covering package functionality and common use cases, see the
+[get started
+vignette](https://tscnlab.github.io/dlmoR/articles/get-started.html).
 
 ``` r
 # Load the package
@@ -116,31 +119,37 @@ print(dlmo_result$dlmoplotfine)
 **Dim-Light Melatonin Onset (reduced fine grid search view)**  
 ![DLMO Fine Plot](man/figures/dlmo_example_fine_plot.png)
 
-## Expected runtime
+## **Expected Runtime**
 
-Runtime depends on the selected search and your machine:
+The runtime of `calculate_dlmo()` depends on the selected search method
+and on the computing power of your machine:
 
-- **Coarse- + Fine-grid DLMO search** (`fine_flag = TRUE`, default): ~10 min (Windows) / ~2 min (Mac) per profile  
-- **Coarse-grid DLMO search only** (`fine_flag = FALSE`): ~1 min (Windows) / <1 min (Mac) per profile
+- **Coarse- and fine-grid DLMO search (`fine_flag = TRUE`, default)**:
+  ~10 minutes (Windows)/~2 minutes (Mac) per melatonin profile.
+- **Coarse-grid DLMO search only (`fine_flag = FALSE`)**: ~1 minute
+  (Windows)/\< 1 minute (Mac) per melatonin profile.
 
-For exploratory work, we recommend running `fine_flag = FALSE` first, then re-running promising profiles with `fine_flag = TRUE`.
 For **batch processing**, runtime scales approximately linearly with the
-number of profiles analyzed. Parallelization (e.g., using `future.apply`, `furrr`, or an HPC scheduler) can substantially reduce wall-clock time in high-throughput settings but is not required.
+number of profiles analyzed.
 
 ## **Getting Help**
 
-For bug reports, usage questions, and feature requests, please open an issue on the GitHub
-[Issues page](https://github.com/tscnlab/dlmoR/issues).
+For bug reports, usage questions, and feature requests, please open an
+issue on the GitHub [Issues
+page](https://github.com/tscnlab/dlmoR/issues).
 
 ## **Citing `dlmoR`**
 
-If you use `dlmoR` in your research, please cite the following preprint, (forthcoming in Journal of Biological Rhythms; citation will be updated upon publication)
-which describes the package and its implementation and provides a systematic 
-evaluation of the hockey-stick DLMO method and its software behavior:
+If you use `dlmoR` in your research, please cite the following
+publication, which describes the package, its implementation, and the
+evaluation of its performance:
 
-Thalji, S. M., & Spitschan, M. (2026). *[dlmoR: An Open-Source R Package for the Dim-Light Melatonin Onset (DLMO) Hockey-Stick Method.](https://doi.org/10.1177/07487304251389994)* Journal of Biological Rhythms, 41(3), 301–323.
+Thalji, S. M., & Spitschan, M. (2026). [*dlmoR: An Open-Source R Package
+for the Dim-Light Melatonin Onset (DLMO) Hockey-Stick
+Method.*](https://doi.org/10.1177/07487304251389994) Journal of
+Biological Rhythms, 41(3), 301–323.
 
-```bibtex
+``` bibtex
 @article{thalji2026dlmor,
   author  = {Thalji, Salma M. and Spitschan, Manuel},
   title   = {dlmoR: An open-source R package for the dim-light melatonin onset (DLMO) hockey-stick method},
@@ -148,8 +157,10 @@ Thalji, S. M., & Spitschan, M. (2026). *[dlmoR: An Open-Source R Package for the
   year    = {2026},
   doi     = {10.1177/07487304251389994}
 }
+```
 
 ## **Data and analysis code availability**
-All raw data, analysis code, result tables, and figures related to this 
-publication are available in the corresponding 
-[publication repository](https://github.com/tscnlab/ThaljiEtAl_JBiolRhythms_2026).
+
+All raw data, analysis code, result tables, and figures related to this
+publication are available in the corresponding [publication
+repository](https://github.com/tscnlab/ThaljiEtAl_JBiolRhythms_2026).

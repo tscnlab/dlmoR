@@ -1,17 +1,17 @@
 citHeader("To cite dlmoR in publications use:")
 
 bibentry(
-  bibtype  = "Misc",
+  bibtype  = "Article",
   title    = "dlmoR: An open-source R package for the dim-light melatonin onset (DLMO) hockey-stick method",
   author   = "Salma M. Thalji and Manuel Spitschan",
-  journal  = "",
-  year     = "2025",
-  volume   = "",
-  number   = "",
-  pages    = "",
+  journal  = "Journal of Biological Rhythms",
+  year     = "2026",
+  volume   = "41",
+  number   = "3",
+  pages    = "301--323",
   url      = "https://github.com/tscnlab/dlmoR",
-  doi      = "10.1101/2025.01.13.632603",
+  doi      = "10.1177/07487304251389994",
   textVersion = paste(
-  "Salma Thalji and Manuel Spitschan (2025): dlmoR: An open-source R package for the dim-light melatonin onset (DLMO) hockey-stick method. R Package, Available on https://github.com/tscnlab/dlmoR, doi:10.1101/2025.01.13.632603."
+    "Thalji, S. M., & Spitschan, M. (2026). dlmoR: An open-source R package for the dim-light melatonin onset (DLMO) hockey-stick method. Journal of Biological Rhythms, 41(3), 301--323. https://doi.org/10.1177/07487304251389994"
   )
 )

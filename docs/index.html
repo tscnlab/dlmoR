@@ -15,7 +15,8 @@
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Determine Time of Dimlight Melatonin Onset">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
+<meta property="og:title" content="Determine Time of Dimlight Melatonin Onset">
 <meta name="description" content="Calculate the time of dimlight melatonin onset from a time series of melatonin concentrations, using the hockey-stick method.">
 <meta property="og:description" content="Calculate the time of dimlight melatonin onset from a time series of melatonin concentrations, using the hockey-stick method.">
 <meta property="og:image" content="https://tscnlab.github.io/dlmoR/logo.svg">
@@ -28,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="index.html">dlmoR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,14 +39,7 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Tutorials</h6></li>
-    <li><a class="dropdown-item" href="articles/get-started.html">Get started with dlmoR</a></li>
-  </ul>
-</li>
+<li class="nav-item"><a class="nav-link" href="articles/index.html">Tutorials</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -59,10 +53,11 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header">
-<img src="logo.svg" class="logo" alt=""><h1 id="dlmor-dim-light-melatonin-onset-estimation">dlmoR: Dim-Light Melatonin Onset Estimation<a class="anchor" aria-label="anchor" href="#dlmor-dim-light-melatonin-onset-estimation"></a>
+<img src="logo.svg" class="logo" alt=""><h1 id="dlmor-dim-light-melatonin-onset-estimation">dlmoR: Dim-light melatonin onset estimation<a class="anchor" aria-label="anchor" href="#dlmor-dim-light-melatonin-onset-estimation"></a>
 </h1>
 </div>
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+<p><img src="reference/figures/logo.svg" align="right" width="160" class="readme-logo"></p>
 <div class="section level2">
 <h2 id="dlmor">
 <strong><code>dlmoR</code></strong><a class="anchor" aria-label="anchor" href="#dlmor"></a>
@@ -81,9 +76,9 @@
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"tscnlab/dlmoR"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+<h2 id="quick-start-guide">Quick start guide<a class="anchor" aria-label="anchor" href="#quick-start-guide"></a>
 </h2>
-<p>This is a simple example that illustrates how to use <strong><code>dlmoR</code></strong>. For a more detailed walkthrough, see the <a href="articles/get-started.html">Get started vignette</a>.</p>
+<p>This short example shows the basic <code>dlmoR</code> workflow. For a more detailed tutorial covering package functionality and common use cases, see the <a href="https://tscnlab.github.io/dlmoR/articles/get-started.html">get started vignette</a>.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Load the package</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">library</span>(dlmoR)</span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
@@ -144,17 +139,17 @@
 <p><strong>Dim-Light Melatonin Onset (reduced fine grid search view)</strong><br><img src="reference/figures/dlmo_example_fine_plot.png" alt="DLMO Fine Plot"></p>
 </div>
 <div class="section level2">
-<h2 id="expected-runtime">Expected runtime<a class="anchor" aria-label="anchor" href="#expected-runtime"></a>
+<h2 id="expected-runtime">
+<strong>Expected Runtime</strong><a class="anchor" aria-label="anchor" href="#expected-runtime"></a>
 </h2>
-<p>Runtime depends on the selected search and your machine:</p>
+<p>The runtime of <code><a href="reference/calculate_dlmo.html">calculate_dlmo()</a></code> depends on the selected search method and on the computing power of your machine:</p>
 <ul>
 <li>
-<strong>Coarse- + Fine-grid DLMO search</strong> (<code>fine_flag = TRUE</code>, default): ~10 min (Windows) / ~2 min (Mac) per profile<br>
-</li>
+<strong>Coarse- and fine-grid DLMO search (<code>fine_flag = TRUE</code>, default)</strong>: ~10 minutes (Windows)/~2 minutes (Mac) per melatonin profile.</li>
 <li>
-<strong>Coarse-grid DLMO search only</strong> (<code>fine_flag = FALSE</code>): ~1 min (Windows) / &lt;1 min (Mac) per profile</li>
+<strong>Coarse-grid DLMO search only (<code>fine_flag = FALSE</code>)</strong>: ~1 minute (Windows)/&lt; 1 minute (Mac) per melatonin profile.</li>
 </ul>
-<p>For exploratory work, we recommend running <code>fine_flag = FALSE</code> first, then re-running promising profiles with <code>fine_flag = TRUE</code>. For <strong>batch processing</strong>, runtime scales approximately linearly with the number of profiles analyzed. Parallelization (e.g., using <code>future.apply</code>, <code>furrr</code>, or an HPC scheduler) can substantially reduce wall-clock time in high-throughput settings but is not required.</p>
+<p>For <strong>batch processing</strong>, runtime scales approximately linearly with the number of profiles analyzed.</p>
 </div>
 <div class="section level2">
 <h2 id="getting-help">
@@ -166,9 +161,15 @@
 <h2 id="citing-dlmor">
 <strong>Citing <code>dlmoR</code></strong><a class="anchor" aria-label="anchor" href="#citing-dlmor"></a>
 </h2>
-<p>If you use <code>dlmoR</code> in your research, please cite the following preprint, (forthcoming in Journal of Biological Rhythms; citation will be updated upon publication) which describes the package and its implementation and provides a systematic evaluation of the hockey-stick DLMO method and its software behavior:</p>
-<p>Thalji, S. M., &amp; Spitschan, M. (2026). <em><a href="https://doi.org/10.1177/07487304251389994" class="external-link">dlmoR: An Open-Source R Package for the Dim-Light Melatonin Onset (DLMO) Hockey-Stick Method.</a></em> Journal of Biological Rhythms, 41(3), 301–323.</p>
-<p>```bibtex @article{thalji2026dlmor, author = {Thalji, Salma M. and Spitschan, Manuel}, title = {dlmoR: An open-source R package for the dim-light melatonin onset (DLMO) hockey-stick method}, journal = {Journal of Biological Rhythms}, year = {2026}, doi = {10.1177/07487304251389994} }</p>
+<p>If you use <code>dlmoR</code> in your research, please cite the following publication, which describes the package, its implementation, and the evaluation of its performance:</p>
+<p>Thalji, S. M., &amp; Spitschan, M. (2026). <a href="https://doi.org/10.1177/07487304251389994" class="external-link"><em>dlmoR: An Open-Source R Package for the Dim-Light Melatonin Onset (DLMO) Hockey-Stick Method.</em></a> Journal of Biological Rhythms, 41(3), 301–323.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="va">@article</span>{<span class="ot">thalji2026dlmor</span>,</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="dt">author</span>  = {Thalji, Salma M. and Spitschan, Manuel},</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="dt">title</span>   = {dlmoR: An open-source R package for the dim-light melatonin onset (DLMO) hockey-stick method},</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="dt">journal</span> = {Journal of Biological Rhythms},</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="dt">year</span>    = {2026},</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="dt">doi</span>     = {10.1177/07487304251389994}</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>}</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="data-and-analysis-code-availability">

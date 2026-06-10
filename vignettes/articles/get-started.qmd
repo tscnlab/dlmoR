@@ -39,7 +39,7 @@ melatonin concentrations using the hockey-stick method. The main function is
 grid search, and returns DLMO estimates together with diagnostic plots.
 
 This vignette will guide you in not only obtaining a DLMO timestamp, but in
-understanding how the analysis settings affect the labelled profile, the
+understanding how the analysis settings affect the labeled profile, the
 selected rise, and the diagnostic plots.
 
 ## Installation
@@ -133,7 +133,7 @@ dlmo_coarse$threshold
 dlmo_coarse$interval_limit
 ```
 
-The labelled melatonin profile is stored in `prof`. These labels are the bridge
+The labeled melatonin profile is stored in `prof`. These labels are the bridge
 between the raw measurements and the fit shown in the diagnostic plot:
 
 ```{r}
@@ -175,9 +175,9 @@ dlmo_result$dlmo$fine$time
 dlmo_result$dlmoplotfine
 ```
 
-The fine search is more computationally expensive because it refines the grid
-around the best coarse-grid solutions. For profiles with a wide region of
-interest, this can take noticeably longer.
+The fine search is more computationally expensive because it searches a refined
+grid with smaller step sizes around the best coarse-grid solutions. For profiles
+with a wide region of interest, this can take noticeably longer.
 
 ## Output structure
 
@@ -197,7 +197,7 @@ interest, this can take noticeably longer.
 
 The `threshold` argument sets the melatonin concentration used to define the
 rise. The appropriate value depends on the assay, study protocol, analysis plan,
-and the participant's overall melatonin production; for example, a profile with
+and the participant's overall melatonin production. For example, a profile with
 lower melatonin concentrations may require a lower threshold than a profile with
 higher concentrations. Changing the threshold can change the base segment, the
 ascending segment, and whether enough points remain to fit the hockey-stick
@@ -243,11 +243,11 @@ dlmo_profile_c_threshold_4 <- calculate_dlmo(
 
 ```{r}
 #| label: fig-threshold-profile-c
-#| fig-cap: "*Profile C analysed with a higher threshold. Changing the threshold changes which points are eligible for the rise and can restore a usable fitting region.*"
+#| fig-cap: "*Profile C analyzed with a higher threshold. Changing the threshold changes which points are eligible for the rise and can restore a usable fitting region.*"
 dlmo_profile_c_threshold_4$dlmoplotfine
 ```
 
-## Understanding interval_limit
+## Understanding *`interval_limit`*
 
 Some melatonin profiles cross the threshold more than once. The `interval_limit`
 argument controls how close repeated candidate rises are handled. It is useful
@@ -265,7 +265,7 @@ The current repeated-crossing behavior is:
   kept
 
 Numeric values are interpreted as hours, so `interval_limit = 2` is equivalent
-to `lubridate::duration(hours = 2)`. Fractional values are allowed; for example,
+to `lubridate::duration(hours = 2)`. Fractional values are allowed, so that for example,
 `interval_limit = 0.5` is 30 minutes.
 
 Importantly, `interval_limit` is measured between the first above-threshold
@@ -314,7 +314,7 @@ dlmo_profile_b_interval <- calculate_dlmo(
 dlmo_profile_b_interval$dlmoplotfine
 ```
 
-## When interval_limit is not needed
+## When *`interval_limit`* is not needed
 
 Not every repeated threshold crossing requires a wider interval limit. There
 are two common cases where the default behavior may already be appropriate.
@@ -351,7 +351,7 @@ Second, if a later candidate rise starts outside the `interval_limit`, it does
 not replace the earlier selected rise. With the default setting, this means that
 a later threshold crossing more than 2 hours after the earlier candidate is
 ignored for repeated-crossing selection. In that case, the later crossing is not
-missed because it is a blip; it is ignored because it is outside the interval
+missed because it is a blip and is ignored because it is outside the interval
 window.
 
 Profile I shows the second case. Here, a later threshold crossing occurs after
@@ -379,7 +379,7 @@ dlmo_profile_i <- calculate_dlmo(
 dlmo_profile_i$dlmoplotfine
 ```
 
-## Threshold and interval_limit can interact
+## Threshold and *`interval_limit`* can interact
 
 Sometimes threshold and interval settings need to be considered together. A
 threshold may work well for one profile but produce an early candidate rise in
@@ -503,24 +503,27 @@ checking against nearby low-residual alternatives.
 
 ### How to read the explorer
 
+The residual explorer screenshots in @fig-residual-profile-d and
+@fig-residual-profile-e show these elements in context.
+
 The heatmap shows the residual error across the DLMO search space. The x-axis
 is candidate DLMO time, the y-axis is candidate melatonin concentration at the
-DLMO, and the colour scale shows the residual value for each candidate
-hockey-stick fit. Darker colours indicate lower residuals. The white diamond
+DLMO, and the color scale shows the residual value for each candidate
+hockey-stick fit. Darker colors indicate lower residuals. The white diamond
 marks the DLMO selected by `calculate_dlmo()`.
 
 The left-hand controls let you decide how much of the low-residual landscape to
 summarize. The clustering threshold selects the lowest-residual grid points to
 display, such as the best 1% or 5% of candidate fits. The minimum cluster size
-sets how many neighbouring grid points are required before a group is treated as
+sets how many neighboring grid points are required before a group is treated as
 a cluster rather than a tiny isolated region.
 
 The violin plot summarizes the timing of the low-residual clusters. Each row is
 a cluster of similarly good candidate DLMO solutions. The vertical reference
 line marks the selected DLMO, and the horizontal spread shows how far each
 cluster lies before or after that estimate. A tight cluster centered near zero
-suggests a well-localized estimate; a broad cluster suggests a wider uncertainty
-window; several separated clusters suggest competing candidate DLMO regions.
+suggests a well-localized estimate, a broad cluster suggests a wider uncertainty
+window, and several separated clusters suggest competing candidate DLMO regions.
 
 The summary tables quantify the same information. The nominal table gives the
 size of each cluster and its mean, median, minimum, and maximum clock time. The
@@ -534,8 +537,8 @@ by an hour or more.
 Profile D shows several low-residual clusters. The selected DLMO is 23:33:36.
 With the explorer set to the lowest 1% of residuals, the residual values shown
 are 0.027 to 0.027 across 263 grid points. In other words, at the printed
-precision, these candidate solutions are essentially indistinguishable; any
-differences are on the order of later decimal places.
+precision, these candidate solutions are essentially indistinguishable, and any
+differences only appear beyond the displayed decimal places.
 
 ```{r}
 #| label: fig-residual-profile-d
@@ -583,15 +586,15 @@ sampling across the relevant part of the rise, with no samples between roughly
 
 In practice, the residual explorer is most useful as a sensitivity check after
 you have already looked at the diagnostic profile plot. The profile plot tells
-you what the algorithm selected; the residual explorer tells you whether nearby
+you what the algorithm selected, the residual explorer tells you whether nearby
 or competing solutions fit almost as well.
 
 ## Batch workflows
 
-Because `calculate_dlmo()` returns ordinary R objects, `dlmoR` fits naturally
+Because `calculate_dlmo()` returns ordinary R objects, `dlmoR` fits easily
 into scripted workflows. You can wrap the function in a small batch script to
 process many melatonin profiles, save the full result objects for later
-inspection, export diagnostic plots, and write a compact summary table with one
+inspection, export diagnostic plots, and write a compact summary results table with one
 row per input file. The same idea works whether you iterate over file paths or
 over data frames that have already been read into R.
 
