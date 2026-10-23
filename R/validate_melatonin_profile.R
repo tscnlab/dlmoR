@@ -13,7 +13,7 @@
 #' @param profile A numeric vector representing the profile data points.
 #' @param threshold Numeric value for the minimum rise threshold, default is 2.3.
 #' @param min_increase_points Integer specifying the minimum number of consecutive points
-#'   above the threshold to establish a rise, default is 3.
+#'   above the threshold to establish a rise, default is 2.
 #' @param min_points Integer specifying the minimum number of data points required for the profile,
 #'   default is 3.
 #' @return Depending on the function, returns either a boolean (for validation functions) or a
@@ -82,22 +82,14 @@ NULL
 #
 #   return(final_result$any_rise)  # Return the result
 # }
-check_rise_threshold <- function(profile, threshold = 2.3, min_increase_points = 3) {
-  # Create a temporary tibble to calculate necessary columns
-  profile_tbl <- profile %>%
-    dplyr::mutate(
-      above_threshold = .data$melatonin >= threshold,
-      prev_below_threshold = dplyr::lag(.data$melatonin < threshold, default = FALSE),
-      transition = .data$above_threshold & .data$prev_below_threshold
-    ) %>%
-    dplyr::mutate(group = cumsum(.data$transition))
-
-  # Debugging: Print intermediate results (optional)
-  # print("Profile Table After Mutation:")
-  # print(profile_tbl, n = 46)
-
-  # We don't need to return `above_threshold` or `transition`, just the columns we want
-  return(profile_tbl)
+check_rise_threshold <- function(profile, threshold = 2.3, min_increase_points = 2) {
+  above <- !is.na(profile$melatonin) & profile$melatonin >= threshold
+  if (!any(above, na.rm = TRUE)) return(FALSE)
+  runs   <- rle(above)
+  ends   <- cumsum(runs$lengths)                  # last row index of each run
+  is_up  <- runs$values
+  at_end <- ends == length(above)                 # run reaches the end of the profile
+  any(is_up & (runs$lengths >= min_increase_points | at_end))
 }
 
 
@@ -108,10 +100,9 @@ check_rise_threshold <- function(profile, threshold = 2.3, min_increase_points =
 #'   data_length<-length(profile)
 #'   print(data_length)
 #' }
+
 check_data_length <- function(profile, min_points = 3) {
-length(profile) >= min_points
-data_length <- length(profile)
-#print(data_length)
+  length(profile) >= min_points
 }
 
 #'
@@ -150,17 +141,13 @@ trim_end_below_threshold <- function(profile, threshold = 2.3) {
 #
 #   return(trimmed_profile)
 # }
-preprocess_profile <- function(profile, threshold = 2.3, min_increase_points = 3, min_points = 3) {
+
+preprocess_profile <- function(profile, threshold = 2.3, min_increase_points = 2, min_points = 3) {
   if (!check_data_length(profile$melatonin, min_points)) {
-    stop("Insufficient number of data points for analysis")
+    stop("insufficient number of data points", call. = FALSE)
   }
-
-  # Step 1: Check for rise threshold (only for internal use, not added to final result)
-  processed_data <- check_rise_threshold(profile, threshold = threshold, min_increase_points)
-
-  # Step 2: Trim the profile based on the threshold
-  trimmed_data <- trim_end_below_threshold(processed_data, threshold = threshold)
-
-  return(trimmed_data)  # Return the trimmed tibble with datetime, melatonin, and time
+  if (!check_rise_threshold(profile, threshold = threshold, min_increase_points = min_increase_points)) {
+    stop("no dynamic part", call. = FALSE)
+  }
+  trim_end_below_threshold(profile, threshold = threshold)
 }
-
