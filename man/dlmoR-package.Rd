@@ -6,7 +6,7 @@
 \alias{dlmoR-package}
 \title{dlmoR: Determine Time of Dimlight Melatonin Onset}
 \description{
-Calculate the time of dimlight melatonin onset from a time series of melatonin concentrations, using the hockey-stick method.
+Calculate the time of dimlight melatonin onset from a time series of melatonin concentrations, using the hockey-stick method or the 3k threshold method (baseline mean plus two standard deviations).
 }
 \seealso{
 Useful links:
