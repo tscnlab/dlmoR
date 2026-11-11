@@ -1,6 +1,6 @@
 #' Validate and Prepare a Melatonin Profile for the 3k Method
 #'
-#' Checks the arguments and the profile used by [calculate_dlmo_3k()] and
+#' Checks the arguments and the profile used by [calculate_dlmo()] (`method = "3k"`) and
 #' returns a clean, time-ordered profile. Problems that make an estimate
 #' impossible stop with an error; problems that can be repaired (missing
 #' values, unsorted rows) are repaired and reported as issues.
@@ -37,7 +37,7 @@
 #'   (`missing_values_removed`);
 #' - rows not in time order are sorted (`unsorted_input`).
 #'
-#' @seealso [calculate_dlmo_3k()]
+#' @seealso [calculate_dlmo()] (`method = "3k"`)
 #' @export
 check_3k_input <- function(data, n_baseline = 3, k_sd = 2, min_duration = 2,
                            min_threshold = NULL, lod = NULL, max_gap = 2) {

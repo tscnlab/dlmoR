@@ -59,8 +59,12 @@ library(dlmoR)
 # Load sample data (provided with the package)
 filename <- system.file("extdata/sample_melatonin_profile.csv", package = "dlmoR")
 
-# Compute DLMO with a threshold of 3 pg/mL
-dlmo_result <- calculate_dlmo(file_path = filename, threshold = 3, fine_flag = TRUE)
+# Compute DLMO with the hockey-stick method (the default) and a threshold of 3 pg/mL
+dlmo_result <- calculate_dlmo(file_path = filename, method = "hockeystick",
+                              threshold = 3, fine_flag = TRUE)
+
+# Other methods use the same function, e.g. the 3k threshold method:
+# calculate_dlmo(data = my_profile, method = "3k")
 
 # View estimated DLMO inflection point (decimal-hours) and melatonin concentration (pg/mL) at this time
 

@@ -25,7 +25,7 @@
 #' iv <- find_threshold_intervals(0:8, c(1, 1, 1, 4, 1, 3, 5, 6, 7), threshold = 2)
 #' select_dlmo_3k(iv, min_duration = 2)
 #'
-#' @seealso [calculate_dlmo_3k()], [find_threshold_intervals()]
+#' @seealso [calculate_dlmo()] (`method = "3k"`), [find_threshold_intervals()]
 #' @export
 select_dlmo_3k <- function(intervals, min_duration = 2) {
   if (nrow(intervals) == 0) {

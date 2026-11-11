@@ -39,7 +39,7 @@ test_that("select_dlmo_3k applies the duration rule and reports the status", {
 })
 
 
-# ---- calculate_dlmo_3k: normal profiles -------------------------------------------
+# ---- 3k method: normal profiles -------------------------------------------
 
 test_that("a clean rise gives the interpolated crossing time", {
   p <- make_profile(c(1.0, 1.2, 1.4, 1.3, 1.5, 3.0, 6, 10, 14, 18, 20))
@@ -56,7 +56,7 @@ test_that("a clean rise gives the interpolated crossing time", {
 
 test_that("short excursions before the sustained rise are ignored and noted", {
   p <- make_profile(c(1, 1.2, 1.4, 1.3, 5, 1.2, 1.3, 1.4, 3, 6, 9, 12, 15, 18))
-  msgs <- capture_messages(res <- suppressWarnings(calculate_dlmo_3k(data = p, plot = FALSE)))
+  msgs <- capture_messages(res <- suppressWarnings(calculate_dlmo(method = "3k", data = p, plot = FALSE)))
   expect_match(msgs, "shorter excursion", all = FALSE)
   expect_equal(format(res$dlmo_datetime, "%H:%M:%S"), "19:33:45")
   expect_true(res$flags[["transient_excursion"]])
@@ -100,7 +100,7 @@ test_that("the sample file can be analysed from file_path", {
 })
 
 
-# ---- calculate_dlmo_3k: no DLMO -------------------------------------------------------
+# ---- 3k method: no DLMO -------------------------------------------------------
 
 test_that("no crossing stops with an error that carries the partial result", {
   p <- make_profile(c(1, 1.2, 1.4, 1.1, 1.3, 1.2, 1.0, 1.1))
@@ -127,13 +127,13 @@ test_that("a rise cut off by the end of the data stops as truncated", {
 
 test_that("the no-DLMO error carries a plot when plot = TRUE", {
   p <- make_profile(c(1, 1.2, 1.4, 1.1, 1.3, 1.2, 1.0, 1.1))
-  e <- tryCatch(suppressMessages(calculate_dlmo_3k(data = p)), dlmo_3k_error = function(e) e)
+  e <- tryCatch(suppressMessages(calculate_dlmo(method = "3k", data = p)), dlmo_3k_error = function(e) e)
   expect_s3_class(e$result$dlmoplot, "ggplot")
   expect_null(fail_3k(data = p)$result$dlmoplot)
 })
 
 
-# ---- calculate_dlmo_3k: warnings about the baseline ------------------------------------
+# ---- 3k method: warnings about the baseline ------------------------------------
 
 test_that("a baseline with SD 0 is flagged and does not count as the rise", {
   p <- make_profile(c(0, 0, 0, 0, 0.5, 3, 6, 9, 12, 15))
@@ -174,7 +174,7 @@ test_that("a long sampling gap around the DLMO is flagged", {
 
 test_that("missing values are removed with a warning", {
   p <- make_profile(c(1.0, 1.2, 1.4, NA, 1.5, 3.0, 6, 10, 14, 18, 20))
-  expect_warning(res <- suppressMessages(calculate_dlmo_3k(data = p, plot = FALSE)), "missing")
+  expect_warning(res <- suppressMessages(calculate_dlmo(method = "3k", data = p, plot = FALSE)), "missing")
   expect_true(res$flags[["missing_values_removed"]])
   expect_equal(nrow(res$prof), 10)
 })
@@ -189,7 +189,7 @@ test_that("unsorted rows are sorted and give the same result", {
 
 test_that("invalid input stops with an informative error", {
   p <- make_profile(c(1.0, 1.2, 1.4, 1.3, 1.5, 3.0, 6, 10))
-  expect_error(calculate_dlmo_3k(), "either `data` or `file_path`")
+  expect_error(calculate_dlmo(method = "3k"), "either `data` or `file_path`")
   expect_error(quiet_3k(data = p, n_baseline = 1), "n_baseline")
   expect_error(quiet_3k(data = p, n_baseline = 2.5), "whole number")
   expect_error(quiet_3k(data = p, k_sd = -1), "k_sd")
@@ -205,7 +205,7 @@ test_that("invalid input stops with an informative error", {
 
 test_that("the result carries a plot and prints a summary", {
   p <- make_profile(c(1.0, 1.2, 1.4, 1.3, 1.5, 3.0, 6, 10, 14, 18, 20))
-  res <- suppressMessages(calculate_dlmo_3k(data = p))
+  res <- suppressMessages(calculate_dlmo(method = "3k", data = p))
   expect_s3_class(res$dlmoplot, "ggplot")
   expect_s3_class(plot_profile_3k(res), "ggplot")
   expect_output(print(res), "18:02:00")

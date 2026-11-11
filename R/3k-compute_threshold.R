@@ -24,7 +24,7 @@
 #' compute_3k_threshold(c(1.2, 1.5, 1.3, 2.0, 6.5, 12))
 #' compute_3k_threshold(c(0, 0, 0, 0.4, 3, 9), min_threshold = 0.9)
 #'
-#' @seealso [calculate_dlmo_3k()]
+#' @seealso [calculate_dlmo()] (`method = "3k"`)
 #' @export
 compute_3k_threshold <- function(melatonin, n_baseline = 3, k_sd = 2, min_threshold = NULL) {
   if (length(melatonin) < n_baseline) {

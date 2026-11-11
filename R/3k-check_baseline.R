@@ -4,7 +4,7 @@
 #' depends on those samples sitting in a stable, low daytime trough. This
 #' function flags baselines whose threshold is likely to lie within assay
 #' noise. It never stops; it returns the problems found so that
-#' [calculate_dlmo_3k()] can warn about them and record them.
+#' [calculate_dlmo()] (`method = "3k"`) can warn about them and record them.
 #'
 #' @param baseline_values Numeric vector of baseline melatonin values.
 #' @param threshold The threshold used (after any `min_threshold`).
@@ -23,7 +23,7 @@
 #' check_3k_baseline(c(0, 0, 0), threshold = 0)
 #' check_3k_baseline(c(0.2, 0.1, 0.3), threshold = 0.5, lod = 0.3)
 #'
-#' @seealso [calculate_dlmo_3k()]
+#' @seealso [calculate_dlmo()] (`method = "3k"`)
 #' @export
 check_3k_baseline <- function(baseline_values, threshold, lod = NULL) {
   issues <- .new_issues()

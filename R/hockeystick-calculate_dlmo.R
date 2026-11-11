@@ -1,31 +1,34 @@
-#' Calculate Dim-Light Melatonin Onset (DLMO)
+#' @section Hockey-stick method (`method = "hockeystick"`):
+#' Fits the hockey-stick model (Danilenko et al., 2014) to the profile: the
+#' profile is split into base, ascending and intermediate segments, the rise is
+#' trimmed with the parallelogram rule, and the DLMO is the inflection point of
+#' a linear base fit joined to a linear or parabolic rise fit, found by a
+#' coarse and an optional fine grid search over the region of interest (ROI).
 #'
-#' This function calculates the DLMO time point based on input melatonin concentration data
-#' with an associated time series. The user can provide data directly as a data frame
-#' or specify a .csv file to load the data.
+#' **Arguments** (passed through `...`):
+#' - `threshold`: The numeric melatonin threshold for defining DLMO
+#'   (default: 2.3 pg/mL).
+#' - `interval_limit`: Numeric or lubridate duration. Indicates the time window
+#'   within which repeated melatonin threshold crossings are treated as part of
+#'   the same rise event. When multiple candidate rises occur within this
+#'   window, the later crossing is taken to represent the melatonin rise.
+#'   Single-point excursions above threshold that immediately return below
+#'   threshold are treated as blips and ignored automatically. Excursions with
+#'   more than one consecutive above-threshold point are treated as candidate
+#'   rises; if a later rise should be preferred, set `interval_limit` large
+#'   enough to include both candidate rise starts. The interval is measured
+#'   between the start times of candidate rises, not from when the earlier
+#'   excursion falls back below threshold. For example, if an early candidate
+#'   rise starts at 12:00 and a later sustained rise starts at 22:00, the
+#'   relevant interval is 10 hours. If provided as a numeric value, it
+#'   represents the window in hours (e.g., `interval_limit = 2` for 2 hours, or
+#'   `interval_limit = 0.5` for 30 minutes). Alternatively, users can specify a
+#'   `lubridate` duration object (e.g., `lubridate::hours(2)` for 2 hours,
+#'   `lubridate::minutes(30)` for 30 minutes). Default is 2 hours.
+#' - `fine_flag`: Logical. If `TRUE`, performs an additional fine-grid search
+#'   to refine the DLMO point after the initial coarse search (default: `TRUE`).
 #'
-#' @param data A data frame with columns `datetime` (POSIXct) and `melatonin` (numeric). If NULL, use
-#' the `file_path` parameter to load data.
-#' @param file_path A string specifying the path to a CSV file containing the data.
-#' The file must have two columns: `datetime` (POSIXct) and `melatonin` (numeric).
-#' @param threshold The numeric melatonin threshold for defining DLMO (default: 2.3 pg/mL).
-#' @param interval_limit Numeric or lubridate duration. Indicates the time window within which
-#' repeated melatonin threshold crossings are treated as part of the same rise event. When
-#' multiple candidate rises occur within this window, the later crossing is taken to represent
-#' the melatonin rise. Single-point excursions above threshold that immediately return below
-#' threshold are treated as blips and ignored automatically. Excursions with more than one
-#' consecutive above-threshold point are treated as candidate rises; if a later rise should be
-#' preferred, set `interval_limit` large enough to include both candidate rise starts. The
-#' interval is measured between the start times of candidate rises, not from when the earlier
-#' excursion falls back below threshold. For example, if an early candidate rise starts at
-#' 12:00 and a later sustained rise starts at 22:00, the relevant interval is 10 hours. If
-#' provided as a numeric value, it represents the window in hours (e.g.,
-#' `interval_limit = 2` for 2 hours, or `interval_limit = 0.5` for 30 minutes).
-#' Alternatively, users can specify a `lubridate` duration object (e.g.,
-#' `lubridate::hours(2)` for 2 hours, `lubridate::minutes(30)` for 30 minutes).
-#' Default is 2 hours.
-#' @param fine_flag Logical. If `TRUE`, performs an additional fine-grid search to refine the DLMO point after the initial coarse search (default: `TRUE`).
-#' @return A list containing the following elements:
+#' **Value**: a list containing the following elements:
 #'
 #' - **`prof`**: A tibble containing the segmented melatonin profile.
 #'   - `datetime` (POSIXct): Timestamps of melatonin measurements.
@@ -62,12 +65,13 @@
 #'   - `base_params` (numeric): Parameter for linear-fit of base segment of profile.
 #'   - `ascending_params` (list): Parameters for the linear or parabolic fit of melatonin rise:
 #'     - `a`, `b`, `c` (numeric): Fitted parameters.
-#' - **`dlmo_time`**: Estimated DLMO time-stamp in units of hh:mm:ss
+#' - **`dlmo`**: List with the `coarse` and (if `fine_flag = TRUE`) `fine`
+#'   DLMO estimates; each holds the DLMO `time` (hh:mm:ss), the fitted
+#'   melatonin value at the DLMO and the fitted lines.
 #' - **`dlmoplotcoarse`**: `ggplot` object visualizing melatonin profile (coarse view).
 #' - **`dlmoplotfine`**: `ggplot` object visualizing melatonin profile (fine view).
 #'
-#' @details
-#' **Understanding the Outputs:**
+#' **Understanding the outputs:**
 #'
 #' - The `prof` tibble contains labeled data for different melatonin profile phases.
 #' - The `prl` list provides the parallelogram rule fit used to trim the melatonin rise segment of the profile to ensure only strong rises are fit when determining DLMO.
@@ -77,20 +81,21 @@
 #' - The `interval_limit` value records the repeated-crossing time window used
 #'   for ascending-segment selection, stored as a `lubridate` duration.
 #' - The `ip` list contains the  DLMO inflection point, the fit parameters for the base and ascending regions, as well as the grid of residuals from fitting the melatonin profile at each point of the ROI.
-#' - The `dlmo_time` variable contains the DLMO timestamp in units of hh:mm:ss (equivalent to `ip$inflection_point$x` in decimal-hours)
+#' - The `dlmo` list contains the DLMO timestamps in units of hh:mm:ss (equivalent to `ip$inflection_point$x` in decimal-hours)
 #' - The plots (`dlmoplotcoarse` and `dlmoplotfine`) visualize the results of the coarse and fine grid DLMO search, respectively.
-
-
+#'
 #' @examples
+#' # ---- Hockey-stick method (default) ----
 #' # Load the sample melatonin profile data included in the package
 #' filename <- system.file("extdata/sample_melatonin_profile.csv", package = "dlmoR")
 #'
 #' # Calculate the DLMO using the sample data and a threshold of 5
 #' sample_dlmo <- calculate_dlmo(file_path = filename, threshold = 5)
 #'
-#' @export
-#'
-calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, interval_limit = lubridate::hours(2), fine_flag = TRUE) {
+#' @rdname calculate_dlmo
+#' @order 2
+#' @usage NULL
+.calculate_dlmo_hockeystick <- function(data = NULL, file_path = NULL, threshold = 2.3, interval_limit = lubridate::hours(2), fine_flag = TRUE) {
 
   # Check if input is provided either directly or via file
   if (is.null(data) && is.null(file_path)) {
@@ -225,28 +230,6 @@ calculate_dlmo <- function(data = NULL, file_path = NULL, threshold = 2.3, inter
     dlmoplotcoarse = vis_coarse,
     dlmoplotfine = vis_fine
   ))
-}
-
-#' Helper Function to Read-in Melatonin Data from a CSV-File
-#'
-#' This function reads in a CSV file which ideally contains melatonin concentration data and associated datetime (or time) stamps and returns
-#' a tibble.
-#'
-#' @param file_path A string specifying the path to the CSV file.
-#' @return A data frame with columns `datetime` (or `time` and `melatonin`).
-#' @keywords internal
-.read_melatonin_data <- function(file_path) {
-  if (!file.exists(file_path)) {
-    stop("The file does not exist: ", file_path)
-  }
-  # data <- read.csv(file_path, sep = ";", header = TRUE)
-  data <- readr::read_delim(file_path, delim = NULL, show_col_types = FALSE)
-  # # check if file is a dataframe
-  # if (!is.data.frame(data)) {
-  #   stop("`data` must be a data frame containing `datetime` (or `time`) and `melatonin` columns.")
-  # }
-
-  return(data)
 }
 
 # Internal function to calculate DLMO

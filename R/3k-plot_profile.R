@@ -3,7 +3,7 @@
 #' Draws the melatonin profile with the baseline samples, the 3k threshold, the
 #' intervals above the threshold and the DLMO.
 #'
-#' @param result An object returned by [calculate_dlmo_3k()].
+#' @param result An object returned by [calculate_dlmo()] (`method = "3k"`).
 #' @param show_intervals Logical. Shade the intervals above the threshold
 #'   (default `TRUE`); the interval that gives the DLMO is shaded darker.
 #'
@@ -14,13 +14,13 @@
 #' sample_profile <- readr::read_delim(filename, delim = ";", show_col_types = FALSE)
 #' afternoon <- sample_profile[sample_profile$datetime >=
 #'                               as.POSIXct("2024-04-17 12:00:00", tz = "UTC"), ]
-#' res <- calculate_dlmo_3k(data = afternoon, plot = FALSE)
+#' res <- calculate_dlmo(data = afternoon, method = "3k", plot = FALSE)
 #' plot_profile_3k(res)
 #'
-#' @seealso [calculate_dlmo_3k()]
+#' @seealso [calculate_dlmo()] (`method = "3k"`)
 #' @export
 plot_profile_3k <- function(result, show_intervals = TRUE) {
-  if (!inherits(result, "dlmo_3k")) stop("`result` must come from calculate_dlmo_3k().", call. = FALSE)
+  if (!inherits(result, "dlmo_3k")) stop("`result` must come from calculate_dlmo(method = \"3k\").", call. = FALSE)
   prof <- result$prof
   base <- prof[prof$baseline == 1, ]
 

@@ -1,38 +1,36 @@
-#' Calculate DLMO with the 3k Threshold Method
-#'
-#' Estimates the dim-light melatonin onset (DLMO) with the 3k method: an
-#' individual threshold is set at the mean of the first `n_baseline` samples
+#' @section 3k threshold method (`method = "3k"`):
+#' An individual threshold is set at the mean of the first `n_baseline` samples
 #' plus `k_sd` standard deviations (Voultsios et al., 1997), and the DLMO is
 #' the time at which melatonin rises above this threshold and stays above it
 #' for at least `min_duration` hours, located by linear interpolation
 #' (Molina & Burgess, 2011).
 #'
-#' @param data A data frame with columns `datetime` (POSIXct) and `melatonin`
-#'   (numeric), or `time` (hms) and `melatonin`. If `NULL`, `file_path` is used.
-#' @param file_path Path to a CSV file with the same columns (comma or semicolon
-#'   separated).
-#' @param n_baseline Integer (>= 2). Number of initial samples that form the
+#' **Arguments** (passed through `...`):
+#' - `n_baseline`: Integer (>= 2). Number of initial samples that form the
 #'   baseline (default 3).
-#' @param k_sd Numeric (>= 0). Number of baseline standard deviations added to
+#' - `k_sd`: Numeric (>= 0). Number of baseline standard deviations added to
 #'   the baseline mean (default 2).
-#' @param min_duration Numeric (>= 0). Hours melatonin must stay above the
+#' - `min_duration`: Numeric (>= 0). Hours melatonin must stay above the
 #'   threshold for the crossing to count as the DLMO (default 2). Use 0 for the
 #'   first crossing.
-#' @param min_threshold Optional numeric. Lower bound for the threshold: if
+#' - `min_threshold`: Optional numeric. Lower bound for the threshold: if
 #'   mean + `k_sd` x SD is below `min_threshold`, `min_threshold` is used
 #'   instead (for example the assay limit of quantification). Useful when the
 #'   baseline sits at the assay floor and its SD is close to 0. Default `NULL`
 #'   (no lower bound, the original 3k method).
-#' @param lod Optional numeric. Assay limit of detection or quantification;
+#' - `lod`: Optional numeric. Assay limit of detection or quantification;
 #'   baseline values at or below it are reported as being at the assay floor.
 #'   Used for warnings only.
-#' @param max_gap Numeric (hours). A sampling gap longer than this within one
+#' - `max_gap`: Numeric (hours). A sampling gap longer than this within one
 #'   hour before to `min_duration` hours after the DLMO triggers a warning
 #'   (default 2).
-#' @param plot Logical. If `TRUE` (default), a diagnostic plot is added to the
+#' - `plot`: Logical. If `TRUE` (default), a diagnostic plot is added to the
 #'   result as `dlmoplot`.
 #'
-#' @return An object of class `dlmo_3k`, a list with
+#' The 3k method also accepts `data` with `time` (hms) instead of `datetime`,
+#' and CSV files that are comma or semicolon separated.
+#'
+#' **Value**: an object of class `dlmo_3k`, a list with
 #' - **`dlmo_time`** (hms) and **`dlmo_datetime`** (POSIXct): the DLMO;
 #' - **`status`**: `"ok"` (see the partial result attached to errors below);
 #' - **`threshold`**: threshold used (pg/mL); **`threshold_raw`**: mean + k_sd x SD
@@ -48,7 +46,6 @@
 #' - **`settings`**: the arguments used;
 #' - **`dlmoplot`**: `ggplot` object (if `plot = TRUE`).
 #'
-#' @details
 #' **Errors.** The function stops with an error when
 #' - the input is invalid: no input, invalid arguments, negative
 #'   concentrations, duplicated time stamps or fewer than `n_baseline + 2`
@@ -83,6 +80,9 @@
 #' start during the morning decline or already on the rise give a biased
 #' threshold; cut such profiles before calling this function.
 #'
+#' See also [plot_profile_3k()], [compute_3k_threshold()],
+#' [find_threshold_intervals()], [select_dlmo_3k()] and [check_3k_baseline()].
+#'
 #' @references
 #' Voultsios A, Kennaway DJ, Dawson D (1997). Salivary melatonin as a circadian
 #' phase marker: validation and comparison to plasma melatonin. *J Biol Rhythms*
@@ -92,6 +92,8 @@
 #' impact of threshold and sampling rate. *Chronobiol Int* 28(8):714-718.
 #'
 #' @examples
+#'
+#' # ---- 3k threshold method ----
 #' filename <- system.file("extdata/sample_melatonin_profile.csv", package = "dlmoR")
 #' sample_profile <- readr::read_delim(filename, delim = ";", show_col_types = FALSE)
 #'
@@ -99,24 +101,23 @@
 #' # the afternoon trough so that the baseline is taken there:
 #' afternoon <- sample_profile[sample_profile$datetime >=
 #'                               as.POSIXct("2024-04-17 12:00:00", tz = "UTC"), ]
-#' res <- calculate_dlmo_3k(data = afternoon)
+#' res <- calculate_dlmo(data = afternoon, method = "3k")
 #' res
 #' res$dlmoplot
 #'
 #' # With the morning samples the threshold is inflated and no DLMO is found.
 #' # The error carries the partial result, so the profile can still be plotted:
-#' failed <- tryCatch(calculate_dlmo_3k(data = sample_profile),
+#' failed <- tryCatch(calculate_dlmo(data = sample_profile, method = "3k"),
 #'                    dlmo_3k_error = function(e) e$result)
 #' failed$status
 #' failed$dlmoplot
 #'
-#' @seealso [plot_profile_3k()], [compute_3k_threshold()],
-#'   [find_threshold_intervals()], [select_dlmo_3k()], [check_3k_baseline()],
-#'   [calculate_dlmo()] for the hockey-stick method.
-#' @export
-calculate_dlmo_3k <- function(data = NULL, file_path = NULL, n_baseline = 3, k_sd = 2,
-                              min_duration = 2, min_threshold = NULL, lod = NULL,
-                              max_gap = 2, plot = TRUE) {
+#' @rdname calculate_dlmo
+#' @order 3
+#' @usage NULL
+.calculate_dlmo_3k <- function(data = NULL, file_path = NULL, n_baseline = 3, k_sd = 2,
+                               min_duration = 2, min_threshold = NULL, lod = NULL,
+                               max_gap = 2, plot = TRUE) {
 
   # ---- input -------------------------------------------------------------------
   if (is.null(data) && is.null(file_path)) {
@@ -243,7 +244,7 @@ calculate_dlmo_3k <- function(data = NULL, file_path = NULL, n_baseline = 3, k_s
     stop(structure(
       class = c("dlmo_3k_error", "error", "condition"),
       list(message = paste0(failure, " The partial result is attached to the error ",
-                            "(see ?calculate_dlmo_3k)."),
+                            "(see ?calculate_dlmo)."),
            call = NULL, result = result)))
   }
   result
@@ -252,7 +253,7 @@ calculate_dlmo_3k <- function(data = NULL, file_path = NULL, n_baseline = 3, k_s
 
 #' Print a 3k DLMO Result
 #'
-#' @param x An object returned by [calculate_dlmo_3k()].
+#' @param x An object returned by [calculate_dlmo()] (`method = "3k"`).
 #' @param ... Ignored.
 #' @return `x`, invisibly.
 #' @export

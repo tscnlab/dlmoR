@@ -1,7 +1,23 @@
 # dlmoR (development version)
 
+- `calculate_dlmo()` is now the single entry point for all DLMO methods.
+  Choose the method with `method = "hockeystick"` (default) or `method = "3k"`,
+  and pass the settings of that method as named arguments (for example
+  `threshold` for the hockey-stick method, `n_baseline` for the 3k method).
+  Existing hockey-stick calls using named arguments, such as
+  `calculate_dlmo(file_path = f, threshold = 5)`, remain compatible.
+  Positional calls are not: the third argument is now `method`, so
+  `calculate_dlmo(profile, NULL, 3)` must become
+  `calculate_dlmo(profile, threshold = 3)`. Settings the chosen method does
+  not use now give an informative error.
+- New argument `dlmo_off` (default `FALSE`) to request the dim-light melatonin
+  offset (DLMOoff) instead of the onset. DLMOoff is not implemented yet, so
+  `dlmo_off = TRUE` stops with an error for now.
+- Source files in `R/` are grouped by method with file-name prefixes:
+  `hockeystick-*.R`, `3k-*.R` and `shared-*.R` (code used by several methods).
+  Offset functions will go to `<method>-offset-*.R`.
 - Added the 3k threshold method for DLMO estimation (Voultsios et al., 1997;
-  Molina & Burgess, 2011) with `calculate_dlmo_3k()`.
+  Molina & Burgess, 2011) with `calculate_dlmo(method = "3k")`.
   - Individual threshold: mean of the first `n_baseline` samples (default 3) plus
     `k_sd` standard deviations (default 2); optional `min_threshold` floor.
   - DLMO: first linearly interpolated crossing above the threshold that stays above

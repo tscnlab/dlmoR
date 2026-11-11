@@ -29,7 +29,7 @@
 #' @examples
 #' find_threshold_intervals(0:5, c(1, 1, 3, 4, 1, 5), threshold = 2)
 #'
-#' @seealso [calculate_dlmo_3k()], [select_dlmo_3k()]
+#' @seealso [calculate_dlmo()] (`method = "3k"`), [select_dlmo_3k()]
 #' @export
 find_threshold_intervals <- function(time_h, melatonin, threshold) {
   stopifnot(length(time_h) == length(melatonin), length(threshold) == 1)
