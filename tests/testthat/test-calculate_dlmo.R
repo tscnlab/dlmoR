@@ -62,10 +62,15 @@ test_that("invalid method, dlmo_off and arguments stop with clear errors", {
   expect_error(calculate_dlmo(data = p, NULL, "3k", FALSE, 4), "must be named")
 })
 
-test_that("dlmo_off = TRUE is not implemented yet for any method", {
+test_that("dlmo_off = TRUE dispatches to the offset function or stops if there is none", {
   p <- make_profile(c(1.0, 1.2, 1.4, 1.3, 1.5, 3.0, 6, 10, 14, 18, 20))
-  for (m in names(dlmoR:::.dlmo_method_registry())) {
+  reg <- dlmoR:::.dlmo_method_registry()
+  expect_false(is.null(reg$hockeystick$offset))
+  for (m in names(reg)[vapply(reg, function(x) is.null(x$offset), logical(1))]) {
     expect_error(calculate_dlmo(data = p, method = m, dlmo_off = TRUE),
                  "not implemented yet")
   }
+  # the hockey-stick offset runs (this rising profile has no falling limb)
+  expect_error(calculate_dlmo(data = p, method = "hockeystick", dlmo_off = TRUE),
+               "No falling limb found")
 })

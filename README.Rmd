@@ -51,6 +51,12 @@ dlmo_result <- calculate_dlmo(file_path = filename, method = "hockeystick",
 # Other methods use the same function, e.g. the 3k threshold method:
 # calculate_dlmo(data = my_profile, method = "3k")
 
+# The melatonin offset (DLMOoff) with the hockey-stick method: the falling limb
+# is cut out, mirrored in time and fitted like a DLMO
+# dlmoff_result <- calculate_dlmo(file_path = filename, method = "hockeystick",
+#                                 dlmo_off = TRUE, threshold = 2.3)
+# dlmoff_result$dlmoff$fine$datetime
+
 # View estimated DLMO inflection point (decimal-hours) and melatonin concentration (pg/mL) at this time
 
 # Coarse grid search result

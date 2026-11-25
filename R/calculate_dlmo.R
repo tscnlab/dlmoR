@@ -15,18 +15,21 @@
 #'   method) or `"3k"` (the 3k threshold method). See the sections below.
 #' @param dlmo_off Logical. If `FALSE` (default), the dim-light melatonin
 #'   onset (DLMO) is calculated. If `TRUE`, the dim-light melatonin offset
-#'   (DLMOoff) is calculated instead. DLMOoff is not implemented yet for any
-#'   method, so `dlmo_off = TRUE` currently stops with an error.
+#'   (DLMOoff) is calculated instead. DLMOoff is implemented for
+#'   `method = "hockeystick"` (see the section "Hockey-stick DLMOoff" below);
+#'   for other methods `dlmo_off = TRUE` stops with an error.
 #' @param ... Named settings of the chosen method, for example `threshold` and
-#'   `fine_flag` for `method = "hockeystick"`, or `n_baseline` and `k_sd` for
-#'   `method = "3k"`. The arguments of each method are listed in the sections
+#'   `fine_flag` for `method = "hockeystick"` (plus `episode` and `min_run` with
+#'   `dlmo_off = TRUE`), or `n_baseline` and `k_sd` for `method = "3k"`. The arguments of each method are listed in the sections
 #'   below. Arguments that the chosen method does not use give an error.
 #'
 #' @return The result of the chosen method; see the "Value" part of the
 #'   section of each method below.
 #'
 #' @seealso [plot_raw_profile()] to look at a profile before choosing a method,
-#'   and [run_residual_explorer()] for hockey-stick results.
+#'   [run_residual_explorer()] for hockey-stick results, and
+#'   [find_offset_limb()] and [plot_profile_dlmoff()] for the hockey-stick
+#'   DLMOoff.
 #'
 #' @order 1
 #' @export
@@ -81,7 +84,7 @@ calculate_dlmo <- function(data = NULL, file_path = NULL,
 #' @noRd
 .dlmo_method_registry <- function() {
   list(
-    hockeystick = list(onset = .calculate_dlmo_hockeystick, offset = NULL),
+    hockeystick = list(onset = .calculate_dlmo_hockeystick, offset = .calculate_dlmoff_hockeystick),
     `3k`        = list(onset = .calculate_dlmo_3k,          offset = NULL)
   )
 }

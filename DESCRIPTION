@@ -10,7 +10,8 @@ Authors@R: c(
 	  person("TSCN-Lab", comment = c(URL = "www.tscnlab.org"), role = "cph"))
 Description: Calculate the time of dimlight melatonin onset from a time series
     of melatonin concentrations, using the hockey-stick method or the 3k
-    threshold method (baseline mean plus two standard deviations). 
+    threshold method (baseline mean plus two standard deviations), and the
+    dimlight melatonin offset with the hockey-stick method.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

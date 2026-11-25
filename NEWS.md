@@ -11,11 +11,22 @@
   `calculate_dlmo(profile, threshold = 3)`. Settings the chosen method does
   not use now give an informative error.
 - New argument `dlmo_off` (default `FALSE`) to request the dim-light melatonin
-  offset (DLMOoff) instead of the onset. DLMOoff is not implemented yet, so
-  `dlmo_off = TRUE` stops with an error for now.
+  offset (DLMOoff) instead of the onset.
+- Added the hockey-stick DLMOoff: `calculate_dlmo(method = "hockeystick",
+  dlmo_off = TRUE)`. The falling limb of one offset is cut out of the profile
+  (`find_offset_limb()`: from the nocturnal peak to the trough before the next
+  rise), mirrored in time, fitted like a DLMO with the hockey-stick method, and
+  the inflection point, fitted lines, region of interest and parallelogram are
+  mapped back to real time. New settings `episode` (which offset to use if the
+  profile has several: `"last"`, `"first"`, `"start"` or an integer) and
+  `min_run`. The result has the structure of the onset result with
+  "ascending" replaced by "descending" (`dlmoff`, `dlmoffplotcoarse`,
+  `dlmoffplotfine`, ...), plus the cut (`limb`) and the fit of the mirrored
+  limb (`mirrored`). `plot_profile_dlmoff()` draws it in the format of the
+  DLMO plots. `dlmo_off = TRUE` still stops with an error for `method = "3k"`.
 - Source files in `R/` are grouped by method with file-name prefixes:
   `hockeystick-*.R`, `3k-*.R` and `shared-*.R` (code used by several methods).
-  Offset functions will go to `<method>-offset-*.R`.
+  Offset functions are in `<method>-offset-*.R`.
 - Added the 3k threshold method for DLMO estimation (Voultsios et al., 1997;
   Molina & Burgess, 2011) with `calculate_dlmo(method = "3k")`.
   - Individual threshold: mean of the first `n_baseline` samples (default 3) plus
@@ -32,7 +43,7 @@
 - New building blocks: `check_3k_input()`, `compute_3k_threshold()`,
   `find_threshold_intervals()`, `select_dlmo_3k()`, `check_3k_baseline()` and
   `plot_profile_3k()`.
-- Added unit tests (testthat) for the 3k method.
+- Added unit tests (testthat) for the 3k method and the hockey-stick DLMOoff.
 
 # dlmoR 0.2.0
 
